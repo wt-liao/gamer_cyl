@@ -32,6 +32,12 @@
 #define PAR_ONLY     4
 
 
+// coordinate systems
+#define CARTESIAN    1
+#define SPHERICAL    2
+#define CYLINDRICAL  3
+
+
 // hydrodynamic schemes
 #define RTVD         1
 #define WAF          2

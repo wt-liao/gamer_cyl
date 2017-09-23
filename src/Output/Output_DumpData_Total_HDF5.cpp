@@ -70,7 +70,7 @@ Procedure for outputting new variables:
 
 
 //-------------------------------------------------------------------------------------------------------
-// Function    :  Output_DumpData_Total_HDF5 (FormatVersion = 2258)
+// Function    :  Output_DumpData_Total_HDF5 (FormatVersion = 2259)
 // Description :  Output all simulation data in the HDF5 format, which can be used as a restart file
 //                or loaded by YT
 //
@@ -146,6 +146,7 @@ Procedure for outputting new variables:
 //                2256 : 2017/09/10 --> output FLAG_BUFFER_SIZE_MAXM2_LV
 //                2257 : 2017/09/17 --> output OPT__OPTIMIZE_AGGRESSIVE
 //                2258 : 2017/09/21 --> output OPT__MINIMIZE_MPI_BARRIER
+//                2259 : 2017/09/23 --> output COORDINATE
 //-------------------------------------------------------------------------------------------------------
 void Output_DumpData_Total_HDF5( const char *FileName )
 {
@@ -1252,8 +1253,9 @@ void FillIn_KeyInfo( KeyInfo_t &KeyInfo )
 
    const time_t CalTime  = time( NULL );   // calendar time
 
-   KeyInfo.FormatVersion = 2258;
+   KeyInfo.FormatVersion = 2259;
    KeyInfo.Model         = MODEL;
+   KeyInfo.Coordinate    = COORDINATE;
    KeyInfo.NLevel        = NLEVEL;
    KeyInfo.NCompFluid    = NCOMP_FLUID;
    KeyInfo.NCompPassive  = NCOMP_PASSIVE;
@@ -1320,6 +1322,7 @@ void FillIn_Makefile( Makefile_t &Makefile )
 
 // model-independent options
    Makefile.Model              = MODEL;
+   Makefile.Coordinate         = COORDINATE;
 
 #  ifdef GRAVITY
    Makefile.Gravity            = 1;
@@ -2090,6 +2093,7 @@ void GetCompound_KeyInfo( hid_t &H5_TypeID )
 
    H5Tinsert( H5_TypeID, "FormatVersion",      HOFFSET(KeyInfo_t,FormatVersion  ),    H5T_NATIVE_INT          );
    H5Tinsert( H5_TypeID, "Model",              HOFFSET(KeyInfo_t,Model          ),    H5T_NATIVE_INT          );
+   H5Tinsert( H5_TypeID, "Coordinate",         HOFFSET(KeyInfo_t,Coordinate     ),    H5T_NATIVE_INT          );
    H5Tinsert( H5_TypeID, "Float8",             HOFFSET(KeyInfo_t,Float8         ),    H5T_NATIVE_INT          );
    H5Tinsert( H5_TypeID, "Gravity",            HOFFSET(KeyInfo_t,Gravity        ),    H5T_NATIVE_INT          );
    H5Tinsert( H5_TypeID, "Particle",           HOFFSET(KeyInfo_t,Particle       ),    H5T_NATIVE_INT          );
@@ -2150,6 +2154,7 @@ void GetCompound_Makefile( hid_t &H5_TypeID )
    H5_TypeID = H5Tcreate( H5T_COMPOUND, sizeof(Makefile_t) );
 
    H5Tinsert( H5_TypeID, "Model",              HOFFSET(Makefile_t,Model             ), H5T_NATIVE_INT );
+   H5Tinsert( H5_TypeID, "Coordinate",         HOFFSET(Makefile_t,Coordinate        ), H5T_NATIVE_INT );
    H5Tinsert( H5_TypeID, "Gravity",            HOFFSET(Makefile_t,Gravity           ), H5T_NATIVE_INT );
    H5Tinsert( H5_TypeID, "Comoving",           HOFFSET(Makefile_t,Comoving          ), H5T_NATIVE_INT );
    H5Tinsert( H5_TypeID, "Particle",           HOFFSET(Makefile_t,Particle          ), H5T_NATIVE_INT );

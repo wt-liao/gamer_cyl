@@ -15,26 +15,29 @@ EXECUTABLE := gamer
 # model: HYDRO/MHD/ELBDM/PAR_ONLY (PAR_ONLY must work with PARTICLE)
 SIMU_OPTION += -DMODEL=HYDRO
 
+# coordinate system: CARTESIAN/SPHERICAL/CYLINDRICAL (experimental)
+SIMU_OPTION += -DCOORDINATE=CARTESIAN
+
 # self-gravity
-SIMU_OPTION += -DGRAVITY
+#SIMU_OPTION += -DGRAVITY
 
 # Poisson solver: SOR/MG (successive-overrelaxation/multigrid)
-SIMU_OPTION += -DPOT_SCHEME=SOR
+#SIMU_OPTION += -DPOT_SCHEME=SOR
 
 # store GRA_GHOST_SIZE ghost-zone potential for each patch on each side (in patch->pot_ext)
 # --> (1) for improving accuracy for particles around the patch boundaries (by Par->ImproveAcc)
 #     (2) currently must be enabled for STAR_FORMATION + STORE_PAR_ACC
-SIMU_OPTION += -DSTORE_POT_GHOST
+#SIMU_OPTION += -DSTORE_POT_GHOST
 
 # use unsplitting method to couple gravity to the target model (for HYDRO and MHD only; ELBDM is not supported yet)
 # --> must be off if GRAVITY is off
-SIMU_OPTION += -DUNSPLIT_GRAVITY
+#SIMU_OPTION += -DUNSPLIT_GRAVITY
 
 # comoving frame
 #SIMU_OPTION += -DCOMOVING
 
 # particles (must work with GRAVITY; set MODEL=PAR_ONLY for particle-only simulations)
-SIMU_OPTION += -DPARTICLE
+#SIMU_OPTION += -DPARTICLE
 
 # maximum number of AMR levels including the base level (level id = 0 ... NLEVEL-1)
 SIMU_OPTION += -DNLEVEL=10
@@ -44,7 +47,7 @@ SIMU_OPTION += -DMAX_PATCH=1000000
 
 # support Grackle, a chemistry and radiative cooling library
 # --> please enable OpenMP in Grackle by "make omp-on"
-SIMU_OPTION += -DSUPPORT_GRACKLE
+#SIMU_OPTION += -DSUPPORT_GRACKLE
 
 
 # (b) model-dependent options
@@ -99,7 +102,7 @@ SIMU_OPTION += -DSTORE_PAR_ACC
 # allow for creating new particles after initialization
 # --> must turn on PARTICLE
 # --> must turn on STORE_POT_GHOST when STORE_PAR_ACC is adopted
-SIMU_OPTION += -DSTAR_FORMATION
+#SIMU_OPTION += -DSTAR_FORMATION
 
 # number of passive particle attributes (**excluding** PAR_CREATION_TIME used by STAR_FORMATION)
 # --> for simulations without any passive attributes, please set this variable to 0 and do NOT comment it out
@@ -109,10 +112,10 @@ SIMU_OPTION += -DPAR_NPASSIVE_MAKEFILE=1
 # (d) optimization options and other features
 # ------------------------------------------------------------------------------------
 # GPU acceleration (to disable GPU, please comment out both -DGPU and -DGPU_ARCH)
-SIMU_OPTION += -DGPU
+#SIMU_OPTION += -DGPU
 
 # GPU architecture: FERMI/KEPLER/MAXWELL/PASCAL
-SIMU_OPTION += -DGPU_ARCH=KEPLER
+#SIMU_OPTION += -DGPU_ARCH=KEPLER
 
 # debug mode
 #SIMU_OPTION += -DGAMER_DEBUG
@@ -130,10 +133,10 @@ SIMU_OPTION += -DINTEL
 #SIMU_OPTION += -DFLOAT8
 
 # serial mode (in which no MPI libraries are required)
-#SIMU_OPTION += -DSERIAL
+SIMU_OPTION += -DSERIAL
 
 # load-balance parallelization (one must not turn on the option "SERIAL") (HILBERT)
-SIMU_OPTION += -DLOAD_BALANCE=HILBERT
+#SIMU_OPTION += -DLOAD_BALANCE=HILBERT
 
 # overlap MPI communication with computation (experimental, only supported in LOAD_BALANCE)
 #SIMU_OPTION += -DOVERLAP_MPI

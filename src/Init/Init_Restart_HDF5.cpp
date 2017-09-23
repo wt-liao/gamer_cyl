@@ -71,6 +71,7 @@ void Init_Restart_HDF5( const char *FileName )
    const bool    Fatal     = true;
    const bool NonFatal     = false;
    const int  Model        = MODEL;
+   const int  Coordinate   = COORDINATE;
    const int  NCompFluid   = NCOMP_FLUID;
    const int  NCompPassive = NCOMP_PASSIVE;
    const int  PatchSize    = PATCH_SIZE;
@@ -135,6 +136,7 @@ void Init_Restart_HDF5( const char *FileName )
    MPI_Barrier( MPI_COMM_WORLD );
 
    LoadField( "Model",          &KeyInfo.Model,          H5_SetID_KeyInfo, H5_TypeID_KeyInfo,    Fatal, &Model,         1,    Fatal );
+   LoadField( "Coordinate",     &KeyInfo.Coordinate,     H5_SetID_KeyInfo, H5_TypeID_KeyInfo, NonFatal, &Coordinate,    1,    Fatal );
    LoadField( "Gravity",        &KeyInfo.Gravity,        H5_SetID_KeyInfo, H5_TypeID_KeyInfo,    Fatal, &Gravity,       1,    Fatal );
    LoadField( "Particle",       &KeyInfo.Particle,       H5_SetID_KeyInfo, H5_TypeID_KeyInfo,    Fatal, &Particle,      1,    Fatal );
    LoadField( "NLevel",         &KeyInfo.NLevel,         H5_SetID_KeyInfo, H5_TypeID_KeyInfo,    Fatal,  NullPtr,      -1, NonFatal );
@@ -1244,6 +1246,7 @@ void Check_Makefile( const char *FileName )
    Makefile_t RS;    // RS = ReStart
 
    LoadField( "Model",              &RS.Model,              SID, TID, NonFatal, &RT.Model,               1,    Fatal );
+   LoadField( "Coordinate",         &RS.Coordinate,         SID, TID, NonFatal, &RT.Coordinate,          1,    Fatal );
    LoadField( "Gravity",            &RS.Gravity,            SID, TID, NonFatal, &RT.Gravity,             1,    Fatal );
    LoadField( "Comoving",           &RS.Comoving,           SID, TID, NonFatal, &RT.Comoving,            1,    Fatal );
    LoadField( "Particle",           &RS.Particle,           SID, TID, NonFatal, &RT.Particle,            1,    Fatal );

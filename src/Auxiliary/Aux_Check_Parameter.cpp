@@ -48,6 +48,10 @@ void Aux_Check_Parameter()
 #     error : ERROR : incorrect number of NCOMP_PASSIVE !!
 #  endif
 
+#  if ( !defined COORDINATE  ||  ( COORDINATE != CARTESIAN && COORDINATE != SPHERICAL && COORDINATE != CYLINDRICAL )  )
+#     error : ERROR : unrecognizable COORDINATE in the Makefile (only support CARTESIAN/SPHERICAL/CYLINDRICAL) !!
+#  endif
+
 #  ifdef SERIAL
    int NRank = 1;
 #  else

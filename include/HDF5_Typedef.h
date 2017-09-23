@@ -42,6 +42,7 @@ struct KeyInfo_t
 
    int    FormatVersion;
    int    Model;
+   int    Coordinate;
    int    Float8;
    int    Gravity;
    int    Particle;
@@ -87,6 +88,7 @@ struct Makefile_t
 {
 
    int Model;
+   int Coordinate;
    int Gravity;
    int Comoving;
    int Particle;

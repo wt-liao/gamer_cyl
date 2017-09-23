@@ -58,6 +58,16 @@ void Aux_TakeNote()
       fprintf( Note, "MODEL                           UNKNOWN\n" );
 #     endif // MODEL
 
+#     if   ( COORDINATE == CARTESIAN )
+      fprintf( Note, "COORDINATE                      CARTESIAN\n" );
+#     elif ( COORDINATE == SPHERICAL )
+      fprintf( Note, "COORDINATE                      SPHERICAL\n" );
+#     elif ( COORDINATE == CYLINDRICAL )
+      fprintf( Note, "COORDINATE                      CYLINDRICAL\n" );
+#     else
+      fprintf( Note, "COORDINATE                      UNKNOWN\n" );
+#     endif // COORDINATE
+
 #     ifdef GRAVITY
       fprintf( Note, "GRAVITY                         ON\n" );
 #     else
