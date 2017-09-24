@@ -34,8 +34,8 @@
 
 // coordinate systems
 #define CARTESIAN    1
-#define SPHERICAL    2
-#define CYLINDRICAL  3
+#define CYLINDRICAL  2
+#define SPHERICAL    3
 
 
 // hydrodynamic schemes

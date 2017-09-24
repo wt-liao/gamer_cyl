@@ -60,10 +60,10 @@ void Aux_TakeNote()
 
 #     if   ( COORDINATE == CARTESIAN )
       fprintf( Note, "COORDINATE                      CARTESIAN\n" );
-#     elif ( COORDINATE == SPHERICAL )
-      fprintf( Note, "COORDINATE                      SPHERICAL\n" );
 #     elif ( COORDINATE == CYLINDRICAL )
       fprintf( Note, "COORDINATE                      CYLINDRICAL\n" );
+#     elif ( COORDINATE == SPHERICAL )
+      fprintf( Note, "COORDINATE                      SPHERICAL\n" );
 #     else
       fprintf( Note, "COORDINATE                      UNKNOWN\n" );
 #     endif // COORDINATE
@@ -513,7 +513,12 @@ void Aux_TakeNote()
 //    record the parameters of simulation scale
       fprintf( Note, "Parameters of Simulation Scale\n" );
       fprintf( Note, "***********************************************************************************\n" );
-      fprintf( Note, "BOX_SIZE (input)                %20.14e\n", BOX_SIZE         );
+      fprintf( Note, "BOX_EDGE_LEFT_X                 %20.14e\n", amr->BoxEdgeL[0] );
+      fprintf( Note, "BOX_EDGE_LEFT_Y                 %20.14e\n", amr->BoxEdgeL[1] );
+      fprintf( Note, "BOX_EDGE_LEFT_Z                 %20.14e\n", amr->BoxEdgeL[2] );
+      fprintf( Note, "BOX_EDGE_RIGHT_X                %20.14e\n", amr->BoxEdgeR[0] );
+      fprintf( Note, "BOX_EDGE_RIGHT_Y                %20.14e\n", amr->BoxEdgeR[1] );
+      fprintf( Note, "BOX_EDGE_RIGHT_Z                %20.14e\n", amr->BoxEdgeR[2] );
       fprintf( Note, "BOX_SIZE_X                      %20.14e\n", amr->BoxSize[0]  );
       fprintf( Note, "BOX_SIZE_Y                      %20.14e\n", amr->BoxSize[1]  );
       fprintf( Note, "BOX_SIZE_Z                      %20.14e\n", amr->BoxSize[2]  );

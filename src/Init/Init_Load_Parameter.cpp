@@ -28,7 +28,20 @@ void Init_Load_Parameter()
 // ********************************************************************************************************************************
 
 // simulation scale
-   ReadPara->Add( "BOX_SIZE",                   &BOX_SIZE,                       -1.0,             Eps_double,    NoMax_double   );
+#  if   ( COORDINATE == CARTESIAN )
+   ReadPara->Add( "BOX_EDGE_LEFT_X",            &amr->BoxEdgeL[0],                NoDef_double,    NoMin_double   NoMax_double   );
+#  elif ( COORDINATE == CYLINDRICAL )
+   ReadPara->Add( "BOX_EDGE_LEFT_X",            &amr->BoxEdgeL[0],                NoDef_double,    0.0,           NoMax_double   );
+#  elif ( COORDINATE == SPHERICAL )
+   ReadPara->Add( "BOX_EDGE_LEFT_X",            &amr->BoxEdgeL[0],                NoDef_double,    0.0,           NoMax_double   );
+#  else
+#  error : UNSUPPORTED COORDINATE
+#  endif
+   ReadPara->Add( "BOX_EDGE_LEFT_Y",            &amr->BoxEdgeL[1],                NoDef_double,    NoMin_double   NoMax_double   );
+   ReadPara->Add( "BOX_EDGE_LEFT_Z",            &amr->BoxEdgeL[2],                NoDef_double,    NoMin_double   NoMax_double   );
+   ReadPara->Add( "BOX_EDGE_RIGHT_X",           &amr->BoxEdgeR[0],                NoDef_double,    NoMin_double   NoMax_double   );
+   ReadPara->Add( "BOX_EDGE_RIGHT_Y",           &amr->BoxEdgeR[1],                NoDef_double,    NoMin_double   NoMax_double   );
+   ReadPara->Add( "BOX_EDGE_RIGHT_Z",           &amr->BoxEdgeR[2],                NoDef_double,    NoMin_double   NoMax_double   );
    ReadPara->Add( "NX0_TOT_X",                  &NX0_TOT[0],                     -1,               PS2,           NoMax_int      );
    ReadPara->Add( "NX0_TOT_Y",                  &NX0_TOT[1],                     -1,               PS2,           NoMax_int      );
    ReadPara->Add( "NX0_TOT_Z",                  &NX0_TOT[2],                     -1,               PS2,           NoMax_int      );

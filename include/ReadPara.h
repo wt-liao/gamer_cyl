@@ -40,6 +40,8 @@ const float  NoMin_float  = (float )-__FLT_MAX__;
 const double NoMin_double = (double)-__DBL_MAX__;
 const float  Eps_float    = (float )+__FLT_MIN__;
 const double Eps_double   = (double)+__DBL_MIN__;
+const float  NoDef_float  = (float )+__FLT_MAX__;
+const double NoDef_double = (double)+__DBL_MAX__;
 
 
 

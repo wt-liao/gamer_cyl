@@ -4,6 +4,7 @@
 #ifdef GRAVITY
 #include "CUPOT.h"
 #endif
+#include "ReadPara.h"
 
 
 
@@ -48,8 +49,25 @@ void Aux_Check_Parameter()
 #     error : ERROR : incorrect number of NCOMP_PASSIVE !!
 #  endif
 
-#  if ( !defined COORDINATE  ||  ( COORDINATE != CARTESIAN && COORDINATE != SPHERICAL && COORDINATE != CYLINDRICAL )  )
-#     error : ERROR : unrecognizable COORDINATE in the Makefile (only support CARTESIAN/SPHERICAL/CYLINDRICAL) !!
+#  if ( !defined COORDINATE  ||  ( COORDINATE != CARTESIAN && COORDINATE != CYLINDRICAL && COORDINATE != SPHERICAL )  )
+#     error : ERROR : unrecognizable COORDINATE in the Makefile (only support CARTESIAN/CYLINDRICAL/SPHERICAL) !!
+#  endif
+
+#  if   ( COORDINATE == CARTESIAN )
+   if ( amr->BoxEdgeL[0] == NoDef_double )   Aux_Error( ERROR_INFO, "please set BOX_EDGE_LEFT_X !!\n" );
+   if ( amr->BoxEdgeL[1] == NoDef_double )   Aux_Error( ERROR_INFO, "please set BOX_EDGE_LEFT_Y !!\n" );
+   if ( amr->BoxEdgeL[2] == NoDef_double )   Aux_Error( ERROR_INFO, "please set BOX_EDGE_LEFT_Z !!\n" );
+   if ( amr->BoxEdgeR[0] == NoDef_double )   Aux_Error( ERROR_INFO, "please set BOX_EDGE_RIGHT_X !!\n" );
+   if ( amr->BoxEdgeR[1] == NoDef_double )   Aux_Error( ERROR_INFO, "please set BOX_EDGE_RIGHT_Y !!\n" );
+   if ( amr->BoxEdgeR[2] == NoDef_double )   Aux_Error( ERROR_INFO, "please set BOX_EDGE_RIGHT_Z !!\n" );
+#  elif ( COORDINATE == CYLINDRICAL )
+   if ( amr->BoxEdgeL[0] == NoDef_double )   Aux_Error( ERROR_INFO, "please set BOX_EDGE_LEFT_X !!\n" );
+   if ( amr->BoxEdgeL[2] == NoDef_double )   Aux_Error( ERROR_INFO, "please set BOX_EDGE_LEFT_Z !!\n" );
+   if ( amr->BoxEdgeR[0] == NoDef_double )   Aux_Error( ERROR_INFO, "please set BOX_EDGE_RIGHT_X !!\n" );
+   if ( amr->BoxEdgeR[2] == NoDef_double )   Aux_Error( ERROR_INFO, "please set BOX_EDGE_RIGHT_Z !!\n" );
+#  elif ( COORDINATE == SPHERICAL )
+   if ( amr->BoxEdgeL[0] == NoDef_double )   Aux_Error( ERROR_INFO, "please set BOX_EDGE_LEFT_X !!\n" );
+   if ( amr->BoxEdgeR[0] == NoDef_double )   Aux_Error( ERROR_INFO, "please set BOX_EDGE_RIGHT_X !!\n" );
 #  endif
 
 #  ifdef SERIAL

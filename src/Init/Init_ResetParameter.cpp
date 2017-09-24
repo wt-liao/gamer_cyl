@@ -191,17 +191,27 @@ void Init_ResetParameter()
 
 
 // derived parameters related to the simulation scale
-   int NX0_Max;
-   NX0_Max = ( NX0_TOT[0] > NX0_TOT[1] ) ? NX0_TOT[0] : NX0_TOT[1];
-   NX0_Max = ( NX0_TOT[2] > NX0_Max    ) ? NX0_TOT[2] : NX0_Max;
+#  if   ( COORDINATE == CARTESIAN )
+   amr->BoxSize[0] = amr->BoxEdgeR[0] - amr->BoxEdgeL[0];   // x
+   amr->BoxSize[1] = amr->BoxEdgeR[1] - amr->BoxEdgeL[1];   // y
+   amr->BoxSize[2] = amr->BoxEdgeR[2] - amr->BoxEdgeL[2];   // z
+#  elif ( COORDINATE == CYLINDRICAL )
+   amr->BoxSize[0] = amr->BoxEdgeR[0] - amr->BoxEdgeL[0];   // r
+   amr->BoxSize[1] = 2.0*M_PI;                              // phi
+   amr->BoxSize[2] = amr->BoxEdgeR[2] - amr->BoxEdgeL[2];   // z
+#  elif ( COORDINATE == SPHERICAL )
+   amr->BoxSize[0] = amr->BoxEdgeR[0] - amr->BoxEdgeL[0];   // r
+   amr->BoxSize[1] = M_PI;                                  // theta
+   amr->BoxSize[2] = 2.0*M_PI;                              // phi
+#  else
+#  error : UNSUPPORTED COORDINATE !!
+#  endif
 
-   for (int lv=0; lv<NLEVEL; lv++)     amr->dh[lv] = BOX_SIZE / (double)( NX0_Max*(1<<lv) );
-
+   for (int lv=0; lv<NLEVEL; lv++)
    for (int d=0; d<3; d++)
-   {
-      amr->BoxSize [d] = NX0_TOT[d]*amr->dh   [0];
-      amr->BoxScale[d] = NX0_TOT[d]*amr->scale[0];
-   }
+      amr->dh[lv][d] = amr->BoxSize[d] / (double)( NX0_TOT[d]*(1<<lv) );
+
+   for (int d=0; d<3; d++)    amr->BoxScale[d] = NX0_TOT[d]*amr->scale[0];
 
 
 // workload weighting at each level

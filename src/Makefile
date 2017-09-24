@@ -15,7 +15,7 @@ EXECUTABLE := gamer
 # model: HYDRO/MHD/ELBDM/PAR_ONLY (PAR_ONLY must work with PARTICLE)
 SIMU_OPTION += -DMODEL=HYDRO
 
-# coordinate system: CARTESIAN/SPHERICAL/CYLINDRICAL (experimental)
+# coordinate system: CARTESIAN/CYLINDRICAL/SPHERICAL (experimental)
 SIMU_OPTION += -DCOORDINATE=CARTESIAN
 
 # self-gravity

@@ -92,8 +92,10 @@ struct AMR_t
    double PotSgTime   [NLEVEL][2];
 #  endif
    int    NPatchComma [NLEVEL][28];
-   double dh          [NLEVEL];
+   double dh          [NLEVEL][3];
    int    ResPower2   [NLEVEL];
+   double BoxEdgeL    [3];
+   double BoxEdgeR    [3];
    double BoxSize     [3];
    int    BoxScale    [3];
    bool   WithFlux;
