@@ -23,7 +23,7 @@ void SortParticle( const long NPar, const real *PosX, const real *PosY, const re
 //                   (3) TSC : Triangular-Shaped-Cloud
 //                2. The deposited density field will be stored in Rho
 //                   --> This array will be initialized as zero only if "InitZero=true"
-//                3. Particles having no contribution to Rho (which has the range EdgeL[d] <= r[d] < EdgeL[d]+RhoSize*dh )
+//                3. Particles having no contribution to Rho (which has the range EdgeL[d] <= r[d] < EdgeL[d]+RhoSize*dh[d] )
 //                   will be ignored
 //                4. Particles position will be predicted to the target physical time if PredictPos is on
 //                   --> But they will NOT be stored back to the global Pos array
@@ -43,7 +43,7 @@ void SortParticle( const long NPar, const real *PosX, const real *PosY, const re
 //                Rho             : Array to store the output density field (assumed to be a cubic array)
 //                RhoSize         : Size of Rho in 1D
 //                EdgeL           : Left edge of the array Rho
-//                dh              : cell size of Rho
+//                dh3             : Cell size of Rho along each direction
 //                PredictPos      : true --> predict particle position to TargetTime
 //                TargetTime      : Target time for predicting the particle position
 //                InitZero        : True --> initialize Rho as zero
@@ -71,7 +71,7 @@ void SortParticle( const long NPar, const real *PosX, const real *PosY, const re
 // Return      :  Rho
 //-------------------------------------------------------------------------------------------------------
 void Par_MassAssignment( const long *ParList, const long NPar, const ParInterp_t IntScheme, real *Rho,
-                         const int RhoSize, const double *EdgeL, const double dh, const bool PredictPos,
+                         const int RhoSize, const double *EdgeL, const double dh3[], const bool PredictPos,
                          const double TargetTime, const bool InitZero, const bool Periodic, const int PeriodicSize[3],
                          const bool UnitDens, const bool CheckFarAway, const bool UseInputMassPos, real **InputMassPos )
 {
@@ -102,6 +102,15 @@ void Par_MassAssignment( const long *ParList, const long NPar, const ParInterp_t
       if ( InputMassPos != NULL )   Aux_Error( ERROR_INFO, "InputMassPos != NULL when UseInputMassPos is off !!\n" );
    }
 #  endif // #ifdef DEBUG_PARTICLE
+
+#  if ( COORDINATE == CARTESIAN )
+   if (  !Mis_CompareRealValue( dh3[0], dh3[1], NULL, false )  ||
+         !Mis_CompareRealValue( dh3[0], dh3[2], NULL, false )    )
+      Aux_Error( ERROR_INFO, "Currently the Cartesian coordinates assume dh[0] (%20.14e) = dh[1] (%20.14e) = dh[2] (%20.14e) !!\n",
+                 dh3[0], dh3[1], dh3[2] );
+#  else
+   Aux_Error( ERROR_INFO, "non-Cartesian coordinates do not support %s() yet !!\n", __FUNCTION__ );
+#  endif
 
 
 // 1. initialization
@@ -156,6 +165,8 @@ void Par_MassAssignment( const long *ParList, const long NPar, const ParInterp_t
 
 
 // 4. deposit particle mass
+//###: COORD-FIX: use dh instead of dh[0]
+   const double  dh       = dh3[0];
    const double _dh       = 1.0 / dh;
    const double _dh3      = CUBE(_dh);
    const double Ghost_Phy = amr->Par->GhostSize*dh;

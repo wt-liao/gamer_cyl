@@ -47,6 +47,15 @@ void Validate()
    Aux_Error( ERROR_INFO, "PARTICLE must be disabled !!\n" );
 #  endif
 
+#  if ( COORDINATE == CARTESIAN )
+   if (  !Mis_CompareRealValue( amr->dh[0][0], amr->dh[0][1], NULL, false )  ||
+         !Mis_CompareRealValue( amr->dh[0][0], amr->dh[0][2], NULL, false )    )
+      Aux_Error( ERROR_INFO, "only work with cubic cells (dh[lv=0] = (%20.14e, %20.14e, %20.14e)) !!",
+                 amr->dh[0][0], amr->dh[0][1], amr->dh[0][2] );
+#  else
+      Aux_Error( ERROR_INFO, "only work with the Cartesian coordinates !!\n" );
+#  endif
+
    if ( MPI_Rank == 0 )
    {
 #     ifdef GRAVITY
@@ -108,9 +117,9 @@ void SetParameter()
    ReadPara->Add( "SphCol_Dens_Delta", &SphCol_Dens_Delta,     -1.0,          Eps_double,       NoMax_double      );
    ReadPara->Add( "SphCol_Engy_Bg",    &SphCol_Engy_Bg,        -1.0,          Eps_double,       NoMax_double      );
    ReadPara->Add( "SphCol_Radius",     &SphCol_Radius,         -1.0,          Eps_double,       NoMax_double      );
-   ReadPara->Add( "SphCol_Center_X",   &SphCol_Center[0],      -1.0,          NoMin_double,     NoMax_double      );
-   ReadPara->Add( "SphCol_Center_Y",   &SphCol_Center[1],      -1.0,          NoMin_double,     NoMax_double      );
-   ReadPara->Add( "SphCol_Center_Z",   &SphCol_Center[2],      -1.0,          NoMin_double,     NoMax_double      );
+   ReadPara->Add( "SphCol_Center_X",   &SphCol_Center[0],       NoDef_double, NoMin_double,     NoMax_double      );
+   ReadPara->Add( "SphCol_Center_Y",   &SphCol_Center[1],       NoDef_double, NoMin_double,     NoMax_double      );
+   ReadPara->Add( "SphCol_Center_Z",   &SphCol_Center[2],       NoDef_double, NoMin_double,     NoMax_double      );
 
    ReadPara->Read( FileName );
 
@@ -118,7 +127,7 @@ void SetParameter()
 
 // set the default values
    for (int d=0; d<3; d++)
-      if ( SphCol_Center[d] < 0.0 )    SphCol_Center[d] = 0.5*amr->BoxSize[d];
+      if ( SphCol_Center[d] == NoDef_double )   SphCol_Center[d] = amr->BoxCenter[d];
 
 
 // (2) set the problem-specific derived parameters

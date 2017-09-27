@@ -208,7 +208,7 @@ void CUAPI_Asyn_FluidSolver( real h_Flu_Array_In [][FLU_NIN    ][ FLU_NXT*FLU_NX
                              real h_Flux_Array[][9][NFLUX_TOTAL][ PS2*PS2 ],
                              const double h_Corner_Array[][3],
                              real h_Pot_Array_USG[][USG_NXT_F][USG_NXT_F][USG_NXT_F],
-                             const int NPatchGroup, const real dt, const real dh, const real Gamma, const bool StoreFlux,
+                             const int NPatchGroup, const real dt, const real dh[], const real Gamma, const bool StoreFlux,
                              const bool XYZ, const LR_Limiter_t LR_Limiter, const real MinMod_Coeff, const real EP_Coeff,
                              const WAF_Limiter_t WAF_Limiter, const real ELBDM_Eta, real ELBDM_Taylor3_Coeff,
                              const bool ELBDM_Taylor3_Auto, const double Time, const OptGravityType_t GravityType,
@@ -254,8 +254,16 @@ void CUAPI_Asyn_FluidSolver( real h_Flu_Array_In [][FLU_NIN    ][ FLU_NXT*FLU_NX
    }
 #  endif // #ifdef GAMER_DEBUG
 
+#  if ( COORDINATE == CARTESIAN )
+   if (  !Mis_CompareRealValue( dh[0], dh[1], NULL, false )  ||
+         !Mis_CompareRealValue( dh[0], dh[2], NULL, false )    )
+      Aux_Error( ERROR_INFO, "Currently the Cartesian coordinates assume dh[0] (%20.14e) = dh[1] (%20.14e) = dh[2] (%20.14e) !!\n",
+                 dh[0], dh[1], dh[2] );
+#  endif
 
-   const real _dh = (real)1.0/dh;
+
+//###: COORD-FIX: use dh instead of dh[0]
+   const real _dh = (real)1.0/dh[0];
    const dim3 BlockDim_FluidSolver ( FLU_BLOCK_SIZE_X, FLU_BLOCK_SIZE_Y, 1 ); // for the fluidsolvers
 
 // model-dependent operations
@@ -265,8 +273,9 @@ void CUAPI_Asyn_FluidSolver( real h_Flu_Array_In [][FLU_NIN    ][ FLU_NXT*FLU_NX
 #  warning : WAIT MHD !!!
 
 #  elif ( MODEL == ELBDM )
+//###: COORD-FIX: use dh instead of dh[0]
 // evaluate the optimized Taylor expansion coefficient
-   if ( ELBDM_Taylor3_Auto )  ELBDM_Taylor3_Coeff = ELBDM_SetTaylor3Coeff( dt, dh, ELBDM_Eta );
+   if ( ELBDM_Taylor3_Auto )  ELBDM_Taylor3_Coeff = ELBDM_SetTaylor3Coeff( dt, dh[0], ELBDM_Eta );
 
 #  else
 #  error : ERROR : unsupported MODEL !!
@@ -348,6 +357,7 @@ void CUAPI_Asyn_FluidSolver( real h_Flu_Array_In [][FLU_NIN    ][ FLU_NXT*FLU_NX
 
 #        if   ( FLU_SCHEME == RTVD )
 
+//###: COORD-FIX: use dh instead of dh[0]
          CUFLU_FluidSolver_RTVD <<< NPatch_per_Stream[s], BlockDim_FluidSolver, 0, Stream[s] >>>
                                 ( d_Flu_Array_F_In  + UsedPatch[s],
                                   d_Flu_Array_F_Out + UsedPatch[s],
@@ -358,6 +368,7 @@ void CUAPI_Asyn_FluidSolver( real h_Flu_Array_In [][FLU_NIN    ][ FLU_NXT*FLU_NX
 
 #        elif ( FLU_SCHEME == WAF )
 
+//###: COORD-FIX: use dh instead of dh[0]
          CUFLU_FluidSolver_WAF <<< NPatch_per_Stream[s], BlockDim_FluidSolver, 0, Stream[s] >>>
                                ( d_Flu_Array_F_In  + UsedPatch[s],
                                  d_Flu_Array_F_Out + UsedPatch[s],
@@ -368,6 +379,7 @@ void CUAPI_Asyn_FluidSolver( real h_Flu_Array_In [][FLU_NIN    ][ FLU_NXT*FLU_NX
 
 #        elif ( FLU_SCHEME == MHM  ||  FLU_SCHEME == MHM_RP )
 
+//###: COORD-FIX: use dh instead of dh[0]
          CUFLU_FluidSolver_MHM <<< NPatch_per_Stream[s], BlockDim_FluidSolver, 0, Stream[s] >>>
                                ( d_Flu_Array_F_In  + UsedPatch[s],
                                  d_Flu_Array_F_Out + UsedPatch[s],
@@ -394,6 +406,7 @@ void CUAPI_Asyn_FluidSolver( real h_Flu_Array_In [][FLU_NIN    ][ FLU_NXT*FLU_NX
 
 #        elif ( FLU_SCHEME == CTU )
 
+//###: COORD-FIX: use dh instead of dh[0]
          CUFLU_FluidSolver_CTU <<< NPatch_per_Stream[s], BlockDim_FluidSolver, 0, Stream[s] >>>
                                ( d_Flu_Array_F_In  + UsedPatch[s],
                                  d_Flu_Array_F_Out + UsedPatch[s],
@@ -429,6 +442,7 @@ void CUAPI_Asyn_FluidSolver( real h_Flu_Array_In [][FLU_NIN    ][ FLU_NXT*FLU_NX
 
 #     elif ( MODEL == ELBDM )
 
+//###: COORD-FIX: use dh instead of dh[0]
          CUFLU_ELBDMSolver <<< NPatch_per_Stream[s], BlockDim_FluidSolver, 0, Stream[s] >>>
                                ( d_Flu_Array_F_In  + UsedPatch[s],
                                  d_Flu_Array_F_Out + UsedPatch[s],

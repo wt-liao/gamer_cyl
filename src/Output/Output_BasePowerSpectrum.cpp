@@ -27,6 +27,17 @@ extern rfftwnd_mpi_plan FFTW_Plan_PS;
 void Output_BasePowerSpectrum( const char *FileName )
 {
 
+// check
+#  if ( COORDINATE == CARTESIAN )
+   if (  !Mis_CompareRealValue( amr->dh[0][0], amr->dh[0][1], NULL, false )  ||
+         !Mis_CompareRealValue( amr->dh[0][0], amr->dh[0][2], NULL, false )    )
+      Aux_Error( ERROR_INFO, "Currently the Cartesian coordinates assume dh[0] (%20.14e) = dh[1] (%20.14e) = dh[2] (%20.14e) !!\n",
+                 amr->dh[0][0], amr->dh[0][1], amr->dh[0][2] );
+#  else
+   Aux_Error( ERROR_INFO, "non-Cartesian coordinates do not support %s() yet !!\n", __FUNCTION__ );
+#  endif
+
+
    if ( MPI_Rank == 0 )    Aux_Message( stdout, "%s (DumpID = %d) ...\n", __FUNCTION__, DumpID );
 
 

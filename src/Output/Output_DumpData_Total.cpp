@@ -523,6 +523,8 @@ void Output_DumpData_Total( const char *FileName )
 
       fseek( File, HeaderOffset_Parameter, SEEK_SET );
 
+//    output the maximum box size to be consistent with the old data format
+      const double box_size_max              = fmax(  fmax( amr->BoxSize[0], amr->BoxSize[1] ), amr->BoxSize[2]  );
       const int    mpi_nrank                 = MPI_NRank;
       const int    mpi_nrank_x[3]            = { MPI_NRank_X[0], MPI_NRank_X[1], MPI_NRank_X[2] };
       const int    opt__output_total         = (int)OPT__OUTPUT_TOTAL;
@@ -605,7 +607,7 @@ void Output_DumpData_Total( const char *FileName )
 
       const bool   dummy_bool                = false;
 
-      fwrite( &BOX_SIZE,                  sizeof(double),                  1,             File );
+      fwrite( &box_size_max,              sizeof(double),                  1,             File );
       fwrite(  NX0_TOT,                   sizeof(int),                     3,             File );
       fwrite( &mpi_nrank,                 sizeof(int),                     1,             File );
       fwrite(  mpi_nrank_x,               sizeof(int),                     3,             File );

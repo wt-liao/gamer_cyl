@@ -27,22 +27,30 @@
 //                   --> but one can easily modify this file to change the default behavior
 //                4. Currently it does not support the soften length
 //
+// Parameter   :  X/Y/Z     : Target spatial coordinates in the adopted coordinate system
+//                Time      : Current physical time
+//                UserArray : User-provided auxiliary array (set by "Init_ExternalPot_Ptr")
+//
 // Return      :  External potential
 //-----------------------------------------------------------------------------------------
 #ifdef __CUDACC__
 __device__
-real CUPOT_ExternalPot( const double x, const double y, const double z, const double Time, const double UserArray[] )
+real CUPOT_ExternalPot( const double X, const double Y, const double Z, const double Time, const double UserArray[] )
 #else
-real   CPU_ExternalPot( const double x, const double y, const double z, const double Time, const double UserArray[] )
+real   CPU_ExternalPot( const double X, const double Y, const double Z, const double Time, const double UserArray[] )
 #endif
 {
 
-   const double Cen[3] = { UserArray[0], UserArray[1], UserArray[2] };
    const real   GM     = (real)UserArray[3];
-   const real   dx     = (real)(x - Cen[0]);
-   const real   dy     = (real)(y - Cen[1]);
-   const real   dz     = (real)(z - Cen[2]);
-   const real   _r     = 1.0/SQRT( dx*dx + dy*dy + dz*dz );
+#  if ( COORDINATE == CARTESIAN )
+   const double Cen[3] = { UserArray[0], UserArray[1], UserArray[2] };
+   const real   dx     = (real)(X - Cen[0]);
+   const real   dy     = (real)(Y - Cen[1]);
+   const real   dz     = (real)(Z - Cen[2]);
+   const real   _r     = (real)1.0/SQRT( dx*dx + dy*dy + dz*dz );
+#  else
+   const real  _r      = (real)1.0/X;
+#  endif
 
    return -GM*_r;
 

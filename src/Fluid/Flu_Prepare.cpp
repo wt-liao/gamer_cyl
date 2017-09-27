@@ -72,7 +72,7 @@ void Flu_Prepare( const int lv, const double PrepTime, real h_Flu_Array_F_In[], 
 // prepare the corner array
    if ( OPT__GRAVITY_TYPE == GRAVITY_EXTERNAL  ||  OPT__GRAVITY_TYPE == GRAVITY_BOTH  ||  OPT__EXTERNAL_POT )
    {
-      const double dh_half = 0.5*amr->dh[lv];
+      const double dh_half[3] = { 0.5*amr->dh[lv][0], 0.5*amr->dh[lv][1], 0.5*amr->dh[lv][2] };
 
       int PID0;
 
@@ -81,7 +81,7 @@ void Flu_Prepare( const int lv, const double PrepTime, real h_Flu_Array_F_In[], 
       {
          PID0 = PID0_List[TID];
 
-         for (int d=0; d<3; d++)    h_Corner_Array_F[TID][d] = amr->patch[0][lv][PID0]->EdgeL[d] + dh_half;
+         for (int d=0; d<3; d++)    h_Corner_Array_F[TID][d] = amr->patch[0][lv][PID0]->EdgeL[d] + dh_half[d];
       } // for (int TID=0; TID<NPG; TID++)
    }
 #  endif // #ifdef UNSPLIT_GRAVITY

@@ -1220,9 +1220,9 @@ void Aux_TakeNote()
 //    record the grid size in different refinement level
       fprintf( Note, "Cell Size and Scale (scale = number of cells at the finest level)\n" );
       fprintf( Note, "***********************************************************************************\n" );
-      fprintf( Note, "%7s%*c%26s%*c%16s\n", "Level", 10, ' ', "Cell Size", 10, ' ', "Cell Scale" );
+      fprintf( Note, "%7s   %13s   %13s   %13s   %13s\n", "Level", "Cell Size[0]", "Cell Size[1]", "Cell Size[2]", "Cell Scale" );
       for (int lv=0; lv<NLEVEL; lv++)
-      fprintf( Note, "%7d%*c%26.20lf%*c%16d\n", lv, 10, ' ', amr->dh[lv], 10, ' ', amr->scale[lv] );
+      fprintf( Note, "%7d   %13.7e   %13.7e   %13.7e   %13d\n", lv, amr->dh[lv][0], amr->dh[lv][1], amr->dh[lv][2], amr->scale[lv] );
       fprintf( Note, "***********************************************************************************\n" );
       fprintf( Note, "\n\n");
 

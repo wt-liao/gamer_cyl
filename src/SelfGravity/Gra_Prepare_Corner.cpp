@@ -22,7 +22,7 @@
 void Gra_Prepare_Corner( const int lv, double h_Corner_Array_G[][3], const int NPG, const int *PID0_List )
 {
 
-   const double dh_half = 0.5*amr->dh[lv];
+   const double dh_half[3] = { 0.5*amr->dh[lv][0], 0.5*amr->dh[lv][1], 0.5*amr->dh[lv][2] };
 
    int N, PID, PID0;
 
@@ -37,7 +37,7 @@ void Gra_Prepare_Corner( const int lv, double h_Corner_Array_G[][3], const int N
          PID = PID0 + LocalID;
          N   = 8*TID + LocalID;
 
-         for (int d=0; d<3; d++)    h_Corner_Array_G[N][d] = amr->patch[0][lv][PID]->EdgeL[d] + dh_half;
+         for (int d=0; d<3; d++)    h_Corner_Array_G[N][d] = amr->patch[0][lv][PID]->EdgeL[d] + dh_half[d];
       }
    } // for (int TID=0; TID<NPG; TID++)
 

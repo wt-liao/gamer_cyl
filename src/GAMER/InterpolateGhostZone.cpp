@@ -119,7 +119,7 @@ void InterpolateGhostZone( const int lv, const int PID, real IntData[], const in
 
    Int_Table( IntScheme, NSide, CGhost );
 
-   const double dh               = amr->dh[lv];
+   const double *dh              = amr->dh[lv];
    const int    GhostSize_Padded = GhostSize + (GhostSize&1);
    const int    CGrid            = (GhostSize+1)/2 + 2*CGhost;    // number of coarse grids required for interpolation
    const int    La               = CGrid - CGhost;                // number of coarse grids in the central region
@@ -277,16 +277,16 @@ void InterpolateGhostZone( const int lv, const int PID, real IntData[], const in
 // a. fill up the central region of CData
 // ------------------------------------------------------------------------------------------------------------
    int i1, i2, j1, j2, k1, k2, Idx, TFluVarIdx, Disp1[3], Disp2[3], Loop1[3];
-   double xyz[3];    // corner coordinates for the user-specified B.C.
+   double XYZ[3];    // corner coordinates for the user-specified B.C.
 
    for (int d=0; d<3; d++)
    {
       Loop1[d] = TABLE_01( SibID, 'x'+d, La, PATCH_SIZE, La );
       Disp1[d] = TABLE_01( SibID, 'x'+d, PATCH_SIZE-La, 0, 0 );
       Disp2[d] = TABLE_01( SibID, 'x'+d, 0, CGhost, CGhost );
-      xyz  [d] = TABLE_01( SibID, 'x'+d, amr->patch[0][lv][PID]->EdgeL[d] + (0.5+PS1-La)*dh,
-                                         amr->patch[0][lv][PID]->EdgeL[d] + (0.5-CGhost)*dh,
-                                         amr->patch[0][lv][PID]->EdgeL[d] + (0.5-CGhost)*dh );
+      XYZ  [d] = TABLE_01( SibID, 'x'+d, amr->patch[0][lv][PID]->EdgeL[d] + (0.5+PS1-La)*dh[d],
+                                         amr->patch[0][lv][PID]->EdgeL[d] + (0.5-CGhost)*dh[d],
+                                         amr->patch[0][lv][PID]->EdgeL[d] + (0.5-CGhost)*dh[d] );
    }
 
 
@@ -708,7 +708,7 @@ void InterpolateGhostZone( const int lv, const int PID, real IntData[], const in
                case BC_FLU_USER:
                   Flu_BoundaryCondition_User        ( CData_Ptr,                      NVar_Flu,
                                                       CSize[0], CSize[1], CSize[2], BC_Idx_Start, BC_Idx_End,
-                                                      TFluVarIdxList, PrepTime, dh, xyz, TVar, lv );
+                                                      TFluVarIdxList, PrepTime, dh, XYZ, TVar, lv );
                break;
 
                default:

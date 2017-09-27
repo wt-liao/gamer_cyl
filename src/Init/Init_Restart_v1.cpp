@@ -687,11 +687,10 @@ void Load_Parameter_Before_1200( FILE *File, const int FormatVersion, int &NLv_R
          Aux_Error( ERROR_INFO, "%s : RESTART file (%d) != Input__Parameter (%d) !!\n",
                     "NX0_TOT[2]", nx0_tot[2], NX0_TOT[2] );
 
-#     if ( MODEL != ELBDM )
-      if ( box_size != BOX_SIZE )
+      const double box_size_runtime = fmax(  fmax( amr->BoxSize[0], amr->BoxSize[1] ), amr->BoxSize[2]  );
+      if ( box_size != box_size_runtime )
          Aux_Error( ERROR_INFO, "%s : RESTART file (%14.7e) != Input__Parameter (%14.7e) !!\n",
-                    "BOX_SIZE", box_size, BOX_SIZE );
-#     endif
+                    "BOX_SIZE", box_size, box_size_runtime );
 
 
 //    warnings
@@ -1322,7 +1321,8 @@ void Load_Parameter_After_1200( FILE *File, const int FormatVersion, int &NLv_Re
 
 //    errors
 //    ------------------
-      CompareVar( "BOX_SIZE",                box_size,                     BOX_SIZE,                     Fatal );
+      const double box_size_runtime = fmax(  fmax( amr->BoxSize[0], amr->BoxSize[1] ), amr->BoxSize[2]  );
+      CompareVar( "BOX_SIZE",                box_size,                     box_size_runtime,             Fatal );
       CompareVar( "NX0_TOT[0]",              nx0_tot[0],                   NX0_TOT[0],                   Fatal );
       CompareVar( "NX1_TOT[1]",              nx0_tot[1],                   NX0_TOT[1],                   Fatal );
       CompareVar( "NX2_TOT[2]",              nx0_tot[2],                   NX0_TOT[2],                   Fatal );

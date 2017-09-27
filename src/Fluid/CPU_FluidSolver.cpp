@@ -134,7 +134,7 @@ void CPU_FluidSolver( real h_Flu_Array_In [][FLU_NIN    ][ FLU_NXT*FLU_NXT*FLU_N
                       real h_Flux_Array[][9][NFLUX_TOTAL][ PS2*PS2 ],
                       const double h_Corner_Array[][3],
                       const real h_Pot_Array_USG[][USG_NXT_F][USG_NXT_F][USG_NXT_F],
-                      const int NPatchGroup, const real dt, const real dh, const real Gamma, const bool StoreFlux,
+                      const int NPatchGroup, const real dt, const real dh[], const real Gamma, const bool StoreFlux,
                       const bool XYZ, const LR_Limiter_t LR_Limiter, const real MinMod_Coeff, const real EP_Coeff,
                       const WAF_Limiter_t WAF_Limiter, const real ELBDM_Eta, real ELBDM_Taylor3_Coeff,
                       const bool ELBDM_Taylor3_Auto, const double Time, const OptGravityType_t GravityType,
@@ -156,6 +156,14 @@ void CPU_FluidSolver( real h_Flu_Array_In [][FLU_NIN    ][ FLU_NXT*FLU_NXT*FLU_N
 #  endif
 #  endif
 
+#  if ( COORDINATE == CARTESIAN )
+   if (  !Mis_CompareRealValue( dh[0], dh[1], NULL, false )  ||
+         !Mis_CompareRealValue( dh[0], dh[2], NULL, false )    )
+      Aux_Error( ERROR_INFO, "Currently the Cartesian coordinates assume dh[0] (%20.14e) = dh[1] (%20.14e) = dh[2] (%20.14e) !!\n",
+                 dh[0], dh[1], dh[2] );
+#  endif
+
+
 #  ifndef UNSPLIT_GRAVITY
    double ExtPot_AuxArray[1];
    double ExtAcc_AuxArray[1];
@@ -166,25 +174,29 @@ void CPU_FluidSolver( real h_Flu_Array_In [][FLU_NIN    ][ FLU_NXT*FLU_NXT*FLU_N
 
 #     if   ( FLU_SCHEME == RTVD )
 
+//###: COORD-FIX: input dh instead of dh[0]
       CPU_FluidSolver_RTVD( h_Flu_Array_In, h_Flu_Array_Out, h_Flux_Array, h_Corner_Array, h_Pot_Array_USG,
-                            NPatchGroup, dt, dh, Gamma, StoreFlux, XYZ, MinDens, MinPres );
+                            NPatchGroup, dt, dh[0], Gamma, StoreFlux, XYZ, MinDens, MinPres );
 
 #     elif ( FLU_SCHEME == WAF )
 
+//###: COORD-FIX: input dh instead of dh[0]
       CPU_FluidSolver_WAF ( h_Flu_Array_In, h_Flu_Array_Out, h_Flux_Array, h_Corner_Array, h_Pot_Array_USG,
-                            NPatchGroup, dt, dh, Gamma, StoreFlux, XYZ, WAF_Limiter, MinDens, MinPres );
+                            NPatchGroup, dt, dh[0], Gamma, StoreFlux, XYZ, WAF_Limiter, MinDens, MinPres );
 
 #     elif ( FLU_SCHEME == MHM  ||  FLU_SCHEME == MHM_RP )
 
+//###: COORD-FIX: input dh instead of dh[0]
       CPU_FluidSolver_MHM ( h_Flu_Array_In, h_Flu_Array_Out, h_DE_Array_Out, h_Flux_Array, h_Corner_Array, h_Pot_Array_USG,
-                            NPatchGroup, dt, dh, Gamma, StoreFlux, LR_Limiter, MinMod_Coeff, EP_Coeff, Time,
+                            NPatchGroup, dt, dh[0], Gamma, StoreFlux, LR_Limiter, MinMod_Coeff, EP_Coeff, Time,
                             GravityType, ExtAcc_AuxArray, MinDens, MinPres, DualEnergySwitch, NormPassive, NNorm, NormIdx,
                             JeansMinPres, JeansMinPres_Coeff );
 
 #     elif ( FLU_SCHEME == CTU )
 
+//###: COORD-FIX: input dh instead of dh[0]
       CPU_FluidSolver_CTU ( h_Flu_Array_In, h_Flu_Array_Out, h_DE_Array_Out, h_Flux_Array, h_Corner_Array, h_Pot_Array_USG,
-                            NPatchGroup, dt, dh, Gamma, StoreFlux, LR_Limiter, MinMod_Coeff, EP_Coeff, Time,
+                            NPatchGroup, dt, dh[0], Gamma, StoreFlux, LR_Limiter, MinMod_Coeff, EP_Coeff, Time,
                             GravityType, ExtAcc_AuxArray, MinDens, MinPres, DualEnergySwitch, NormPassive, NNorm, NormIdx,
                             JeansMinPres, JeansMinPres_Coeff );
 
@@ -201,9 +213,11 @@ void CPU_FluidSolver( real h_Flu_Array_In [][FLU_NIN    ][ FLU_NXT*FLU_NXT*FLU_N
 
 #  elif ( MODEL == ELBDM )
 //    evaluate the optimized Taylor expansion coefficient
-      if ( ELBDM_Taylor3_Auto )  ELBDM_Taylor3_Coeff = ELBDM_SetTaylor3Coeff( dt, dh, ELBDM_Eta );
+//###: COORD-FIX: input dh instead of dh[0]
+      if ( ELBDM_Taylor3_Auto )  ELBDM_Taylor3_Coeff = ELBDM_SetTaylor3Coeff( dt, dh[0], ELBDM_Eta );
 
-      CPU_ELBDMSolver( h_Flu_Array_In, h_Flu_Array_Out, h_Flux_Array, NPatchGroup, dt, dh, ELBDM_Eta, StoreFlux,
+//###: COORD-FIX: input dh instead of dh[0]
+      CPU_ELBDMSolver( h_Flu_Array_In, h_Flu_Array_Out, h_Flux_Array, NPatchGroup, dt, dh[0], ELBDM_Eta, StoreFlux,
                        ELBDM_Taylor3_Coeff, XYZ, MinDens );
 
 #  else

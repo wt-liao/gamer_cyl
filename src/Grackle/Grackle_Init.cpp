@@ -114,6 +114,16 @@ void Grackle_Init()
 #  endif
 
 
+// more checks
+   if ( grackle_data->H2_self_shielding )
+   {
+      if (  !Mis_CompareRealValue( amr->dh[0][0], amr->dh[0][1], NULL, false )  ||
+            !Mis_CompareRealValue( amr->dh[0][0], amr->dh[0][2], NULL, false )    )
+         Aux_Error( ERROR_INFO, "H2_self_shielding in Grackle assumes dh[0] (%20.14e) = dh[1] (%20.14e) = dh[2] (%20.14e) !!\n",
+                    amr->dh[0][0], amr->dh[0][1], amr->dh[0][2] );
+   }
+
+
 // initialize the chemistry object
    if ( initialize_chemistry_data(&Che_Units) == 0 )
      Aux_Error( ERROR_INFO, "initialize_chemistry_data() failed !!\n" );

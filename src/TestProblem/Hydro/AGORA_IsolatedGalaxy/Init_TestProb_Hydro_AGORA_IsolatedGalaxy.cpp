@@ -88,6 +88,15 @@ void Validate()
       Aux_Error( ERROR_INFO, "please set PAR_INIT = 1 (by FUNCTION) !!\n" );
 #  endif
 
+#  if ( COORDINATE == CARTESIAN )
+   if (  !Mis_CompareRealValue( amr->dh[0][0], amr->dh[0][1], NULL, false )  ||
+         !Mis_CompareRealValue( amr->dh[0][0], amr->dh[0][2], NULL, false )    )
+      Aux_Error( ERROR_INFO, "only work with cubic cells (dh[lv=0] = (%20.14e, %20.14e, %20.14e)) !!",
+                 amr->dh[0][0], amr->dh[0][1], amr->dh[0][2] );
+#  else
+      Aux_Error( ERROR_INFO, "only work with the Cartesian coordinates !!\n" );
+#  endif
+
 
    if ( MPI_Rank == 0 )
    {
@@ -114,7 +123,7 @@ void Validate()
          Aux_Message( stderr, "WARNING : it's recommended to set FLAG_BUFFER_SIZE_MAXM1_LV >= 2 for this test !!\n" );
 
       if ( amr->BoxSize[0] != amr->BoxSize[1]  ||  amr->BoxSize[0] != amr->BoxSize[2] )
-         Aux_Message( stderr, "WARNING : non-cubic box (currently the flag routine \"Flag_AGORA()\" assumes a cubic box) !!\n" );
+         Aux_Message( stderr, "WARNING : non-cubic box (are you sure) !!\n" );
 
       if ( INIT_SUBSAMPLING_NCELL != 0 )
          Aux_Message( stderr, "WARNING : INIT_SUBSAMPLING_NCELL (%d) != 0 will lead to non-uniform initial disk temperature !!\n",
@@ -314,9 +323,9 @@ void SetGridIC( real fluid[], const double x, const double y, const double z, co
 {
 
    const bool   CheckMinPres_Yes = true;
-   const double dx               = x - 0.5*amr->BoxSize[0];
-   const double dy               = y - 0.5*amr->BoxSize[1];
-   const double dz               = z - 0.5*amr->BoxSize[2];
+   const double dx               = x - amr->BoxCenter[0];
+   const double dy               = y - amr->BoxCenter[1];
+   const double dz               = z - amr->BoxCenter[2];
    const double r                = sqrt( SQR(dx) + SQR(dy) );
    const double h                = fabs( dz );
 
@@ -325,7 +334,7 @@ void SetGridIC( real fluid[], const double x, const double y, const double z, co
 // use the 5-point Gaussian quadrature integration to improve the accuracy of the average cell density
 // --> we don't want to use the sub-sampling for that purpose since it will break the initial uniform temperature
 // DiskGasDens = AGORA_DiskGasDens0 * exp( -r/AGORA_DiskScaleLength ) * exp( -h/AGORA_DiskScaleHeight );
-   DiskGasDens = GaussianQuadratureIntegrate( dx, dy, dz, amr->dh[lv] );
+   DiskGasDens = GaussianQuadratureIntegrate( dx, dy, dz, amr->dh[lv][0] );   // assuming cubic cells
    DiskGasPres = CPU_Temperature2Pressure( DiskGasDens, AGORA_DiskGasTemp, MOLECULAR_WEIGHT, Const_mH/UNIT_M,
                                            CheckMinPres_Yes, MIN_PRES );
 

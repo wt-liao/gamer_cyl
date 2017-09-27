@@ -43,9 +43,9 @@ void Init_ExternalPot()
    const double M  = 1.0;
    const double GM = NEWTON_G*M;
 
-   ExtPot_AuxArray[0] = 0.5*amr->BoxSize[0];
-   ExtPot_AuxArray[1] = 0.5*amr->BoxSize[1];
-   ExtPot_AuxArray[2] = 0.5*amr->BoxSize[2];
+   ExtPot_AuxArray[0] = amr->BoxCenter[0];
+   ExtPot_AuxArray[1] = amr->BoxCenter[1];
+   ExtPot_AuxArray[2] = amr->BoxCenter[2];
    ExtPot_AuxArray[3] = GM;
    */
 

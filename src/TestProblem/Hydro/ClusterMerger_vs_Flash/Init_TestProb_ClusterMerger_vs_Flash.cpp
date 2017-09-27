@@ -73,6 +73,15 @@ void Validate()
       Aux_Error( ERROR_INFO, "please set PAR_INIT = 1 (by FUNCTION) !!\n" );
 #  endif
 
+#  if ( COORDINATE == CARTESIAN )
+   if (  !Mis_CompareRealValue( amr->dh[0][0], amr->dh[0][1], NULL, false )  ||
+         !Mis_CompareRealValue( amr->dh[0][0], amr->dh[0][2], NULL, false )    )
+      Aux_Error( ERROR_INFO, "only work with cubic cells (dh[lv=0] = (%20.14e, %20.14e, %20.14e)) !!",
+                 amr->dh[0][0], amr->dh[0][1], amr->dh[0][2] );
+#  else
+      Aux_Error( ERROR_INFO, "only work with the Cartesian coordinates !!\n" );
+#  endif
+
 
    if ( MPI_Rank == 0 )    Aux_Message( stdout, "   Validating test problem %d ... done\n", TESTPROB_ID );
 
@@ -245,7 +254,6 @@ void SetGridIC( real fluid[], const double x, const double y, const double z, co
                 const int lv, double AuxArray[] )
 {
 
-   const double  BoxCenter[3] = { 0.5*amr->BoxSize[0], 0.5*amr->BoxSize[1], 0.5*amr->BoxSize[2] };
    const double *Table_D1     = Merger_Prof1 + 0*Merger_NBin1;    // density  table of cluster 1
    const double *Table_P1     = Merger_Prof1 + 1*Merger_NBin1;    // pressure table of cluster 1
    const double *Table_R1     = Merger_Prof1 + 2*Merger_NBin1;    // radius   table of cluster 1
@@ -255,8 +263,8 @@ void SetGridIC( real fluid[], const double x, const double y, const double z, co
 
    if ( Merger_Coll )
    {
-      const double ClusterCenter1[3] = { BoxCenter[0]-0.5*Merger_Coll_D, BoxCenter[1]-0.5*Merger_Coll_B, BoxCenter[2] };
-      const double ClusterCenter2[3] = { BoxCenter[0]+0.5*Merger_Coll_D, BoxCenter[1]+0.5*Merger_Coll_B, BoxCenter[2] };
+      const double ClusterCenter1[3] = { amr->BoxCenter[0]-0.5*Merger_Coll_D, amr->BoxCenter[1]-0.5*Merger_Coll_B, amr->BoxCenter[2] };
+      const double ClusterCenter2[3] = { amr->BoxCenter[0]+0.5*Merger_Coll_D, amr->BoxCenter[1]+0.5*Merger_Coll_B, amr->BoxCenter[2] };
 
       double r1, r2, Dens1, Dens2, Pres1, Pres2, Vel;
 
@@ -287,7 +295,7 @@ void SetGridIC( real fluid[], const double x, const double y, const double z, co
    {
       double r, Dens, Pres;
 
-      r    = sqrt( SQR(x-BoxCenter[0]) + SQR(y-BoxCenter[1]) + SQR(z-BoxCenter[2]) );
+      r    = sqrt( SQR(x-amr->BoxCenter[0]) + SQR(y-amr->BoxCenter[1]) + SQR(z-amr->BoxCenter[2]) );
       Dens = Mis_InterpolateFromTable( Merger_NBin1, Table_R1, Table_D1, r );
       Pres = Mis_InterpolateFromTable( Merger_NBin1, Table_R1, Table_P1, r );
 

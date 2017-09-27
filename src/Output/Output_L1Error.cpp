@@ -1,7 +1,7 @@
 #include "Copyright.h"
 #include "GAMER.h"
 
-static void WriteFile( void (*AnalFunc)( real fluid[], const double x, const double y, const double z, const double Time,
+static void WriteFile( void (*AnalFunc)( real fluid[], const double X, const double Y, const double Z, const double Time,
                                          const int lv, double AuxArray[] ),
                        FILE *File[], const int lv, const int PID, const int i, const int j, const int k,
                        double L1_Err[], const OptOutputPart_t Part );
@@ -21,25 +21,38 @@ static void WriteFile( void (*AnalFunc)( real fluid[], const double x, const dou
 //                           --> Usually set to the same function pointer for initializing grids
 //                               (e.g., SetGridIC() in various test problems)
 //                Prefix   : Prefix of the output filename
-//                Part     : OUTPUT_X    : x line
-//                           OUTPUT_Y    : y line
-//                           OUTPUT_Z    : z line
+//                Part     : OUTPUT_X    : X line
+//                           OUTPUT_Y    : Y line
+//                           OUTPUT_Z    : Z line
 //                           OUTPUT_DIAG : diagonal along (+1,+1,+1)
-//                x/y/z    : spatial coordinates for Part
+//                X/Y/Z    : Spatial coordinates in the adopted coordinate system (for the "Part" input parameter)
 //
 // Return      :  None
 //-------------------------------------------------------------------------------------------------------
-void Output_L1Error( void (*AnalFunc)( real fluid[], const double x, const double y, const double z, const double Time,
+void Output_L1Error( void (*AnalFunc)( real fluid[], const double X, const double Y, const double Z, const double Time,
                                        const int lv, double AuxArray[] ),
-                     const char *Prefix, const OptOutputPart_t Part, const double x, const double y, const double z )
+                     const char *Prefix, const OptOutputPart_t Part, const double X, const double Y, const double Z )
 {
 
    if ( MPI_Rank == 0 )    Aux_Message( stdout, "%s (DumpID = %d) ...\n", __FUNCTION__, DumpID );
 
 
 // check
-   if ( Part == OUTPUT_DIAG  &&  ( amr->BoxSize[0] != amr->BoxSize[1] || amr->BoxSize[0] != amr->BoxSize[2] )  )
-      Aux_Error( ERROR_INFO, "simulation domain must be cubic for \"OUTPUT_DIAG\" !!\n" );
+   if ( Part == OUTPUT_DIAG )
+   {
+#     if ( COORDINATE == CARTESIAN )
+      if (  !Mis_CompareRealValue( amr->BoxSize[0], amr->BoxSize[1], NULL, false ) ||
+            !Mis_CompareRealValue( amr->BoxSize[0], amr->BoxSize[2], NULL, false )  )
+         Aux_Error( ERROR_INFO, "simulation domain must be cubic for \"OUTPUT_DIAG\" !!\n" );
+
+      if (  !Mis_CompareRealValue( amr->dh[0][0], amr->dh[0][1], NULL, false )  ||
+            !Mis_CompareRealValue( amr->dh[0][0], amr->dh[0][2], NULL, false )    )
+         Aux_Error( ERROR_INFO, "Currently the Cartesian coordinates assume dh[0] (%20.14e) = dh[1] (%20.14e) = dh[2] (%20.14e) !!\n",
+                    amr->dh[0][0], amr->dh[0][1], amr->dh[0][2] );
+#     else
+      Aux_Error( ERROR_INFO, "non-Cartesian coordinates do not support %s()\n", __FUNCTION__ );
+#     endif
+   }
 
    for (int lv=1; lv<NLEVEL; lv++)
       if ( NPatchTotal[lv] != 0 )   Mis_CompareRealValue( Time[0], Time[lv], __FUNCTION__, true );
@@ -89,13 +102,13 @@ void Output_L1Error( void (*AnalFunc)( real fluid[], const double x, const doubl
 
 
 // prepare to output errors
-   double  dh, xx, yy, zz;
+   double  XX, YY, ZZ;
    int    *Corner  = NULL;
    double *EdgeL   = NULL;
    double *EdgeR   = NULL;
-   bool    Check_x = false;
-   bool    Check_y = false;
-   bool    Check_z = false;
+   bool    Check_X = false;
+   bool    Check_Y = false;
+   bool    Check_Z = false;
 
    double L1_Err[NCOMP_FLUID];
    static bool FirstTime = true;
@@ -104,10 +117,10 @@ void Output_L1Error( void (*AnalFunc)( real fluid[], const double x, const doubl
 
    switch ( Part )
    {
-      case OUTPUT_X    :                    Check_y = true;   Check_z = true;   break;
-      case OUTPUT_Y    :  Check_x = true;                     Check_z = true;   break;
-      case OUTPUT_Z    :  Check_x = true;   Check_y = true;                     break;
-      case OUTPUT_DIAG :  Check_x = false;  Check_y = false;  Check_z = false;  break;
+      case OUTPUT_X    :                    Check_Y = true;   Check_Z = true;   break;
+      case OUTPUT_Y    :  Check_X = true;                     Check_Z = true;   break;
+      case OUTPUT_Z    :  Check_X = true;   Check_Y = true;                     break;
+      case OUTPUT_DIAG :  Check_X = false;  Check_Y = false;  Check_Z = false;  break;
       default          :  Aux_Error( ERROR_INFO, "unsupported option \"Part = %d\" [4/5/6/7] !!\n", Part );
    }
 
@@ -131,7 +144,7 @@ void Output_L1Error( void (*AnalFunc)( real fluid[], const double x, const doubl
 //       output data
          for (int lv=0; lv<NLEVEL; lv++)
          {
-            dh = amr->dh[lv];
+            const double *dh = amr->dh[lv];
 
             for (int PID=0; PID<amr->NPatchComma[lv][1]; PID++)
             {
@@ -154,22 +167,22 @@ void Output_L1Error( void (*AnalFunc)( real fluid[], const double x, const doubl
                   } // if ( Part == OUTPUT_DIAG )
 
 
-                  else // x/y/z lines || xy/yz/xz slices
+                  else // X/Y/Z lines || XY/YZ/XZ slices
                   {
 //                   check whether the patch corner is within the target range
-                     if (  !Check_x  ||  ( EdgeL[0] <= x && EdgeR[0] > x )  )
-                     if (  !Check_y  ||  ( EdgeL[1] <= y && EdgeR[1] > y )  )
-                     if (  !Check_z  ||  ( EdgeL[2] <= z && EdgeR[2] > z )  )
+                     if (  !Check_X  ||  ( EdgeL[0] <= X && EdgeR[0] > X )  )
+                     if (  !Check_Y  ||  ( EdgeL[1] <= Y && EdgeR[1] > Y )  )
+                     if (  !Check_Z  ||  ( EdgeL[2] <= Z && EdgeR[2] > Z )  )
                      {
 //                      check whether the cell is within the target range
-                        for (int k=0; k<PS1; k++)  {  zz = EdgeL[2] + k*dh;
-                                                      if ( Check_z && ( zz>z || zz+dh<=z ) )    continue;
+                        for (int k=0; k<PS1; k++)  {  ZZ = EdgeL[2] + k*dh[2];
+                                                      if ( Check_Z && ( ZZ>Z || ZZ+dh[2]<=Z ) )    continue;
 
-                        for (int j=0; j<PS1; j++)  {  yy = EdgeL[1] + j*dh;
-                                                      if ( Check_y && ( yy>y || yy+dh<=y ) )    continue;
+                        for (int j=0; j<PS1; j++)  {  YY = EdgeL[1] + j*dh[1];
+                                                      if ( Check_Y && ( YY>Y || YY+dh[1]<=Y ) )    continue;
 
-                        for (int i=0; i<PS1; i++)  {  xx = EdgeL[0] + i*dh;
-                                                      if ( Check_x && ( xx>x || xx+dh<=x ) )    continue;
+                        for (int i=0; i<PS1; i++)  {  XX = EdgeL[0] + i*dh[0];
+                                                      if ( Check_X && ( XX>X || XX+dh[0]<=X ) )    continue;
 
                            WriteFile( AnalFunc, File, lv, PID, i, j, k, L1_Err, Part );
 
@@ -200,7 +213,7 @@ void Output_L1Error( void (*AnalFunc)( real fluid[], const double x, const doubl
          case OUTPUT_X    :  Norm = amr->BoxSize[0];  break;
          case OUTPUT_Y    :  Norm = amr->BoxSize[1];  break;
          case OUTPUT_Z    :  Norm = amr->BoxSize[2];  break;
-         case OUTPUT_DIAG :  Norm = amr->BoxSize[0];  break;
+         case OUTPUT_DIAG :  Norm = amr->BoxSize[0];  break;   // assuming a cubic simulation box
          default          :  Aux_Error( ERROR_INFO, "unsupported option \"Part = %d\" [4/5/6/7] !!\n", Part );
       }
 
@@ -249,7 +262,7 @@ void Output_L1Error( void (*AnalFunc)( real fluid[], const double x, const doubl
 
 //-------------------------------------------------------------------------------------------------------
 // Function    :  WriteFile
-// Description :  WRite the data of a single cell
+// Description :  Write the data of a single cell
 //
 // Note        :  1. Invoked by Output_L1Error()
 //
@@ -259,14 +272,14 @@ void Output_L1Error( void (*AnalFunc)( real fluid[], const double x, const doubl
 //                PID      : Patch ID
 //                i/j/k    : Cell indices within the patch
 //                L1_Err   : Array to record the L1 errors of all variables
-//                Part     : OUTPUT_X    : x line
-//                           OUTPUT_Y    : y line
-//                           OUTPUT_Z    : z line
+//                Part     : OUTPUT_X    : X line
+//                           OUTPUT_Y    : Y line
+//                           OUTPUT_Z    : Z line
 //                           OUTPUT_DIAG : diagonal along (+1,+1,+1)
 //
 // Return      :  L1_Err
 //-------------------------------------------------------------------------------------------------------
-void WriteFile( void (*AnalFunc)( real fluid[], const double x, const double y, const double z, const double Time,
+void WriteFile( void (*AnalFunc)( real fluid[], const double X, const double Y, const double Z, const double Time,
                                   const int lv, double AuxArray[] ),
                 FILE *File[], const int lv, const int PID, const int i, const int j, const int k,
                 double L1_Err[], const OptOutputPart_t Part )
@@ -290,12 +303,11 @@ void WriteFile( void (*AnalFunc)( real fluid[], const double x, const double y, 
 
 
 // get the analytical solution
-   const double dh = amr->dh[lv];
-   const double x  = amr->patch[0][lv][PID]->EdgeL[0] + (i+0.5)*dh;
-   const double y  = amr->patch[0][lv][PID]->EdgeL[1] + (j+0.5)*dh;
-   const double z  = amr->patch[0][lv][PID]->EdgeL[2] + (k+0.5)*dh;
+   const double X = Aux_Coord_CellIdx2AdoptedCoord( lv, PID, 0, i );
+   const double Y = Aux_Coord_CellIdx2AdoptedCoord( lv, PID, 1, j );
+   const double Z = Aux_Coord_CellIdx2AdoptedCoord( lv, PID, 2, k );
 
-   AnalFunc( Anal, x, y, z, Time[0], lv, NULL );
+   AnalFunc( Anal, X, Y, Z, Time[0], lv, NULL );
 
 
 // convert total energy to pressure
@@ -306,14 +318,14 @@ void WriteFile( void (*AnalFunc)( real fluid[], const double x, const double y, 
 
 
 // record the physical coordinate
-   double r;
+   double r, dh;
 
    switch ( Part )
    {
-      case OUTPUT_X    : r = x;              break;
-      case OUTPUT_Y    : r = y;              break;
-      case OUTPUT_Z    : r = z;              break;
-      case OUTPUT_DIAG : r = sqrt(3.0)*x;    break;
+      case OUTPUT_X    : r = X;           dh = amr->dh[lv][0];  break;
+      case OUTPUT_Y    : r = Y;           dh = amr->dh[lv][1];  break;
+      case OUTPUT_Z    : r = Z;           dh = amr->dh[lv][2];  break;
+      case OUTPUT_DIAG : r = sqrt(3.0)*X; dh = amr->dh[lv][0];  break;  // assuming both the simulation box and cells are cubic
       default          : Aux_Error( ERROR_INFO, "unsupported option \"Part = %d\" [4/5/6/7] !!\n", Part );
    }
 

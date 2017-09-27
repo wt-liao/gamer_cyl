@@ -429,7 +429,8 @@ void FFT_Periodic( real *RhoK, const real Poi_Coeff, const int j_start, const in
    const int Ny        = NX0_TOT[1];
    const int Nz        = NX0_TOT[2];
    const int Nx_Padded = Nx/2 + 1;
-   const real dh       = amr->dh[0];
+//###: COORD-FIX: use dh instead of dh[0]
+   const real dh       = amr->dh[0][0];
    real Deno;
    fftw_complex *cdata;
 
@@ -594,6 +595,17 @@ void FFT_Isolated( real *RhoK, const real *gFuncK, const real Poi_Coeff, const i
 //-------------------------------------------------------------------------------------------------------
 void CPU_PoissonSolver_FFT( const real Poi_Coeff, const int SaveSg, const double PrepTime )
 {
+
+// check
+#  if ( COORDINATE == CARTESIAN )
+   if (  !Mis_CompareRealValue( amr->dh[0][0], amr->dh[0][1], NULL, false )  ||
+         !Mis_CompareRealValue( amr->dh[0][0], amr->dh[0][2], NULL, false )    )
+      Aux_Error( ERROR_INFO, "Currently the Cartesian coordinates assume dh[0] (%20.14e) = dh[1] (%20.14e) = dh[2] (%20.14e) !!\n",
+                 amr->dh[0][0], amr->dh[0][1], amr->dh[0][2] );
+#  else
+   Aux_Error( ERROR_INFO, "non-Cartesian coordinates do not support %s() yet !!\n", __FUNCTION__ );
+#  endif
+
 
 // determine the FFT size (the zero-padding method is adopted for the isolated BC)
    int FFT_Size[3] = { NX0_TOT[0], NX0_TOT[1], NX0_TOT[2] };

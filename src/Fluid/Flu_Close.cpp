@@ -219,6 +219,10 @@ void CorrectFlux( const int lv, const real h_Flux_Array[][9][NFLUX_TOTAL][4*PATC
    if ( !amr->WithFlux )
       Aux_Message( stderr, "WARNING : why invoking %s when amr->WithFlux is off ??\n", __FUNCTION__ );
 
+#  if ( COORDINATE != CARTESIAN )
+   Aux_Error( ERROR_INFO, "non-Cartesian coordinates do not support %s() yet !!\n", __FUNCTION__ );
+#  endif
+
 
 #  pragma omp parallel
    {
@@ -376,8 +380,14 @@ void CorrectUnphysical( const int lv, const int NPG, const int *PID0_List,
                         const real dt )
 {
 
-   const real dh           = (real)amr->dh[lv];
-   const real dt_dh        = dt/dh;
+// check
+#  if ( COORDINATE != CARTESIAN )
+   if ( OPT__1ST_FLUX_CORR != FIRST_FLUX_CORR_NONE )
+      Aux_Error( ERROR_INFO, "non-Cartesian coordinates do not support OPT__1ST_FLUX_CORR yet !!\n" );
+#  endif
+
+
+   const real dt_dh[3]     = { dt/amr->dh[lv][0], dt/amr->dh[lv][1], dt/amr->dh[lv][2] };
    const int  didx[3]      = { 1, FLU_NXT, FLU_NXT*FLU_NXT };
    const real  Gamma_m1    = GAMMA - (real)1.0;
    const real _Gamma_m1    = (real)1.0 / Gamma_m1;
@@ -497,7 +507,7 @@ void CorrectUnphysical( const int lv, const int NPG, const int *PID0_List,
                for (int v=0; v<NCOMP_TOTAL; v++)   dF[d][v] = FluxR[d][v] - FluxL[d][v];
 
                for (int v=0; v<NCOMP_TOTAL; v++)
-                  Update[v] = h_Flu_Array_F_In[TID][v][idx_in] - dt_dh*( dF[0][v] + dF[1][v] + dF[2][v] );
+                  Update[v] = h_Flu_Array_F_In[TID][v][idx_in] - ( dt_dh[0]*dF[0][v] + dt_dh[1]*dF[1][v] + dt_dh[2]*dF[2][v] );
 
             } // if ( OPT__1ST_FLUX_CORR != FIRST_FLUX_CORR_NONE )
 
@@ -569,7 +579,7 @@ void CorrectUnphysical( const int lv, const int NPG, const int *PID0_List,
 
 //                      recalculate the first-order solution for a full time-step
                         for (int v=0; v<NCOMP_TOTAL; v++)
-                           Corr1D_InOut[k][j][i][v] -= dt_dh*( FluxR_1D[v] - FluxL_1D[v] );
+                           Corr1D_InOut[k][j][i][v] -= dt_dh[d]*( FluxR_1D[v] - FluxL_1D[v] );
 
 //                      store the 1st-order fluxes used for updating the central cell
                         if ( i == Corr1D_NBuf  &&  j == Corr1D_NBuf  &&  k == Corr1D_NBuf )

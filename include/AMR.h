@@ -47,7 +47,10 @@ void Aux_Error( const char *File, const int Line, const char *Func, const char *
 //                               --> In all cases, [ 1] gives the total number of "real" patches
 //                                                 [26] gives the total number of "real+buffer" patches
 //                dh          : Grid size at each level
-//                BoxSize     : Simulation box physical size
+//                BoxEdgeL    : Simulation box left  edge in the adopted coordinate system
+//                BoxEdgeR    : Simulation box right edge in the adopted coordinate system
+//                BoxCenter   : Simulation box center     in the adopted coordinate system
+//                BoxSize     : Simulation box size       in the adopted coordinate system
 //                BoxScale    : Simulation box scale
 //                WithFlux    : Whether of not to allocate the flux arrays at all coarse-fine boundaries
 //                Par         : Particle data
@@ -96,6 +99,7 @@ struct AMR_t
    int    ResPower2   [NLEVEL];
    double BoxEdgeL    [3];
    double BoxEdgeR    [3];
+   double BoxCenter   [3];
    double BoxSize     [3];
    int    BoxScale    [3];
    bool   WithFlux;
@@ -206,13 +210,13 @@ struct AMR_t
    //                2. Sg = 0 : Store both data and relation (father,son.sibling,corner,flag,flux)
    //                   Sg = 1 : Store only data
    //
-   // Parameter   :  lv       : Target refinement level
-   //                x,y,z    : Physical coordinates of the patch corner
-   //                FaPID    : Patch ID of the parent patch at level "lv-1"
-   //                FluData  : true --> Allocate hydrodynamic array "fluid"
-   //                PotData  : true --> Allocate potential array "pot"
+   // Parameter   :  lv          : Target refinement level
+   //                scale_x/y/z : Grid scale indices (not physical coordinates) of the patch corner
+   //                FaPID       : Patch ID of the parent patch at level "lv-1"
+   //                FluData     : true --> Allocate hydrodynamic array "fluid"
+   //                PotData     : true --> Allocate potential array "pot"
    //===================================================================================
-   void pnew( const int lv, const int x, const int y, const int z, const int FaPID, const bool FluData,
+   void pnew( const int lv, const int scale_x, const int scale_y, const int scale_z, const int FaPID, const bool FluData,
               const bool PotData )
    {
 
@@ -230,8 +234,8 @@ struct AMR_t
             Aux_Error( ERROR_INFO, "conflicting patch allocation (Lv %d, PID %d, FaPID %d) !!\n", lv, NewPID, FaPID );
 #        endif
 
-         patch[0][lv][NewPID] = new patch_t( x, y, z, FaPID, FluData, PotData, FluData, lv, BoxScale, dh[TOP_LEVEL] );
-         patch[1][lv][NewPID] = new patch_t( 0, 0, 0,    -1, FluData, PotData,   false, lv, BoxScale, dh[TOP_LEVEL] );
+         patch[0][lv][NewPID] = new patch_t( scale_x, scale_y, scale_z, FaPID, FluData, PotData, FluData, lv, BoxScale, BoxEdgeL, dh[TOP_LEVEL] );
+         patch[1][lv][NewPID] = new patch_t(       0,       0,       0,    -1, FluData, PotData,   false, lv, BoxScale, BoxEdgeL, dh[TOP_LEVEL] );
       }
 
 //    reactivate inactive patches
@@ -251,8 +255,8 @@ struct AMR_t
 //       do NOT initialize field pointers as NULL since they may be allocated already
          const bool InitPtrAsNull_No = false;
 
-         patch[0][lv][NewPID]->Activate( x, y, z, FaPID, FluData, PotData, FluData, lv, BoxScale, dh[TOP_LEVEL], InitPtrAsNull_No );
-         patch[1][lv][NewPID]->Activate( 0, 0, 0,    -1, FluData, PotData,   false, lv, BoxScale, dh[TOP_LEVEL], InitPtrAsNull_No );
+         patch[0][lv][NewPID]->Activate( scale_x, scale_y, scale_z, FaPID, FluData, PotData, FluData, lv, BoxScale, BoxEdgeL, dh[TOP_LEVEL], InitPtrAsNull_No );
+         patch[1][lv][NewPID]->Activate(       0,       0,       0,    -1, FluData, PotData,   false, lv, BoxScale, BoxEdgeL, dh[TOP_LEVEL], InitPtrAsNull_No );
       } // if ( patch[0][lv][NewPID] == NULL ) ... else ...
 
       num[lv] ++;

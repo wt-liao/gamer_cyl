@@ -242,7 +242,7 @@ void Prepare_PatchData( const int lv, const double PrepTime, real *h_Input_Array
 //#  endif // #ifdef GAMER_DEBUG
 
 
-   const double dh               = amr->dh[lv];
+   const double *dh              = amr->dh[lv];
    const int    PGSize1D         = 2*( PATCH_SIZE + GhostSize );  // size of a single patch group including the ghost zone
    const int    PGSize3D         = CUBE( PGSize1D );
    const int    GhostSize_Padded = GhostSize + (GhostSize&1);
@@ -611,7 +611,7 @@ void Prepare_PatchData( const int lv, const double PrepTime, real *h_Input_Array
    {
 //    thread-private variables
       int    J, K, I2, J2, K2, Idx1, Idx2, PID0, TFluVarIdx, BC_Sibling, BC_Idx_Start[3], BC_Idx_End[3];
-      double xyz0[3];            // corner coordinates for the user-specified B.C.
+      double XYZ0[3];            // corner coordinates for the user-specified B.C.
 #     if ( MODEL == HYDRO  ||  MODEL == MHD )
       real Fluid[NCOMP_FLUID];   // for calculating pressure and temperature only --> don't need NCOMP_TOTAL
 #     endif
@@ -699,7 +699,7 @@ void Prepare_PatchData( const int lv, const double PrepTime, real *h_Input_Array
 #           endif // #ifdef DEBUG_PARTICLE
 
 //          set the left edge of the rho_ext array
-            for (int d=0; d<3; d++)    EdgeL[d] = amr->patch[0][lv][PID]->EdgeL[d] - RHOEXT_GHOST_SIZE*dh;
+            for (int d=0; d<3; d++)    EdgeL[d] = amr->patch[0][lv][PID]->EdgeL[d] - RHOEXT_GHOST_SIZE*dh[d];
 
 //          deposit particle mass on grids (**from particles to their home patch**)
 //          --> don't have to worry about the periodicity (even for external buffer patches) here since
@@ -734,7 +734,7 @@ void Prepare_PatchData( const int lv, const double PrepTime, real *h_Input_Array
             Aux_Error( ERROR_INFO, "PID0 (%d) does not have LocalID == 0 !!\n", PID0 );
 #        endif
 
-         for (int d=0; d<3; d++)    xyz0[d] = amr->patch[0][lv][PID0]->EdgeL[d] + (0.5-GhostSize)*dh;
+         for (int d=0; d<3; d++)    XYZ0[d] = amr->patch[0][lv][PID0]->EdgeL[d] + (0.5-GhostSize)*dh[d];
 
 //       Array points to h_Input_Array directly for PrepUnit == UNIT_PATCHGROUP
          if ( PrepUnit == UNIT_PATCHGROUP )  Array = h_Input_Array + TID*NVar_Tot*PGSize3D;
@@ -1234,7 +1234,7 @@ void Prepare_PatchData( const int lv, const double PrepTime, real *h_Input_Array
                      case BC_FLU_USER:
                         Flu_BoundaryCondition_User        ( Array_Ptr,                      NVar_Flu,
                                                             PGSize1D, PGSize1D, PGSize1D, BC_Idx_Start, BC_Idx_End,
-                                                            TFluVarIdxList, PrepTime, dh, xyz0, TVar, lv );
+                                                            TFluVarIdxList, PrepTime, dh, XYZ0, TVar, lv );
                      break;
 
                      default:
@@ -1405,9 +1405,9 @@ void Prepare_PatchData( const int lv, const double PrepTime, real *h_Input_Array
 
                   const int    FaPID    = amr->patch[0][lv][PID0]->father;
                   const int    FaSibPID = amr->patch[0][lv-1][FaPID]->sibling[Side];
-                  const double EdgeL[3] = { amr->patch[0][lv][PID0]->EdgeL[0] - GhostSize*dh,
-                                            amr->patch[0][lv][PID0]->EdgeL[1] - GhostSize*dh,
-                                            amr->patch[0][lv][PID0]->EdgeL[2] - GhostSize*dh };
+                  const double EdgeL[3] = { amr->patch[0][lv][PID0]->EdgeL[0] - GhostSize*dh[0],
+                                            amr->patch[0][lv][PID0]->EdgeL[1] - GhostSize*dh[1],
+                                            amr->patch[0][lv][PID0]->EdgeL[2] - GhostSize*dh[2] };
                   long  *ParList = NULL;
                   int    NPar;
                   bool   UseInputMassPos;

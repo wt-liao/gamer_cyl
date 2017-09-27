@@ -29,8 +29,17 @@ void Init_GreenFuncK()
 
 
 // check
+#  if ( COORDINATE == CARTESIAN )
+   if (  !Mis_CompareRealValue( amr->dh[0][0], amr->dh[0][1], NULL, false )  ||
+         !Mis_CompareRealValue( amr->dh[0][0], amr->dh[0][2], NULL, false )    )
+      Aux_Error( ERROR_INFO, "Currently the Cartesian coordinates assume dh[0] (%20.14e) = dh[1] (%20.14e) = dh[2] (%20.14e) !!\n",
+                 amr->dh[0][0], amr->dh[0][1], amr->dh[0][2] );
+#  else
+   Aux_Error( ERROR_INFO, "non-Cartesian coordinates do not support %s() yet !!\n", __FUNCTION__ );
+#  endif
+
    if ( OPT__BC_POT != BC_POT_ISOLATED )
-      Aux_Message( stderr, "OPT__BC_POT != BC_POT_ISOLATED, why do you need to calculate the Green's function !?\n" );
+      Aux_Message( stderr, "WARNING : OPT__BC_POT != BC_POT_ISOLATED, why do you need to calculate the Green's function !?\n" );
 
 
 // 1. get the array indices used by FFTW
@@ -55,7 +64,8 @@ void Init_GreenFuncK()
 
 
 // 2. calculate the Green's function in the real space
-   const double dh0   = amr->dh[0];
+//###: COORD-FIX: use dh instead of dh[0]
+   const double dh0   = amr->dh[0][0];
    const double Coeff = -NEWTON_G*CUBE(dh0)/( (double)FFT_Size[0]*FFT_Size[1]*FFT_Size[2] );
    double x, y, z, r;
    int    kk;

@@ -97,8 +97,8 @@ long  LB_Corner2Index( const int lv, const int Corner[], const Check_t Check );
 //                                  --> Different from corner[3], which do NOT assume periodicity
 //                PaddedCr1D      : 1D corner coordiniate padded with two base-level patches on each side
 //                                  in each direction, normalized to the finest-level patch scale (PATCH_SIZE)
-//                                  --> each PaddedCr1D defines a unique 3D position
-//                                  --> patches at different levels with the same PaddedCr1D have the same
+//                                  --> Each PaddedCr1D defines a unique 3D position
+//                                  --> Patches at different levels with the same PaddedCr1D have the same
 //                                      3D corner coordinates
 //                LB_Idx          : Space-filling-curve index for load balance
 //                NPar            : Number of particles belonging to this leaf patch
@@ -218,25 +218,26 @@ struct patch_t
    //
    // Note        :  Initialize data members
    //
-   // Parameter   :  x,y,z     : Scale indices of the patch corner
-   //                FaPID     : Patch ID of the father patch
-   //                FluData   : true --> Allocate the hydrodynamic array(s) "fluid"
-   //                                     "rho_ext" will NOT be allocated here even if PARTICLE is on
-   //                PotData   : true --> Allocate the potential array "pot" (has no effect if "GRAVITY" is turned off)
-   //                                     "pot_ext" will be allocated as well if STORE_POT_GHOST is on
-   //                DE_Status : true --> Allocate the dual-energy status array "de_status"
-   //                                 --> Useless if "DUAL_ENERGY" is turned off
-   //                lv        : Refinement level of the newly created patch
-   //                BoxScale  : Simulation box scale
-   //                dh_min    : Cell size at the maximum level
+   // Parameter   :  scale_x/y/z : Grid scale indices of the patch corner
+   //                FaPID       : Patch ID of the father patch
+   //                FluData     : true --> Allocate the hydrodynamic array(s) "fluid"
+   //                                       "rho_ext" will NOT be allocated here even if PARTICLE is on
+   //                PotData     : true --> Allocate the potential array "pot" (has no effect if "GRAVITY" is turned off)
+   //                                       "pot_ext" will be allocated as well if STORE_POT_GHOST is on
+   //                DE_Status   : true --> Allocate the dual-energy status array "de_status"
+   //                                   --> Useless if "DUAL_ENERGY" is turned off
+   //                lv          : Refinement level of the newly created patch
+   //                BoxScale    : Simulation box scale
+   //                BoxEdgeL    : Simulation box left edge
+   //                dh_min      : Cell size at the maximum level
    //===================================================================================
-   patch_t( const int x, const int y, const int z, const int FaPID, const bool FluData, const bool PotData, const bool DE_Status,
-            const int lv, const int BoxScale[], const double dh_min )
+   patch_t( const int scale_x, const int scale_y, const int scale_z, const int FaPID, const bool FluData, const bool PotData,
+            const bool DE_Status, const int lv, const int BoxScale[], const double BoxEdgeL[], const double dh_min[] )
    {
 
 //    always initialize field pointers (e.g., fluid, pot, ...) as NULL if they are not allocated here
       const bool InitPtrAsNull_Yes = true;
-      Activate( x, y, z, FaPID, FluData, PotData, DE_Status, lv, BoxScale, dh_min, InitPtrAsNull_Yes );
+      Activate( scale_x, scale_y, scale_z, FaPID, FluData, PotData, DE_Status, lv, BoxScale, BoxEdgeL, dh_min, InitPtrAsNull_Yes );
 
    } // METHOD : patch_t
 
@@ -248,7 +249,7 @@ struct patch_t
    //
    // Note        :  Called by the patch constructor "patch_t" and amr->pnew when OPT__REUSE_MEMORY is adopted
    //
-   // Parameter   :  x,y,z          : Scale indices of the patch corner
+   // Parameter   :  scale_x/y/z    : Grid scale indices of the patch corner
    //                FaPID          : Patch ID of the father patch
    //                FluData        : true --> Allocate the hydrodynamic array(s) "fluid"
    //                                          "rho_ext" will NOT be allocated here even if PARTICLE is on
@@ -258,6 +259,7 @@ struct patch_t
    //                                      --> Useless if "DUAL_ENERGY" is turned off
    //                lv             : Refinement level of the newly created patch
    //                BoxScale       : Simulation box scale
+   //                BoxEdgeL       : Simulation box left edge
    //                dh_min         : Cell size at the maximum level
    //                InitPtrAsNull  : Whether or not to initialize the field arrays (i.e., fluid, pot, pot_ext, rho_ext, de_status) as NULL
    //                                 --> It is used mainly for OPT__REUSE_MEMORY, where we don't want to set these pointers as
@@ -270,13 +272,14 @@ struct patch_t
    //                                     initialized as NULL here
    //                                 --> Does not apply to any particle variable (except rho_ext)
    //===================================================================================
-   void Activate( const int x, const int y, const int z, const int FaPID, const bool FluData, const bool PotData, const bool DE_Status,
-                  const int lv, const int BoxScale[], const double dh_min, const bool InitPtrAsNull )
+   void Activate( const int scale_x, const int scale_y, const int scale_z, const int FaPID, const bool FluData, const bool PotData,
+                  const bool DE_Status, const int lv, const int BoxScale[], const double BoxEdgeL[], const double dh_min[],
+                  const bool InitPtrAsNull )
    {
 
-      corner[0] = x;
-      corner[1] = y;
-      corner[2] = z;
+      corner[0] = scale_x;
+      corner[1] = scale_y;
+      corner[2] = scale_z;
       father    = FaPID;
       son       = -1;
       flag      = false;
@@ -311,13 +314,13 @@ struct patch_t
 //       EdgeR[d] = (double)(  ( corner[d] + BoxScale[d] + PScale ) % BoxScale[d] )*dh_min;
 //       --> otherwise the buffer patches just outside the simulation left edge (and the real patches just inside the simulation
 //           right edge) will have EdgeR==0 instead of EdgeR==BoxSize
-         EdgeL[d] = (double)(  ( corner[d] + BoxScale[d] ) % BoxScale[d]           )*dh_min;
-         EdgeR[d] = (double)(  ( corner[d] + BoxScale[d] ) % BoxScale[d] + PScale  )*dh_min;
+         EdgeL[d] = BoxEdgeL[d] + (double)(  ( corner[d] + BoxScale[d] ) % BoxScale[d]           )*dh_min[d];
+         EdgeR[d] = BoxEdgeL[d] + (double)(  ( corner[d] + BoxScale[d] ) % BoxScale[d] + PScale  )*dh_min[d];
 
 //       do no use the following non-periodic version anymore --> it does not work with the current particle implementation
          /*
-         EdgeL[d] = (double)corner[d]*dh_min;
-         EdgeR[d] = (double)( corner[d] + PScale )*dh_min;
+         EdgeL[d] = BoxEdgeL[d] + (double)corner[d]*dh_min[d];
+         EdgeR[d] = BoxEdgeL[d] + (double)( corner[d] + PScale )*dh_min[d];
          */
       }
 

@@ -49,6 +49,15 @@ void Validate()
    if ( OPT__BC_FLU[0] != BC_FLU_PERIODIC )
       Aux_Error( ERROR_INFO, "please set \"OPT__BC_FLU_* = 1\" (i.e., periodic BC) !!\n" );
 
+#  if ( COORDINATE == CARTESIAN )
+   if (  !Mis_CompareRealValue( amr->dh[0][0], amr->dh[0][1], NULL, false )  ||
+         !Mis_CompareRealValue( amr->dh[0][0], amr->dh[0][2], NULL, false )    )
+      Aux_Error( ERROR_INFO, "only work with cubic cells (dh[lv=0] = (%20.14e, %20.14e, %20.14e)) !!",
+                 amr->dh[0][0], amr->dh[0][1], amr->dh[0][2] );
+#  else
+      Aux_Error( ERROR_INFO, "only work with the Cartesian coordinates !!\n" );
+#  endif
+
 
    if ( MPI_Rank == 0 )    Aux_Message( stdout, "   Validating test problem %d ... done\n", TESTPROB_ID );
 

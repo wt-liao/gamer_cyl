@@ -842,12 +842,12 @@ void Load_Parameter_After_2000( FILE *File, const int FormatVersion, int &NLv_Re
    long   end_step;
    double lb_wli_max, gamma, minmod_coeff, ep_coeff, elbdm_mass, elbdm_planck_const, newton_g, sor_omega;
    double mg_tolerated_error, output_part_x, output_part_y, output_part_z, molecular_weight;
-   double box_size, end_t, omega_m0, dt__fluid, dt__gravity, dt__phase, dt__max_delta_a, output_dt, hubble0;
+   double box_size_max, end_t, omega_m0, dt__fluid, dt__gravity, dt__phase, dt__max_delta_a, output_dt, hubble0;
    double unit_l, unit_m, unit_t, unit_v, unit_d, unit_e, unit_p;
 
    fseek( File, HeaderOffset_Parameter, SEEK_SET );
 
-   fread( &box_size,                   sizeof(double),                  1,             File );
+   fread( &box_size_max,               sizeof(double),                  1,             File );
    fread(  nx0_tot,                    sizeof(int),                     3,             File );
    fread( &mpi_nrank,                  sizeof(int),                     1,             File );
    fread(  mpi_nrank_x,                sizeof(int),                     3,             File );
@@ -1325,7 +1325,8 @@ void Load_Parameter_After_2000( FILE *File, const int FormatVersion, int &NLv_Re
 
 //    errors
 //    ------------------
-      CompareVar( "BOX_SIZE",                box_size,                     BOX_SIZE,                     Fatal );
+      const double box_size_max_runtime = fmax(  fmax( amr->BoxSize[0], amr->BoxSize[1] ), amr->BoxSize[2]  );
+      CompareVar( "BOX_SIZE_MAX",            box_size_max,                 box_size_max_runtime,         Fatal );
       CompareVar( "NX0_TOT[0]",              nx0_tot[0],                   NX0_TOT[0],                   Fatal );
       CompareVar( "NX1_TOT[1]",              nx0_tot[1],                   NX0_TOT[1],                   Fatal );
       CompareVar( "NX2_TOT[2]",              nx0_tot[2],                   NX0_TOT[2],                   Fatal );

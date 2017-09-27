@@ -72,7 +72,7 @@ void Par_LB_Init_RedistributeByRectangular()
          }
 
          if ( TRank_3D[d] == -1 )
-            Aux_Error( ERROR_INFO, "cannot determine target rank for ParID %ld with Pos = (%20.14e, %20.14e, %20.14e) !!\n",
+            Aux_Error( ERROR_INFO, "cannot determine the target rank for ParID %ld with Pos = (%20.14e, %20.14e, %20.14e) !!\n",
                        ParID, Pos[0][ParID], Pos[1][ParID], Pos[2][ParID] );
 
          if ( Pos[d][ParID] < (real)0.0 )

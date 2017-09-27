@@ -29,9 +29,9 @@ void Par_FindHomePatch_Base( const int *BaseP )
 #  endif
 
 
-   const double PS0  = PS1*amr->dh[0];                               // base-level patch size
-   const int  NP0[3] = { NX0[0]/PS1+4, NX0[1]/PS1+4, NX0[2]/PS1+4 }; // number of base-level patches including
-                                                                     // 2 buffer patches on each sides
+   const double PS0[3] = { PS1*amr->dh[0][0], PS1*amr->dh[0][1], PS1*amr->dh[0][2] };  // base-level patch size
+   const int    NP0[3] = { NX0[0]/PS1+4, NX0[1]/PS1+4, NX0[2]/PS1+4 };                 // number of base-level patches including
+                                                                                       // 2 buffer patches on each sides
 
 // 1D -> 3D array
    const int (*BaseP3D)[ NP0[1] ][ NP0[0] ] = ( const int (*)[ NP0[1] ][ NP0[0] ] )BaseP;
@@ -66,7 +66,7 @@ void Par_FindHomePatch_Base( const int *BaseP )
 #           else
             dr [d] = Pos[d][ParID] - amr->ParaVar->SubDomain_EdgeL[d];
 #           endif
-            ijk[d] = 2 + int( dr[d]/PS0 );
+            ijk[d] = 2 + int( dr[d]/PS0[d] );
 
 #           ifdef DEBUG_PARTICLE
 //          check: whether the array index is within the correct range

@@ -168,15 +168,14 @@ void Par_Init_ByFunction_Merger()
 // shift center (assuming the center of loaded particles = [0,0,0])
    if ( MPI_Rank == 0 )    Aux_Message( stdout, "   Shifting particle center and adding bulk velocity ... " );
 
-   const double BoxCenter[3] = { 0.5*amr->BoxSize[0], 0.5*amr->BoxSize[1], 0.5*amr->BoxSize[2] };
    real *Pos[3] = { amr->Par->PosX, amr->Par->PosY, amr->Par->PosZ };
 
    if ( Merger_Coll )
    {
       const double ClusterCenter1[3]
-         = { BoxCenter[0]-0.5*Merger_Coll_D, BoxCenter[1]-0.5*Merger_Coll_B, BoxCenter[2] };
+         = { amr->BoxCenter[0]-0.5*Merger_Coll_D, amr->BoxCenter[1]-0.5*Merger_Coll_B, amr->BoxCenter[2] };
       const double ClusterCenter2[3]
-         = { BoxCenter[0]+0.5*Merger_Coll_D, BoxCenter[1]+0.5*Merger_Coll_B, BoxCenter[2] };
+         = { amr->BoxCenter[0]+0.5*Merger_Coll_D, amr->BoxCenter[1]+0.5*Merger_Coll_B, amr->BoxCenter[2] };
 
       for (long p=0; p<NPar_ThisRank[0]; p++)
       for (int d=0; d<3; d++)
@@ -191,7 +190,7 @@ void Par_Init_ByFunction_Merger()
    {
       for (long p=0; p<amr->Par->NPar_AcPlusInac; p++)
       for (int d=0; d<3; d++)
-         Pos[d][p] += BoxCenter[d];
+         Pos[d][p] += amr->BoxCenter[d];
    }
 
 

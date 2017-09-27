@@ -63,20 +63,33 @@ void CPU_dtSolver_HydroGravity( real dt_Array[],
 //-------------------------------------------------------------------------------------------------------
 void CPU_dtSolver( const Solver_t TSolver, real dt_Array[], const real Flu_Array[][NCOMP_FLUID][ CUBE(PS1) ],
                    const real Pot_Array[][ CUBE(GRA_NXT) ], const double Corner_Array[][3],
-                   const int NPatchGroup, const real dh, const real Safety, const real Gamma, const real MinPres,
+                   const int NPatchGroup, const real dh[], const real Safety, const real Gamma, const real MinPres,
                    const bool P5_Gradient, const OptGravityType_t GravityType, const bool ExtPot, const double TargetTime )
 {
+
+// check
+#  if ( COORDINATE == CARTESIAN )
+   if (  !Mis_CompareRealValue( dh[0], dh[1], NULL, false )  ||
+         !Mis_CompareRealValue( dh[0], dh[2], NULL, false )    )
+      Aux_Error( ERROR_INFO, "Currently the Cartesian coordinates assume dh[0] (%20.14e) = dh[1] (%20.14e) = dh[2] (%20.14e) !!\n",
+                 dh[0], dh[1], dh[2] );
+#  else
+   Aux_Error( ERROR_INFO, "non-Cartesian coordinates do not support %s() yet !!\n", __FUNCTION__ );
+#  endif
+
 
    switch ( TSolver )
    {
 #     if   ( MODEL == HYDRO )
+//###: COORD-FIX: use dh instead of dh[0]
       case DT_FLU_SOLVER:
-         CPU_dtSolver_HydroCFL( dt_Array, Flu_Array, NPatchGroup, dh, Safety, Gamma, MinPres );
+         CPU_dtSolver_HydroCFL( dt_Array, Flu_Array, NPatchGroup, dh[0], Safety, Gamma, MinPres );
       break;
 
 #     ifdef GRAVITY
+//###: COORD-FIX: use dh instead of dh[0]
       case DT_GRA_SOLVER:
-         CPU_dtSolver_HydroGravity( dt_Array, Pot_Array, Corner_Array, NPatchGroup, dh, Safety, P5_Gradient,
+         CPU_dtSolver_HydroGravity( dt_Array, Pot_Array, Corner_Array, NPatchGroup, dh[0], Safety, P5_Gradient,
                                     GravityType, ExtAcc_AuxArray, TargetTime );
       break;
 #     endif

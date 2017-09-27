@@ -75,7 +75,7 @@ void Aux_Record_BoundaryPatch( const int lv, int *NList, int **IDList, int **Pos
                NList  [22] ++;
             }
 
-         } // if ( Pos[1] == 0 )
+         } // if ( Pos[1] == 2 )
 
          else if ( Pos[1] == NP[1]-3 )
          {

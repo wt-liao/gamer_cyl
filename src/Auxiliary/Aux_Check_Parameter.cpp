@@ -53,6 +53,62 @@ void Aux_Check_Parameter()
 #     error : ERROR : unrecognizable COORDINATE in the Makefile (only support CARTESIAN/CYLINDRICAL/SPHERICAL) !!
 #  endif
 
+#  if ( COORDINATE == CARTESIAN )
+   if (  !Mis_CompareRealValue( amr->dh[0][0], amr->dh[0][1], NULL, false )  ||
+         !Mis_CompareRealValue( amr->dh[0][0], amr->dh[0][2], NULL, false )    )
+      Aux_Error( ERROR_INFO, "Currently the Cartesian coordinates assume dh[0] (%20.14e) = dh[1] (%20.14e) = dh[2] (%20.14e) !!\n",
+                 amr->dh[0][0], amr->dh[0][1], amr->dh[0][2] );
+
+#  else
+
+#  ifdef GRAVITY
+#     error : ERROR : non-Cartesian coordinates do not support GRAVITY yet !!
+
+   if ( OPT__GRAVITY_TYPE == GRAVITY_EXTERNAL  ||  OPT__GRAVITY_TYPE == GRAVITY_BOTH )
+      Aux_Error( ERROR_INFO, "non-Cartesian coordinates do not support external gravity yet !!\n" );
+
+   if ( OPT__EXTERNAL_POT )
+      Aux_Error( ERROR_INFO, "non-Cartesian coordinates do not support external potential yet !!\n" );
+#  endif
+
+#  ifdef PARTICLE
+#     error : ERROR : non-Cartesian coordinates do not support PARTICLE yet !!
+#  endif
+
+#  ifdef STAR_FORMATION
+#     error : ERROR : non-Cartesian coordinates do not support STAR_FORMATION yet !!
+#  endif
+
+#  if ( MODEL != HYDRO )
+#     error : ERROR : currently only HYDRO supports non-Cartesian coordinates !!
+#  endif
+
+#  ifdef SUPPORT_LIBYT
+#     error : ERROR : non-Cartesian coordinates do not support SUPPORT_LIBYT yet !!
+#  endif
+
+#  if ( MODEL == HYDRO )
+   if ( OPT__1ST_FLUX_CORR != FIRST_FLUX_CORR_NONE )
+      Aux_Error( ERROR_INFO, "non-Cartesian coordinates do not support OPT__1ST_FLUX_CORR yet !!\n" );
+#  endif
+#  endif // #if ( COORDINATE == CARTESIAN ) ... else ...
+
+   if ( OPT__OUTPUT_PART == OUTPUT_DIAG )
+   {
+#     if ( COORDINATE == CARTESIAN )
+      if (  !Mis_CompareRealValue( amr->BoxSize[0], amr->BoxSize[1], NULL, false ) ||
+            !Mis_CompareRealValue( amr->BoxSize[0], amr->BoxSize[2], NULL, false )  )
+         Aux_Error( ERROR_INFO, "simulation domain must be cubic for \"OPT__OUTPUT_PART == OUTPUT_DIAG\" !!\n" );
+
+      if (  !Mis_CompareRealValue( amr->dh[0][0], amr->dh[0][1], NULL, false )  ||
+            !Mis_CompareRealValue( amr->dh[0][0], amr->dh[0][2], NULL, false )    )
+         Aux_Error( ERROR_INFO, "\"OPT__OUTPUT_PART == OUTPUT_DIAG\" only works with cubic cells !!\n" );
+#     else
+      Aux_Error( ERROR_INFO, "non-Cartesian coordinates do not support \"OPT__OUTPUT_PART == OUTPUT_DIAG\" !!\n" );
+#     endif
+   }
+
+
 #  if   ( COORDINATE == CARTESIAN )
    if ( amr->BoxEdgeL[0] == NoDef_double )   Aux_Error( ERROR_INFO, "please set BOX_EDGE_LEFT_X !!\n" );
    if ( amr->BoxEdgeL[1] == NoDef_double )   Aux_Error( ERROR_INFO, "please set BOX_EDGE_LEFT_Y !!\n" );
@@ -125,16 +181,16 @@ void Aux_Check_Parameter()
 #  endif
 
    if (  ( OPT__OUTPUT_PART == OUTPUT_YZ  ||  OPT__OUTPUT_PART == OUTPUT_Y  ||  OPT__OUTPUT_PART == OUTPUT_Z )  &&
-         ( OUTPUT_PART_X < 0.0  ||  OUTPUT_PART_X >= amr->BoxSize[0] )  )
-      Aux_Error( ERROR_INFO, "incorrect OUTPUT_PART_X (out of range [0<=X<%lf]) !!\n", amr->BoxSize[0] );
+         ( OUTPUT_PART_X < amr->BoxEdgeL[0] ||  OUTPUT_PART_X >= amr->BoxEdgeR[0] )  )
+      Aux_Error( ERROR_INFO, "incorrect OUTPUT_PART_X (out of range [%lf<=X<%lf]) !!\n", amr->BoxEdgeL[0], amr->BoxEdgeR[0] );
 
    if (  ( OPT__OUTPUT_PART == OUTPUT_XZ  ||  OPT__OUTPUT_PART == OUTPUT_X  ||  OPT__OUTPUT_PART == OUTPUT_Z )  &&
-         ( OUTPUT_PART_Y < 0.0  ||  OUTPUT_PART_Y >= amr->BoxSize[1] )  )
-      Aux_Error( ERROR_INFO, "incorrect OUTPUT_PART_Y (out of range [0<=Y<%lf]) !!\n", amr->BoxSize[1] );
+         ( OUTPUT_PART_Y < amr->BoxEdgeL[1]  ||  OUTPUT_PART_Y >= amr->BoxEdgeR[1] )  )
+      Aux_Error( ERROR_INFO, "incorrect OUTPUT_PART_Y (out of range [%lf<=Y<%lf]) !!\n", amr->BoxEdgeL[1], amr->BoxEdgeR[1] );
 
    if (  ( OPT__OUTPUT_PART == OUTPUT_XY  ||  OPT__OUTPUT_PART == OUTPUT_X  ||  OPT__OUTPUT_PART == OUTPUT_Y )  &&
-         ( OUTPUT_PART_Z < 0.0  ||  OUTPUT_PART_Z >= amr->BoxSize[2] )  )
-      Aux_Error( ERROR_INFO, "incorrect OUTPUT_PART_Z (out of range [0<=Z<%lf]) !!\n", amr->BoxSize[2] );
+         ( OUTPUT_PART_Z < amr->BoxEdgeL[2]  ||  OUTPUT_PART_Z >= amr->BoxEdgeR[2] )  )
+      Aux_Error( ERROR_INFO, "incorrect OUTPUT_PART_Z (out of range [%lf<=Z<%lf]) !!\n", amr->BoxEdgeL[2], amr->BoxEdgeR[2] );
 
    if (  OPT__OUTPUT_PART == OUTPUT_DIAG  &&  ( NX0_TOT[0] != NX0_TOT[1] || NX0_TOT[0] != NX0_TOT[2] )  )
       Aux_Error( ERROR_INFO, "\"%s\" only works with CUBIC domain !!\n",
@@ -396,7 +452,7 @@ void Aux_Check_Parameter()
       Aux_Message( stderr, "WARNING : COMOVING is NOT defined for OPT__UM_FACTOR_5OVER3 !!\n" );
 #     endif
 
-      Aux_Message( stderr, "REMINDER : please make sure that \"background density ~= 1.0\" for OPT__UM_FACTOR_5OVER3\n" );
+      Aux_Message( stderr, "REMINDER : please make sure that \"background density ~ 1.0\" for OPT__UM_FACTOR_5OVER3\n" );
    }
 
 #  if ( defined GRAVITY  &&  GRA_GHOST_SIZE == 0  &&  defined STORE_POT_GHOST )

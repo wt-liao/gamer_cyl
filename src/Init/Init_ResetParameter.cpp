@@ -191,6 +191,8 @@ void Init_ResetParameter()
 
 
 // derived parameters related to the simulation scale
+   for (int d=0; d<3; d++)    amr->BoxCenter[d] = 0.5*( amr->BoxEdgeL[d] + amr->BoxEdgeR[d] );
+
 #  if   ( COORDINATE == CARTESIAN )
    amr->BoxSize[0] = amr->BoxEdgeR[0] - amr->BoxEdgeL[0];   // x
    amr->BoxSize[1] = amr->BoxEdgeR[1] - amr->BoxEdgeL[1];   // y

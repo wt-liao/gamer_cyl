@@ -60,6 +60,10 @@ void SF_CreateStar_AGORA( const int lv, const real TimeNew, const real dt, struc
 #     error : SF_CreateStar_AGORA() does not support COMOVING yet !!
 #  endif
 
+#  if ( COORDINATE != CARTESIAN )
+#     error : SF_CreateStar_AGORA() does not support non-Cartesian coordinates yet !!
+#  endif
+
    if ( UseMetal )
    {
       if ( PAR_NPASSIVE != 2 )
@@ -75,15 +79,19 @@ void SF_CreateStar_AGORA( const int lv, const real TimeNew, const real dt, struc
 
 
 // constant parameters
-   const double dh             = amr->dh[lv];
-   const real   dv             = CUBE( dh );
-   const int    FluSg          = amr->FluSg[lv];
-   const int    PotSg          = amr->PotSg[lv];
-   const real   Coeff_FreeFall = SQRT( (32.0*NEWTON_G)/(3.0*M_PI) );
-   const real  _MinStarMass    = (real)1.0 / MinStarMass;
-   const real   Eff_times_dt   = Efficiency*dt;
-// const real   GraConst       = ( OPT__GRA_P5_GRADIENT ) ? -1.0/(12.0*dh) : -1.0/(2.0*dh);
-   const real   GraConst       = ( false                ) ? -1.0/(12.0*dh) : -1.0/(2.0*dh); // P5 is NOT supported yet
+   const double *dh             = amr->dh[lv];
+   const int     FluSg          = amr->FluSg[lv];
+   const int     PotSg          = amr->PotSg[lv];
+   const real    Coeff_FreeFall = SQRT( (32.0*NEWTON_G)/(3.0*M_PI) );
+   const real   _MinStarMass    = (real)1.0 / MinStarMass;
+   const real    Eff_times_dt   = Efficiency*dt;
+#if ( COORDINATE != CARTESIAN )
+#error : non-Cartesian coordinates are not supported here !!
+#endif
+   const real    GraConst[3]    = { -1.0/(2.0*dh[0]), -1.0/(2.0*dh[1]), -1.0/(2.0*dh[2]) };  // P5 is NOT supported yet
+#  if ( COORDINATE == CARTESIAN )
+   const real    dv             = Aux_Coord_CellIdx2Volume( lv, NULL_INT, NULL_INT, NULL_INT, NULL_INT );
+#  endif
 
 
 // start of OpenMP parallel region
@@ -97,7 +105,7 @@ void SF_CreateStar_AGORA( const int lv, const real TimeNew, const real dt, struc
    const int TID = 0;
 #  endif
 
-   double x0, y0, z0, x, y, z;
+   double X, Y, Z;
    real   GasDens, _GasDens, GasMass, _Time_FreeFall, StarMFrac, StarMass, GasMFracLeft;
    real   (*fluid)[PS1][PS1][PS1]      = NULL;
    real   (*pot_ext)[GRA_NXT][GRA_NXT] = NULL;
@@ -135,18 +143,18 @@ void SF_CreateStar_AGORA( const int lv, const real TimeNew, const real dt, struc
 
       fluid   = amr->patch[FluSg][lv][PID]->fluid;
       pot_ext = amr->patch[PotSg][lv][PID]->pot_ext;
-      x0      = amr->patch[0][lv][PID]->EdgeL[0] + 0.5*dh;
-      y0      = amr->patch[0][lv][PID]->EdgeL[1] + 0.5*dh;
-      z0      = amr->patch[0][lv][PID]->EdgeL[2] + 0.5*dh;
       NNewPar = 0;
 
       for (int k=0; k<PS1; k++)
       for (int j=0; j<PS1; j++)
       for (int i=0; i<PS1; i++)
       {
-
 //       1. check the star formation criteria
 //       ===========================================================================================================
+#        if ( COORDINATE != CARTESIAN )
+         const real dv = Aux_Coord_CellIdx2Volume( lv, PID, i, j, k );
+#        endif
+
          GasDens = fluid[DENS][k][j][i];
          GasMass = GasDens*dv;
 
@@ -196,14 +204,14 @@ void SF_CreateStar_AGORA( const int lv, const real TimeNew, const real dt, struc
 
 //       2-1. intrinsic attributes
          _GasDens = (real)1.0 / GasDens;
-         x        = x0 + i*dh;
-         y        = y0 + j*dh;
-         z        = z0 + k*dh;
+         X        = Aux_Coord_CellIdx2AdoptedCoord( lv, PID, 0, i );
+         Y        = Aux_Coord_CellIdx2AdoptedCoord( lv, PID, 1, j );
+         Z        = Aux_Coord_CellIdx2AdoptedCoord( lv, PID, 2, k );
 
          NewParVar[NNewPar][PAR_MASS] = StarMass;
-         NewParVar[NNewPar][PAR_POSX] = x;
-         NewParVar[NNewPar][PAR_POSY] = y;
-         NewParVar[NNewPar][PAR_POSZ] = z;
+         NewParVar[NNewPar][PAR_POSX] = X;
+         NewParVar[NNewPar][PAR_POSY] = Y;
+         NewParVar[NNewPar][PAR_POSZ] = Z;
          NewParVar[NNewPar][PAR_VELX] = fluid[MOMX][k][j][i]*_GasDens;
          NewParVar[NNewPar][PAR_VELY] = fluid[MOMY][k][j][i]*_GasDens;
          NewParVar[NNewPar][PAR_VELZ] = fluid[MOMZ][k][j][i]*_GasDens;
@@ -236,26 +244,29 @@ void SF_CreateStar_AGORA( const int lv, const real TimeNew, const real dt, struc
 //       external potential (currently useful only for ELBDM; always work with OPT__GRAVITY_TYPE == GRAVITY_SELF)
          if ( OPT__EXTERNAL_POT )
          {
-            pot_xm += CPU_ExternalPot( x-dh, y,    z,    TimeNew, ExtPot_AuxArray );
-            pot_xp += CPU_ExternalPot( x+dh, y,    z,    TimeNew, ExtPot_AuxArray );
-            pot_ym += CPU_ExternalPot( x,    y-dh, z,    TimeNew, ExtPot_AuxArray );
-            pot_yp += CPU_ExternalPot( x,    y+dh, z,    TimeNew, ExtPot_AuxArray );
-            pot_zm += CPU_ExternalPot( x,    y,    z-dh, TimeNew, ExtPot_AuxArray );
-            pot_zp += CPU_ExternalPot( x,    y,    z+dh, TimeNew, ExtPot_AuxArray );
+            pot_xm += CPU_ExternalPot( X-dh[0], Y,       Z,       TimeNew, ExtPot_AuxArray );
+            pot_xp += CPU_ExternalPot( X+dh[0], Y,       Z,       TimeNew, ExtPot_AuxArray );
+            pot_ym += CPU_ExternalPot( X,       Y-dh[1], Z,       TimeNew, ExtPot_AuxArray );
+            pot_yp += CPU_ExternalPot( X,       Y+dh[1], Z,       TimeNew, ExtPot_AuxArray );
+            pot_zm += CPU_ExternalPot( X,       Y,       Z-dh[2], TimeNew, ExtPot_AuxArray );
+            pot_zp += CPU_ExternalPot( X,       Y,       Z+dh[2], TimeNew, ExtPot_AuxArray );
          }
 
 //       external acceleration (currently useful only for HYDRO)
          real GasAcc[3] = { (real)0.0, (real)0.0, (real)0.0 };
 
          if ( OPT__GRAVITY_TYPE == GRAVITY_EXTERNAL  ||  OPT__GRAVITY_TYPE == GRAVITY_BOTH )
-            CPU_ExternalAcc( GasAcc, x, y, z, TimeNew, ExtAcc_AuxArray );
+            CPU_ExternalAcc( GasAcc, X, Y, Z, TimeNew, ExtAcc_AuxArray );
 
 //       self-gravity
          if ( OPT__GRAVITY_TYPE == GRAVITY_SELF  ||  OPT__GRAVITY_TYPE == GRAVITY_BOTH )
          {
-            GasAcc[0] += GraConst*( pot_xp - pot_xm );
-            GasAcc[1] += GraConst*( pot_yp - pot_ym );
-            GasAcc[2] += GraConst*( pot_zp - pot_zm );
+#if ( COORDINATE != CARTESIAN )
+#error : non-Cartesian coordinates are not supported here !!
+#endif
+            GasAcc[0] += GraConst[0]*( pot_xp - pot_xm );
+            GasAcc[1] += GraConst[1]*( pot_yp - pot_ym );
+            GasAcc[2] += GraConst[2]*( pot_zp - pot_zm );
          }
 
          NewParVar[NNewPar][PAR_ACCX] = GasAcc[0];

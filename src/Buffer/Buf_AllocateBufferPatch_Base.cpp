@@ -50,7 +50,7 @@ void Buf_AllocateBufferPatch_Base( AMR_t *Tamr )
 //    allocate the buffer patches
       for (int d=0; d<3; d++)
       {
-         Cr0      [d] = TABLE_01( s, 'x'+d, -2*PATCH_SIZE*scale0, 0, NX0[d]*scale0 ) + MPI_Rank_X[d]*NX0[d]*scale0;
+         Cr0      [d] = TABLE_01( s, 'x'+d, -2*Width, 0, NX0[d]*scale0 ) + MPI_Rank_X[d]*NX0[d]*scale0;
          loop_size[d] = TABLE_01( s, 'x'+d, 1, NX0[d]/PS2, 1 );
       }
 

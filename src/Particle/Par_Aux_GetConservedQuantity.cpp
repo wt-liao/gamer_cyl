@@ -39,6 +39,17 @@ void Par_Aux_GetConservedQuantity( double &Mass_Total, double &MomX_Total, doubl
                                    double &Ek_Total, double &Ep_Total )
 {
 
+// check
+#  if ( COORDINATE == CARTESIAN )
+   if (  !Mis_CompareRealValue( amr->dh[0][0], amr->dh[0][1], NULL, false )  ||
+         !Mis_CompareRealValue( amr->dh[0][0], amr->dh[0][2], NULL, false )    )
+      Aux_Error( ERROR_INFO, "Currently the Cartesian coordinates assume dh[0] (%20.14e) = dh[1] (%20.14e) = dh[2] (%20.14e) !!\n",
+                 amr->dh[0][0], amr->dh[0][1], amr->dh[0][2] );
+#  else
+   Aux_Error( ERROR_INFO, "non-Cartesian coordinates do not support %s() yet !!\n", __FUNCTION__ );
+#  endif
+
+
 // 1. mass, momentum, and kinematic energy
    double Mass_ThisRank=0.0, MomX_ThisRank=0.0, MomY_ThisRank=0.0, MomZ_ThisRank=0.0, Ek_ThisRank=0.0;
    double Send[5], Recv[5];
@@ -108,7 +119,8 @@ void Par_Aux_GetConservedQuantity( double &Mass_Total, double &MomX_Total, doubl
 // loop over particles in all leaf patches
    for (int lv=0; lv<NLEVEL; lv++)
    {
-      dh          = amr->dh[lv];
+//###: COORD-FIX: use dh instead of dh[0]
+      dh          = amr->dh[lv][0];
       _dh         = 1.0/dh;
       PrepPotTime = Time[lv];
 

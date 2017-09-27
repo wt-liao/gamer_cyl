@@ -109,7 +109,7 @@ void CPU_PoissonGravitySolver( const real h_Rho_Array    [][RHO_NXT][RHO_NXT][RH
                                const real h_Pot_Array_USG[][USG_NXT_G][USG_NXT_G][USG_NXT_G],
                                const real h_Flu_Array_USG[][GRA_NIN-1][PS1][PS1][PS1],
                                      char h_DE_Array     [][PS1][PS1][PS1],
-                               const int NPatchGroup, const real dt, const real dh, const int SOR_Min_Iter,
+                               const int NPatchGroup, const real dt, const real dh[], const int SOR_Min_Iter,
                                const int SOR_Max_Iter, const real SOR_Omega, const int MG_Max_Iter,
                                const int MG_NPre_Smooth, const int MG_NPost_Smooth, const real MG_Tolerated_Error,
                                const real Poi_Coeff, const IntScheme_t IntScheme, const bool P5_Gradient,
@@ -143,19 +143,30 @@ void CPU_PoissonGravitySolver( const real h_Rho_Array    [][RHO_NXT][RHO_NXT][RH
    }
 #  endif // #ifdef GAMER_DEBUG
 
+#  if ( COORDINATE == CARTESIAN )
+   if (  !Mis_CompareRealValue( dh[0], dh[1], NULL, false )  ||
+         !Mis_CompareRealValue( dh[0], dh[2], NULL, false )    )
+      Aux_Error( ERROR_INFO, "Currently the Cartesian coordinates assume dh[0] (%20.14e) = dh[1] (%20.14e) = dh[2] (%20.14e) !!\n",
+                 dh[0], dh[1], dh[2] );
+#  else
+   Aux_Error( ERROR_INFO, "non-Cartesian coordinates do not support %s() yet !!\n", __FUNCTION__ );
+#  endif
+
 
 // Poisson solver
    if ( Poisson )
    {
 #     if   ( POT_SCHEME == SOR )
 
-      CPU_PoissonSolver_SOR( h_Rho_Array, h_Pot_Array_In, h_Pot_Array_Out, NPatchGroup, dh,
+//###: COORD-FIX: use dh instead of dh[0]
+      CPU_PoissonSolver_SOR( h_Rho_Array, h_Pot_Array_In, h_Pot_Array_Out, NPatchGroup, dh[0],
                              SOR_Min_Iter, SOR_Max_Iter, SOR_Omega,
                              Poi_Coeff, IntScheme );
 
 #     elif ( POT_SCHEME == MG  )
 
-      CPU_PoissonSolver_MG ( h_Rho_Array, h_Pot_Array_In, h_Pot_Array_Out, NPatchGroup, dh,
+//###: COORD-FIX: use dh instead of dh[0]
+      CPU_PoissonSolver_MG ( h_Rho_Array, h_Pot_Array_In, h_Pot_Array_Out, NPatchGroup, dh[0],
                              MG_Max_Iter, MG_NPre_Smooth, MG_NPost_Smooth, MG_Tolerated_Error,
                              Poi_Coeff, IntScheme );
 
@@ -171,14 +182,16 @@ void CPU_PoissonGravitySolver( const real h_Rho_Array    [][RHO_NXT][RHO_NXT][RH
    if ( GraAcc )
    {
 #     if   ( MODEL == HYDRO )
+//###: COORD-FIX: use dh instead of dh[0]
       CPU_HydroGravitySolver( h_Flu_Array, h_Pot_Array_Out, h_Corner_Array, h_Pot_Array_USG, h_Flu_Array_USG, h_DE_Array,
-                              NPatchGroup, dt, dh, P5_Gradient, GravityType, ExtAcc_AuxArray, TimeNew, TimeOld, MinEint );
+                              NPatchGroup, dt, dh[0], P5_Gradient, GravityType, ExtAcc_AuxArray, TimeNew, TimeOld, MinEint );
 
 #     elif ( MODEL == MHD )
 #     error : WAIT MHD !!!
 
 #     elif ( MODEL == ELBDM )
-      CPU_ELBDMGravitySolver( h_Flu_Array, h_Pot_Array_Out, h_Corner_Array, NPatchGroup, ELBDM_Eta*dt, dh, ELBDM_Lambda,
+//###: COORD-FIX: use dh instead of dh[0]
+      CPU_ELBDMGravitySolver( h_Flu_Array, h_Pot_Array_Out, h_Corner_Array, NPatchGroup, ELBDM_Eta*dt, dh[0], ELBDM_Lambda,
                               ExtPot, TimeNew, ExtPot_AuxArray );
 
 #     else

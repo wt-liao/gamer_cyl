@@ -70,7 +70,7 @@ Procedure for outputting new variables:
 
 
 //-------------------------------------------------------------------------------------------------------
-// Function    :  Output_DumpData_Total_HDF5 (FormatVersion = 2259)
+// Function    :  Output_DumpData_Total_HDF5 (FormatVersion = 2300)
 // Description :  Output all simulation data in the HDF5 format, which can be used as a restart file
 //                or loaded by YT
 //
@@ -147,6 +147,7 @@ Procedure for outputting new variables:
 //                2257 : 2017/09/17 --> output OPT__OPTIMIZE_AGGRESSIVE
 //                2258 : 2017/09/21 --> output OPT__MINIMIZE_MPI_BARRIER
 //                2259 : 2017/09/23 --> output COORDINATE
+//                2300 : 2017/09/26 --> output BoxEdgeL/R[3] instead of BoxSize, dh[3] instead of dh
 //-------------------------------------------------------------------------------------------------------
 void Output_DumpData_Total_HDF5( const char *FileName )
 {
@@ -186,15 +187,15 @@ void Output_DumpData_Total_HDF5( const char *FileName )
    }
 
 
-
 // 2. prepare all HDF5 variables
-   hsize_t H5_SetDims_LBIdx, H5_SetDims_Cr[2], H5_SetDims_Fa, H5_SetDims_Son, H5_SetDims_Sib[2], H5_SetDims_Field[4];
+   hsize_t H5_SetDims_LBIdx, H5_SetDims_Cr[2], H5_SetDims_Fa, H5_SetDims_Son, H5_SetDims_Sib[2], H5_SetDims_Field[4], H5_SetDims_Cvt2Phy;
    hsize_t H5_MemDims_Field[4], H5_Count_Field[4], H5_Offset_Field[4];
    hid_t   H5_MemID_Field;
    hid_t   H5_FileID, H5_GroupID_Info, H5_GroupID_Tree, H5_GroupID_GridData;
    hid_t   H5_SetID_LBIdx, H5_SetID_Cr, H5_SetID_Fa, H5_SetID_Son, H5_SetID_Sib, H5_SetID_Field;
    hid_t   H5_SetID_KeyInfo, H5_SetID_Makefile, H5_SetID_SymConst, H5_SetID_InputPara;
    hid_t   H5_SpaceID_Scalar, H5_SpaceID_LBIdx, H5_SpaceID_Cr, H5_SpaceID_Fa, H5_SpaceID_Son, H5_SpaceID_Sib, H5_SpaceID_Field;
+   hid_t   H5_SpaceID_Cvt2Phy;
    hid_t   H5_TypeID_Com_KeyInfo, H5_TypeID_Com_Makefile, H5_TypeID_Com_SymConst, H5_TypeID_Com_InputPara;
    hid_t   H5_DataCreatePropList;
    hid_t   H5_AttID_Cvt2Phy;
@@ -609,12 +610,14 @@ void Output_DumpData_Total_HDF5( const char *FileName )
       if ( H5_SetID_Cr < 0 )    Aux_Error( ERROR_INFO, "failed to create the dataset \"%s\" !!\n", "Corner" );
 
 //    attach the attribute for converting corner to physical coordinates
-      H5_AttID_Cvt2Phy = H5Acreate( H5_SetID_Cr, "Cvt2Phy", H5T_NATIVE_DOUBLE, H5_SpaceID_Scalar,
-                                    H5P_DEFAULT, H5P_DEFAULT );
+      H5_SetDims_Cvt2Phy = 3;
+      H5_SpaceID_Cvt2Phy = H5Screate_simple( 1, &H5_SetDims_Cvt2Phy, NULL );
+      H5_AttID_Cvt2Phy   = H5Acreate( H5_SetID_Cr, "Cvt2Phy", H5T_NATIVE_DOUBLE, H5_SpaceID_Cvt2Phy,
+                                      H5P_DEFAULT, H5P_DEFAULT );
 
       if ( H5_AttID_Cvt2Phy < 0 )   Aux_Error( ERROR_INFO, "failed to create the attribute \"%s\" !!\n", "Cvt2Phy" );
 
-      H5_Status = H5Awrite( H5_AttID_Cvt2Phy, H5T_NATIVE_DOUBLE, &amr->dh[TOP_LEVEL] );
+      H5_Status = H5Awrite( H5_AttID_Cvt2Phy, H5T_NATIVE_DOUBLE, amr->dh[TOP_LEVEL] );
       H5_Status = H5Aclose( H5_AttID_Cvt2Phy );
 
       H5_Status = H5Dwrite( H5_SetID_Cr, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, CrList_AllLv );
@@ -1253,7 +1256,7 @@ void FillIn_KeyInfo( KeyInfo_t &KeyInfo )
 
    const time_t CalTime  = time( NULL );   // calendar time
 
-   KeyInfo.FormatVersion = 2259;
+   KeyInfo.FormatVersion = 2300;
    KeyInfo.Model         = MODEL;
    KeyInfo.Coordinate    = COORDINATE;
    KeyInfo.NLevel        = NLEVEL;
@@ -1292,12 +1295,14 @@ void FillIn_KeyInfo( KeyInfo_t &KeyInfo )
 
    for (int lv=0; lv<NLEVEL; lv++)
    {
-      KeyInfo.Time          [lv] = Time          [lv];
-      KeyInfo.CellSize      [lv] = amr->dh       [lv];
-      KeyInfo.CellScale     [lv] = amr->scale    [lv];
-      KeyInfo.NPatch        [lv] = NPatchTotal   [lv];
-      KeyInfo.AdvanceCounter[lv] = AdvanceCounter[lv];
-      KeyInfo.dTime_AllLv   [lv] = dTime_AllLv   [lv];
+      KeyInfo.Time          [lv]    = Time          [lv];
+      KeyInfo.CellScale     [lv]    = amr->scale    [lv];
+      KeyInfo.NPatch        [lv]    = NPatchTotal   [lv];
+      KeyInfo.AdvanceCounter[lv]    = AdvanceCounter[lv];
+      KeyInfo.dTime_AllLv   [lv]    = dTime_AllLv   [lv];
+
+      for (int d=0; d<3; d++)
+      KeyInfo.CellWidth     [lv][d] = amr->dh    [lv][d];
    }
 
    KeyInfo.CodeVersion  = (char*)"gamer";
@@ -1712,7 +1717,10 @@ void FillIn_InputPara( InputPara_t &InputPara )
 {
 
 // simulation scale
-   InputPara.BoxSize                 = BOX_SIZE;
+   for (int d=0; d<3; d++)
+   InputPara.BoxEdgeL[d]             = amr->BoxEdgeL[d];
+   for (int d=0; d<3; d++)
+   InputPara.BoxEdgeR[d]             = amr->BoxEdgeR[d];
    for (int d=0; d<3; d++)
    InputPara.NX0_Tot[d]              = NX0_TOT[d];
    InputPara.MPI_NRank               = MPI_NRank;
@@ -2070,15 +2078,16 @@ void GetCompound_KeyInfo( hid_t &H5_TypeID )
 {
 
 // create the array type
-   const hsize_t H5_ArrDims_3Var         = 3;                        // array size of [3]
-   const hsize_t H5_ArrDims_NLv          = NLEVEL;                   // array size of [NLEVEL]
+   const hsize_t H5_ArrDims_3Var          = 3;              // array size of [3]
+   const hsize_t H5_ArrDims_NLv           = NLEVEL;         // array size of [NLEVEL]
+   const hsize_t H5_ArrDims_NLv3[2]       = { NLEVEL, 3 };  // array size of [NLEVEL][3]
 
-   const hid_t   H5_TypeID_Arr_3Double   = H5Tarray_create( H5T_NATIVE_DOUBLE, 1, &H5_ArrDims_3Var      );
-   const hid_t   H5_TypeID_Arr_3Int      = H5Tarray_create( H5T_NATIVE_INT,    1, &H5_ArrDims_3Var      );
-   const hid_t   H5_TypeID_Arr_NLvInt    = H5Tarray_create( H5T_NATIVE_INT,    1, &H5_ArrDims_NLv       );
-   const hid_t   H5_TypeID_Arr_NLvLong   = H5Tarray_create( H5T_NATIVE_LONG,   1, &H5_ArrDims_NLv       );
-   const hid_t   H5_TypeID_Arr_NLvDouble = H5Tarray_create( H5T_NATIVE_DOUBLE, 1, &H5_ArrDims_NLv       );
-
+   const hid_t   H5_TypeID_Arr_3Double    = H5Tarray_create( H5T_NATIVE_DOUBLE, 1, &H5_ArrDims_3Var );
+   const hid_t   H5_TypeID_Arr_3Int       = H5Tarray_create( H5T_NATIVE_INT,    1, &H5_ArrDims_3Var );
+   const hid_t   H5_TypeID_Arr_NLvInt     = H5Tarray_create( H5T_NATIVE_INT,    1, &H5_ArrDims_NLv  );
+   const hid_t   H5_TypeID_Arr_NLvLong    = H5Tarray_create( H5T_NATIVE_LONG,   1, &H5_ArrDims_NLv  );
+   const hid_t   H5_TypeID_Arr_NLvDouble  = H5Tarray_create( H5T_NATIVE_DOUBLE, 1, &H5_ArrDims_NLv  );
+   const hid_t   H5_TypeID_Arr_NLv3Double = H5Tarray_create( H5T_NATIVE_DOUBLE, 2,  H5_ArrDims_NLv3 );
 
 // create the "variable-length string" datatype
    hid_t  H5_TypeID_VarStr;
@@ -2091,39 +2100,39 @@ void GetCompound_KeyInfo( hid_t &H5_TypeID )
 // get the compound type
    H5_TypeID = H5Tcreate( H5T_COMPOUND, sizeof(KeyInfo_t) );
 
-   H5Tinsert( H5_TypeID, "FormatVersion",      HOFFSET(KeyInfo_t,FormatVersion  ),    H5T_NATIVE_INT          );
-   H5Tinsert( H5_TypeID, "Model",              HOFFSET(KeyInfo_t,Model          ),    H5T_NATIVE_INT          );
-   H5Tinsert( H5_TypeID, "Coordinate",         HOFFSET(KeyInfo_t,Coordinate     ),    H5T_NATIVE_INT          );
-   H5Tinsert( H5_TypeID, "Float8",             HOFFSET(KeyInfo_t,Float8         ),    H5T_NATIVE_INT          );
-   H5Tinsert( H5_TypeID, "Gravity",            HOFFSET(KeyInfo_t,Gravity        ),    H5T_NATIVE_INT          );
-   H5Tinsert( H5_TypeID, "Particle",           HOFFSET(KeyInfo_t,Particle       ),    H5T_NATIVE_INT          );
-   H5Tinsert( H5_TypeID, "NLevel",             HOFFSET(KeyInfo_t,NLevel         ),    H5T_NATIVE_INT          );
-   H5Tinsert( H5_TypeID, "NCompFluid",         HOFFSET(KeyInfo_t,NCompFluid     ),    H5T_NATIVE_INT          );
-   H5Tinsert( H5_TypeID, "NCompPassive",       HOFFSET(KeyInfo_t,NCompPassive   ),    H5T_NATIVE_INT          );
-   H5Tinsert( H5_TypeID, "PatchSize",          HOFFSET(KeyInfo_t,PatchSize      ),    H5T_NATIVE_INT          );
-   H5Tinsert( H5_TypeID, "DumpID",             HOFFSET(KeyInfo_t,DumpID         ),    H5T_NATIVE_INT          );
-   H5Tinsert( H5_TypeID, "NX0",                HOFFSET(KeyInfo_t,NX0            ),    H5_TypeID_Arr_3Int      );
-   H5Tinsert( H5_TypeID, "BoxScale",           HOFFSET(KeyInfo_t,BoxScale       ),    H5_TypeID_Arr_3Int      );
-   H5Tinsert( H5_TypeID, "NPatch",             HOFFSET(KeyInfo_t,NPatch         ),    H5_TypeID_Arr_NLvInt    );
-   H5Tinsert( H5_TypeID, "CellScale",          HOFFSET(KeyInfo_t,CellScale      ),    H5_TypeID_Arr_NLvInt    );
+   H5Tinsert( H5_TypeID, "FormatVersion",      HOFFSET(KeyInfo_t,FormatVersion  ),    H5T_NATIVE_INT           );
+   H5Tinsert( H5_TypeID, "Model",              HOFFSET(KeyInfo_t,Model          ),    H5T_NATIVE_INT           );
+   H5Tinsert( H5_TypeID, "Coordinate",         HOFFSET(KeyInfo_t,Coordinate     ),    H5T_NATIVE_INT           );
+   H5Tinsert( H5_TypeID, "Float8",             HOFFSET(KeyInfo_t,Float8         ),    H5T_NATIVE_INT           );
+   H5Tinsert( H5_TypeID, "Gravity",            HOFFSET(KeyInfo_t,Gravity        ),    H5T_NATIVE_INT           );
+   H5Tinsert( H5_TypeID, "Particle",           HOFFSET(KeyInfo_t,Particle       ),    H5T_NATIVE_INT           );
+   H5Tinsert( H5_TypeID, "NLevel",             HOFFSET(KeyInfo_t,NLevel         ),    H5T_NATIVE_INT           );
+   H5Tinsert( H5_TypeID, "NCompFluid",         HOFFSET(KeyInfo_t,NCompFluid     ),    H5T_NATIVE_INT           );
+   H5Tinsert( H5_TypeID, "NCompPassive",       HOFFSET(KeyInfo_t,NCompPassive   ),    H5T_NATIVE_INT           );
+   H5Tinsert( H5_TypeID, "PatchSize",          HOFFSET(KeyInfo_t,PatchSize      ),    H5T_NATIVE_INT           );
+   H5Tinsert( H5_TypeID, "DumpID",             HOFFSET(KeyInfo_t,DumpID         ),    H5T_NATIVE_INT           );
+   H5Tinsert( H5_TypeID, "NX0",                HOFFSET(KeyInfo_t,NX0            ),    H5_TypeID_Arr_3Int       );
+   H5Tinsert( H5_TypeID, "BoxScale",           HOFFSET(KeyInfo_t,BoxScale       ),    H5_TypeID_Arr_3Int       );
+   H5Tinsert( H5_TypeID, "NPatch",             HOFFSET(KeyInfo_t,NPatch         ),    H5_TypeID_Arr_NLvInt     );
+   H5Tinsert( H5_TypeID, "CellScale",          HOFFSET(KeyInfo_t,CellScale      ),    H5_TypeID_Arr_NLvInt     );
 
-   H5Tinsert( H5_TypeID, "Step",               HOFFSET(KeyInfo_t,Step           ),    H5T_NATIVE_LONG         );
-   H5Tinsert( H5_TypeID, "AdvanceCounter",     HOFFSET(KeyInfo_t,AdvanceCounter ),    H5_TypeID_Arr_NLvLong   );
+   H5Tinsert( H5_TypeID, "Step",               HOFFSET(KeyInfo_t,Step           ),    H5T_NATIVE_LONG          );
+   H5Tinsert( H5_TypeID, "AdvanceCounter",     HOFFSET(KeyInfo_t,AdvanceCounter ),    H5_TypeID_Arr_NLvLong    );
 #  ifdef PARTICLE
-   H5Tinsert( H5_TypeID, "Par_NPar",           HOFFSET(KeyInfo_t,Par_NPar),           H5T_NATIVE_LONG         );
-   H5Tinsert( H5_TypeID, "Par_NPassive",       HOFFSET(KeyInfo_t,Par_NPassive),       H5T_NATIVE_INT          );
+   H5Tinsert( H5_TypeID, "Par_NPar",           HOFFSET(KeyInfo_t,Par_NPar),           H5T_NATIVE_LONG          );
+   H5Tinsert( H5_TypeID, "Par_NPassive",       HOFFSET(KeyInfo_t,Par_NPassive),       H5T_NATIVE_INT           );
 #  endif
 
-   H5Tinsert( H5_TypeID, "BoxSize",            HOFFSET(KeyInfo_t,BoxSize        ),    H5_TypeID_Arr_3Double   );
-   H5Tinsert( H5_TypeID, "Time",               HOFFSET(KeyInfo_t,Time           ),    H5_TypeID_Arr_NLvDouble );
-   H5Tinsert( H5_TypeID, "CellSize",           HOFFSET(KeyInfo_t,CellSize       ),    H5_TypeID_Arr_NLvDouble );
-   H5Tinsert( H5_TypeID, "dTime_AllLv",        HOFFSET(KeyInfo_t,dTime_AllLv    ),    H5_TypeID_Arr_NLvDouble );
+   H5Tinsert( H5_TypeID, "BoxSize",            HOFFSET(KeyInfo_t,BoxSize        ),    H5_TypeID_Arr_3Double    );
+   H5Tinsert( H5_TypeID, "Time",               HOFFSET(KeyInfo_t,Time           ),    H5_TypeID_Arr_NLvDouble  );
+   H5Tinsert( H5_TypeID, "CellWidth",          HOFFSET(KeyInfo_t,CellWidth      ),    H5_TypeID_Arr_NLv3Double );
+   H5Tinsert( H5_TypeID, "dTime_AllLv",        HOFFSET(KeyInfo_t,dTime_AllLv    ),    H5_TypeID_Arr_NLvDouble  );
 #  ifdef GRAVITY
-   H5Tinsert( H5_TypeID, "AveDens_Init",       HOFFSET(KeyInfo_t,AveDens_Init   ),    H5T_NATIVE_DOUBLE       );
+   H5Tinsert( H5_TypeID, "AveDens_Init",       HOFFSET(KeyInfo_t,AveDens_Init   ),    H5T_NATIVE_DOUBLE        );
 #  endif
 
-   H5Tinsert( H5_TypeID, "CodeVersion",        HOFFSET(KeyInfo_t,CodeVersion    ),    H5_TypeID_VarStr        );
-   H5Tinsert( H5_TypeID, "DumpWallTime",       HOFFSET(KeyInfo_t,DumpWallTime   ),    H5_TypeID_VarStr        );
+   H5Tinsert( H5_TypeID, "CodeVersion",        HOFFSET(KeyInfo_t,CodeVersion    ),    H5_TypeID_VarStr         );
+   H5Tinsert( H5_TypeID, "DumpWallTime",       HOFFSET(KeyInfo_t,DumpWallTime   ),    H5_TypeID_VarStr         );
 
 
 // free memory
@@ -2364,6 +2373,7 @@ void GetCompound_InputPara( hid_t &H5_TypeID )
    const hid_t   H5_TypeID_Arr_NLvM1_2Double = H5Tarray_create( H5T_NATIVE_DOUBLE, 2,  H5_ArrDims_NLvM1_2   );
    const hid_t   H5_TypeID_Arr_NLvM1_4Double = H5Tarray_create( H5T_NATIVE_DOUBLE, 2,  H5_ArrDims_NLvM1_4   );
 #  endif
+   const hid_t   H5_TypeID_Arr_3Double       = H5Tarray_create( H5T_NATIVE_DOUBLE, 1, &H5_ArrDims_3Var      );
 
 
 // create the "variable-length string" datatype
@@ -2384,7 +2394,8 @@ void GetCompound_InputPara( hid_t &H5_TypeID )
    H5_TypeID = H5Tcreate( H5T_COMPOUND, sizeof(InputPara_t) );
 
 // simulation scale
-   H5Tinsert( H5_TypeID, "BoxSize",                 HOFFSET(InputPara_t,BoxSize                ), H5T_NATIVE_DOUBLE  );
+   H5Tinsert( H5_TypeID, "BoxEdgeL",                HOFFSET(InputPara_t,BoxEdgeL               ), H5_TypeID_Arr_3Double );
+   H5Tinsert( H5_TypeID, "BoxEdgeR",                HOFFSET(InputPara_t,BoxEdgeR               ), H5_TypeID_Arr_3Double );
    H5Tinsert( H5_TypeID, "NX0_Tot",                 HOFFSET(InputPara_t,NX0_Tot                ), H5_TypeID_Arr_3Int );
    H5Tinsert( H5_TypeID, "MPI_NRank",               HOFFSET(InputPara_t,MPI_NRank              ), H5T_NATIVE_INT     );
    H5Tinsert( H5_TypeID, "MPI_NRank_X",             HOFFSET(InputPara_t,MPI_NRank_X            ), H5_TypeID_Arr_3Int );

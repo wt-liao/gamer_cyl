@@ -59,8 +59,14 @@ void Flu_Restrict( const int FaLv, const int SonFluSg, const int FaFluSg, const 
       Aux_Error( ERROR_INFO, "no suitable target variable is found --> missing (_TOTAL) !!\n" );
 #  endif
 
+#  if ( COORDINATE != CARTESIAN )
+   Aux_Error( ERROR_INFO, "non-Cartesian coordinates do not support %s() yet !!\n", __FUNCTION__ );
+#  endif
+
+
 // nothing to do if there are no real patches at lv+1
    if ( amr->NPatchComma[SonLv][1] == 0 )    return;
+
 
 // check the synchronization
    Mis_CompareRealValue( Time[FaLv], Time[SonLv], __FUNCTION__, true );
@@ -155,14 +161,14 @@ void Flu_Restrict( const int FaLv, const int SonFluSg, const int FaFluSg, const 
             for (int i=0; i<PATCH_SIZE/2; i++)  {  I = i*2;    Ip = I+1;   ii = i + Disp_i;
 
                amr->patch[FaFluSg][FaLv][FaPID]->fluid[TFluVarIdx][kk][jj][ii]
-                  = 0.125 * ( amr->patch[SonFluSg][SonLv][SonPID]->fluid[TFluVarIdx][K ][J ][I ] +
-                              amr->patch[SonFluSg][SonLv][SonPID]->fluid[TFluVarIdx][K ][J ][Ip] +
-                              amr->patch[SonFluSg][SonLv][SonPID]->fluid[TFluVarIdx][K ][Jp][I ] +
-                              amr->patch[SonFluSg][SonLv][SonPID]->fluid[TFluVarIdx][Kp][J ][I ] +
-                              amr->patch[SonFluSg][SonLv][SonPID]->fluid[TFluVarIdx][K ][Jp][Ip] +
-                              amr->patch[SonFluSg][SonLv][SonPID]->fluid[TFluVarIdx][Kp][Jp][I ] +
-                              amr->patch[SonFluSg][SonLv][SonPID]->fluid[TFluVarIdx][Kp][J ][Ip] +
-                              amr->patch[SonFluSg][SonLv][SonPID]->fluid[TFluVarIdx][Kp][Jp][Ip]   );
+                  = (real)0.125 * ( amr->patch[SonFluSg][SonLv][SonPID]->fluid[TFluVarIdx][K ][J ][I ] +
+                                    amr->patch[SonFluSg][SonLv][SonPID]->fluid[TFluVarIdx][K ][J ][Ip] +
+                                    amr->patch[SonFluSg][SonLv][SonPID]->fluid[TFluVarIdx][K ][Jp][I ] +
+                                    amr->patch[SonFluSg][SonLv][SonPID]->fluid[TFluVarIdx][Kp][J ][I ] +
+                                    amr->patch[SonFluSg][SonLv][SonPID]->fluid[TFluVarIdx][K ][Jp][Ip] +
+                                    amr->patch[SonFluSg][SonLv][SonPID]->fluid[TFluVarIdx][Kp][Jp][I ] +
+                                    amr->patch[SonFluSg][SonLv][SonPID]->fluid[TFluVarIdx][Kp][J ][Ip] +
+                                    amr->patch[SonFluSg][SonLv][SonPID]->fluid[TFluVarIdx][Kp][Jp][Ip]   );
             }}}
          }
 
@@ -176,14 +182,14 @@ void Flu_Restrict( const int FaLv, const int SonFluSg, const int FaFluSg, const 
             for (int i=0; i<PATCH_SIZE/2; i++)  {  I = i*2;    Ip = I+1;   ii = i + Disp_i;
 
                amr->patch[FaPotSg][FaLv][FaPID]->pot[kk][jj][ii]
-                  = 0.125 * ( amr->patch[SonPotSg][SonLv][SonPID]->pot[K ][J ][I ] +
-                              amr->patch[SonPotSg][SonLv][SonPID]->pot[K ][J ][Ip] +
-                              amr->patch[SonPotSg][SonLv][SonPID]->pot[K ][Jp][I ] +
-                              amr->patch[SonPotSg][SonLv][SonPID]->pot[Kp][J ][I ] +
-                              amr->patch[SonPotSg][SonLv][SonPID]->pot[K ][Jp][Ip] +
-                              amr->patch[SonPotSg][SonLv][SonPID]->pot[Kp][Jp][I ] +
-                              amr->patch[SonPotSg][SonLv][SonPID]->pot[Kp][J ][Ip] +
-                              amr->patch[SonPotSg][SonLv][SonPID]->pot[Kp][Jp][Ip]   );
+                  = (real)0.125 * ( amr->patch[SonPotSg][SonLv][SonPID]->pot[K ][J ][I ] +
+                                    amr->patch[SonPotSg][SonLv][SonPID]->pot[K ][J ][Ip] +
+                                    amr->patch[SonPotSg][SonLv][SonPID]->pot[K ][Jp][I ] +
+                                    amr->patch[SonPotSg][SonLv][SonPID]->pot[Kp][J ][I ] +
+                                    amr->patch[SonPotSg][SonLv][SonPID]->pot[K ][Jp][Ip] +
+                                    amr->patch[SonPotSg][SonLv][SonPID]->pot[Kp][Jp][I ] +
+                                    amr->patch[SonPotSg][SonLv][SonPID]->pot[Kp][J ][Ip] +
+                                    amr->patch[SonPotSg][SonLv][SonPID]->pot[Kp][Jp][Ip]   );
             }}}
          }
 #        endif // #ifdef GRAVITY

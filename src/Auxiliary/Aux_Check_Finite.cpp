@@ -47,22 +47,19 @@ void Aux_Check_Finite( const int lv, const char *comment )
                {
                   if ( ! isfinite(Data[v]) )
                   {
+                     double xyz[3];
+                     Aux_Coord_CellIdx2CartesianCoord( lv, PID, i, j, k, xyz );
+
                      if ( Pass )
                      {
                         Aux_Message( stderr, "\"%s\" : <%s> FAILED at level %2d, Time = %13.7e, Step = %ld !!\n",
                                      comment, __FUNCTION__, lv, Time[lv], Step );
-                        Aux_Message( stderr, "%4s\t%7s\t\t%19s\t%8s\n", "Rank", "PatchID", "Coordinate",
-                                                                        "Variable" );
+                        Aux_Message( stderr, "%4s   %7s   %43s   %8s\n", "Rank", "PatchID", "Coordinates", "Variable" );
 
                         Pass = false;
                      }
 
-                     Aux_Message( stderr, "%4d\t%7d\t\t(%5d,%5d,%5d)\t%8d\n",
-                                  MPI_Rank, PID,
-                                  i*amr->scale[lv] + amr->patch[0][lv][PID]->corner[0],
-                                  j*amr->scale[lv] + amr->patch[0][lv][PID]->corner[1],
-                                  k*amr->scale[lv] + amr->patch[0][lv][PID]->corner[2],
-                                  v );
+                     Aux_Message( stderr, "%4d   %7d   (%13.7e,%13.7e,%13.7e)   %8d\n", MPI_Rank, PID, xyz[0], xyz[1], xyz[2], v );
                   } // if ( ! isfinite(Data[v]) )
                } // for (int v=0; v<NVar; v++)
             } // i,j,k

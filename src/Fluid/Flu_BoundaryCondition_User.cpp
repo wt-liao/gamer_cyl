@@ -2,11 +2,11 @@
 #include "GAMER.h"
 
 // declare as static so that other functions cannot invoke it directly and must use the function pointer
-static void BC_User( real fluid[], const double x, const double y, const double z, const double Time,
+static void BC_User( real fluid[], const double X, const double Y, const double Z, const double Time,
                      const int lv, double AuxArray[] );
 
 // this function pointer may be overwritten by various test problem initializers
-void (*BC_User_Ptr)( real fluid[], const double x, const double y, const double z, const double Time,
+void (*BC_User_Ptr)( real fluid[], const double X, const double Y, const double Z, const double Time,
                      const int lv, double AuxArray[] ) = BC_User;
 
 
@@ -23,14 +23,14 @@ void (*BC_User_Ptr)( real fluid[], const double x, const double y, const double 
 //                3. Enabled by the runtime options "OPT__BC_FLU_* == 4"
 //
 // Parameter   :  fluid    : Fluid field to be set
-//                x/y/z    : Physical coordinates
+//                X/Y/Z    : Physical coordinates in the adopted coordinate system
 //                Time     : Physical time
 //                lv       : Refinement level
 //                AuxArray : Auxiliary array
 //
 // Return      :  fluid
 //-------------------------------------------------------------------------------------------------------
-void BC_User( real fluid[], const double x, const double y, const double z, const double Time,
+void BC_User( real fluid[], const double X, const double Y, const double Z, const double Time,
               const int lv, double AuxArray[] )
 {
 
@@ -38,16 +38,14 @@ void BC_User( real fluid[], const double x, const double y, const double z, cons
 // ##########################################################################################################
 // Example 1 : set to time-independent values for HYDRO
    /*
-   const double C[3] = { 0.5*amr->BoxSize[0],
-                         0.5*amr->BoxSize[1],
-                         0.5*amr->BoxSize[2] };
+   const double *C   = amr->BoxCenter;
    const real Height = 100.0;
    const real Width  =  64.0;
    const real Gamma2 = real( 1.0/GAMMA/(GAMMA-1.0) );
    const real Cs     = 1.0;
    const real Rho0   = 1.0;
 
-   fluid[DENS] = Rho0 + Height*EXP(  -( SQR(x-C[0]) + SQR(y-C[1]) + SQR(z-C[2]) ) / SQR(Width)  );
+   fluid[DENS] = Rho0 + Height*EXP(  -( SQR(X-C[0]) + SQR(Y-C[1]) + SQR(Z-C[2]) ) / SQR(Width)  );
    fluid[MOMX] = 0.0;
    fluid[MOMY] = 0.0;
    fluid[MOMZ] = 0.0;
@@ -90,7 +88,7 @@ void BC_User( real fluid[], const double x, const double y, const double z, cons
 //-------------------------------------------------------------------------------------------------------
 void Flu_BoundaryCondition_User( real *Array, const int NVar_Flu, const int ArraySizeX, const int ArraySizeY,
                                  const int ArraySizeZ, const int Idx_Start[], const int Idx_End[],
-                                 const int TFluVarIdxList[], const double Time, const double dh, const double *Corner,
+                                 const int TFluVarIdxList[], const double Time, const double dh[], const double *Corner,
                                  const int TVar, const int lv )
 {
 
@@ -98,9 +96,10 @@ void Flu_BoundaryCondition_User( real *Array, const int NVar_Flu, const int Arra
    if ( BC_User_Ptr == NULL )    Aux_Error( ERROR_INFO, "BC_User_Ptr == NULL !!\n" );
 
 
-   const double x0 = Corner[0] + (double)Idx_Start[0]*dh;   // starting x,y,z coordinates
-   const double y0 = Corner[1] + (double)Idx_Start[1]*dh;
-   const double z0 = Corner[2] + (double)Idx_Start[2]*dh;
+// starting coordinates in the adopted coordinate system
+   const double X0 = Corner[0] + (double)Idx_Start[0]*dh[0];
+   const double Y0 = Corner[1] + (double)Idx_Start[1]*dh[1];
+   const double Z0 = Corner[2] + (double)Idx_Start[2]*dh[2];
 
 #  if   ( MODEL == HYDRO )
    const bool CheckMinPres_Yes = true;
@@ -129,13 +128,13 @@ void Flu_BoundaryCondition_User( real *Array, const int NVar_Flu, const int Arra
 // set the boundary values
    int    i, j, k, v2;
    real   BVal[NCOMP_TOTAL];
-   double x, y, z;
+   double X, Y, Z;
 
-   for (k=Idx_Start[2], z=z0; k<=Idx_End[2]; k++, z+=dh)
-   for (j=Idx_Start[1], y=y0; j<=Idx_End[1]; j++, y+=dh)
-   for (i=Idx_Start[0], x=x0; i<=Idx_End[0]; i++, x+=dh)
+   for (k=Idx_Start[2], Z=Z0; k<=Idx_End[2]; k++, Z+=dh[2])
+   for (j=Idx_Start[1], Y=Y0; j<=Idx_End[1]; j++, Y+=dh[1])
+   for (i=Idx_Start[0], X=X0; i<=Idx_End[0]; i++, X+=dh[0])
    {
-      BC_User_Ptr( BVal, x, y, z, Time, lv, NULL );
+      BC_User_Ptr( BVal, X, Y, Z, Time, lv, NULL );
 
       for (int v=0; v<NVar_Flu; v++)   Array3D[v][k][j][i] = BVal[ TFluVarIdxList[v] ];
 

@@ -145,7 +145,7 @@ void CUAPI_Asyn_PoissonGravitySolver( const real h_Rho_Array    [][RHO_NXT][RHO_
                                       const real h_Pot_Array_USG[][USG_NXT_G][USG_NXT_G][USG_NXT_G],
                                       const real h_Flu_Array_USG[][GRA_NIN-1][PS1][PS1][PS1],
                                             char h_DE_Array     [][PS1][PS1][PS1],
-                                      const int NPatchGroup, const real dt, const real dh, const int SOR_Min_Iter,
+                                      const int NPatchGroup, const real dt, const real dh[], const int SOR_Min_Iter,
                                       const int SOR_Max_Iter, const real SOR_Omega, const int MG_Max_Iter,
                                       const int MG_NPre_Smooth, const int MG_NPost_Smooth,
                                       const real MG_Tolerated_Error, const real Poi_Coeff,
@@ -164,13 +164,15 @@ void CUAPI_Asyn_PoissonGravitySolver( const real h_Rho_Array    [][RHO_NXT][RHO_
    const dim3 Gra_Block_Dim( PATCH_SIZE, PATCH_SIZE, GRA_BLOCK_SIZE_Z );
    const int  NPatch      = NPatchGroup*8;
 #  if   ( POT_SCHEME == SOR )
-   const real Poi_Const   = Poi_Coeff*dh*dh;
+//###: COORD-FIX: use dh instead of dh[0]
+   const real Poi_Const   = Poi_Coeff*dh[0]*dh[0];
    const real SOR_Omega_6 = SOR_Omega/6.0;
 #  endif
 
 // model-dependent constants
 #  if   ( MODEL == HYDRO )
-   const real Gra_Const   = ( P5_Gradient ) ? -dt/(12.0*dh) : -dt/( 2.0*dh);
+//###: COORD-FIX: use dh instead of dh[0]
+   const real Gra_Const   = ( P5_Gradient ) ? -dt/(12.0*dh[0]) : -dt/(2.0*dh[0]);
 
 #  elif ( MODEL == MHD )
 #  warning : WAIT MHD !!!
@@ -237,6 +239,15 @@ void CUAPI_Asyn_PoissonGravitySolver( const real h_Rho_Array    [][RHO_NXT][RHO_
 
    if ( Poisson  &&  ( IntScheme != INT_CQUAD  &&  IntScheme != INT_QUAD )  )
       Aux_Error( ERROR_INFO, "incorrect parameter %s = %d !!\n", "IntScheme", IntScheme );
+
+#  if ( COORDINATE == CARTESIAN )
+   if (  !Mis_CompareRealValue( dh[0], dh[1], NULL, false )  ||
+         !Mis_CompareRealValue( dh[0], dh[2], NULL, false )    )
+      Aux_Error( ERROR_INFO, "Currently the Cartesian coordinates assume dh[0] (%20.14e) = dh[1] (%20.14e) = dh[2] (%20.14e) !!\n",
+                 dh[0], dh[1], dh[2] );
+#  else
+   Aux_Error( ERROR_INFO, "non-Cartesian coordinates do not support %s() yet !!\n", __FUNCTION__ );
+#  endif
 
 
    int *NPatch_per_Stream = new int [GPU_NStream];
@@ -360,11 +371,12 @@ void CUAPI_Asyn_PoissonGravitySolver( const real h_Rho_Array    [][RHO_NXT][RHO_
 
 #        elif ( POT_SCHEME == MG  )
 
+//###: COORD-FIX: use dh instead of dh[0]
          CUPOT_PoissonSolver_MG             <<< NPatch_per_Stream[s], Poi_Block_Dim, 0, Stream[s] >>>
                                             ( d_Rho_Array_P     + UsedPatch[s],
                                               d_Pot_Array_P_In  + UsedPatch[s],
                                               d_Pot_Array_P_Out + UsedPatch[s],
-                                              dh, MG_Max_Iter, MG_NPre_Smooth, MG_NPost_Smooth, MG_Tolerated_Error,
+                                              dh[0], MG_Max_Iter, MG_NPre_Smooth, MG_NPost_Smooth, MG_Tolerated_Error,
                                               Poi_Coeff, IntScheme );
 
 #        else
@@ -379,6 +391,7 @@ void CUAPI_Asyn_PoissonGravitySolver( const real h_Rho_Array    [][RHO_NXT][RHO_
       if ( GraAcc )
       {
 #        if   ( MODEL == HYDRO )
+//###: COORD-FIX: use dh instead of dh[0]
          CUPOT_HydroGravitySolver <<< NPatch_per_Stream[s], Gra_Block_Dim, 0, Stream[s] >>>
                                   ( d_Flu_Array_G     + UsedPatch[s],
                                     d_Pot_Array_P_Out + UsedPatch[s],
@@ -387,16 +400,17 @@ void CUAPI_Asyn_PoissonGravitySolver( const real h_Rho_Array    [][RHO_NXT][RHO_
                                     d_Flu_Array_USG_G + UsedPatch[s],
                                     d_DE_Array_G      + UsedPatch[s],
                                     Gra_Const, P5_Gradient, GravityType,
-                                    TimeNew, TimeOld, dt, dh, MinEint );
+                                    TimeNew, TimeOld, dt, dh[0], MinEint );
 #        elif ( MODEL == MHD )
 #        warning : WAITH MHD !!!
 
 #        elif ( MODEL == ELBDM )
+//###: COORD-FIX: use dh instead of dh[0]
          CUPOT_ELBDMGravitySolver <<< NPatch_per_Stream[s], Gra_Block_Dim, 0, Stream[s] >>>
                                   ( d_Flu_Array_G     + UsedPatch[s],
                                     d_Pot_Array_P_Out + UsedPatch[s],
                                     d_Corner_Array_G  + UsedPatch[s],
-                                    ELBDM_EtaDt, dh, ELBDM_Lambda, ExtPot, TimeNew );
+                                    ELBDM_EtaDt, dh[0], ELBDM_Lambda, ExtPot, TimeNew );
 
 #        else
 #        error : ERROR : unsupported MODEL !!

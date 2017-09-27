@@ -173,7 +173,7 @@ void Init_Restart_HDF5( const char *FileName )
 
    LoadField( "BoxSize",         KeyInfo.BoxSize,        H5_SetID_KeyInfo, H5_TypeID_KeyInfo,    Fatal,  amr->BoxSize,  3,    Fatal );
    LoadField( "Time",            KeyInfo.Time,           H5_SetID_KeyInfo, H5_TypeID_KeyInfo,    Fatal,  NullPtr,      -1, NonFatal );
-   LoadField( "CellSize",        KeyInfo.CellSize,       H5_SetID_KeyInfo, H5_TypeID_KeyInfo,    Fatal,  NullPtr,      -1, NonFatal );
+   LoadField( "CellWidth",       KeyInfo.CellWidth[0],   H5_SetID_KeyInfo, H5_TypeID_KeyInfo, NonFatal,  amr->dh[0],    3*KeyInfo.NLevel, Fatal );
    LoadField( "dTime_AllLv",     KeyInfo.dTime_AllLv,    H5_SetID_KeyInfo, H5_TypeID_KeyInfo, NonFatal,  NullPtr,      -1, NonFatal );
 #  ifdef GRAVITY
    LoadField( "AveDens_Init",   &KeyInfo.AveDens_Init,   H5_SetID_KeyInfo, H5_TypeID_KeyInfo,    Fatal,  NullPtr,      -1, NonFatal );
@@ -706,7 +706,7 @@ void Init_Restart_HDF5( const char *FileName )
                   if (  TABLE_02( LocalID, 'x'+d, 0, 1 ) != (amr->patch[0][lv][PID]->corner[d]/PatchScale)%2  )
                   {
                      Output_Patch( lv, PID, 0, 0, NULL );
-                     Aux_Error( ERROR_INFO, "lv %d, PID %d, LocalID does not match patch corner (patch has been output) !!\n",
+                     Aux_Error( ERROR_INFO, "lv %d, PID %d, LocalID does not match patch corner !!\n",
                                  lv, PID );
                   }
                }
@@ -1515,7 +1515,8 @@ void Check_InputPara( const char *FileName )
    InputPara_t RS;   // RS = ReStart
 
 // simulation scale
-   LoadField( "BoxSize",                 &RS.BoxSize,                 SID, TID, NonFatal, &RT.BoxSize,                  1,    Fatal );
+   LoadField( "BoxEdgeL",                 RS.BoxEdgeL,                SID, TID, NonFatal,  RT.BoxEdgeL,                 3,    Fatal );
+   LoadField( "BoxEdgeR",                 RS.BoxEdgeR,                SID, TID, NonFatal,  RT.BoxEdgeR,                 3,    Fatal );
    LoadField( "NX0_Tot",                  RS.NX0_Tot,                 SID, TID, NonFatal,  RT.NX0_Tot,                  3,    Fatal );
    LoadField( "MPI_NRank",               &RS.MPI_NRank,               SID, TID, NonFatal, &RT.MPI_NRank,                1, NonFatal );
    LoadField( "MPI_NRank_X",              RS.MPI_NRank_X,             SID, TID, NonFatal,  RT.MPI_NRank_X,              3, NonFatal );

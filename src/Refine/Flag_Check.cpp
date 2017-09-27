@@ -65,6 +65,7 @@ bool Flag_Check( const int lv, const int PID, const int i, const int j, const in
 // ===========================================================================================
    if ( OPT__FLAG_PAR_MASS_CELL )
    {
+//###: COORD-FIX: support non-Cartesian coordinates for ParDens and dv
       Flag |= ( ParDens[k][j][i]*dv > FlagTable_ParMassCell[lv] );
       if ( Flag )    return Flag;
    }
@@ -134,9 +135,42 @@ bool Flag_Check( const int lv, const int PID, const int i, const int j, const in
                                          Fluid[ENGY][k][j][i], Gamma_m1, CheckMinPres_Yes, MIN_PRES );
 #     endif // #ifdef DUAL_ENERGY ... else ...
 
-      Flag |= ( SQR(amr->dh[lv]) > JeansCoeff*Pres/SQR(Dens) );
+      double dh_max = TINY_NUMBER;
+
+#     if   ( COORDINATE == CARTESIAN )
+      const double dx = amr->dh[lv][0];
+      const double dy = amr->dh[lv][1];
+      const double dz = amr->dh[lv][2];
+
+      dh_max = fmax( dx, dy );
+      dh_max = fmax( dh_max, dz );
+
+#     elif ( COORDINATE == CYLINDRICAL )
+      const double dr   = amr->dh[lv][0];
+      const double dphi = amr->dh[lv][1];
+      const double dz   = amr->dh[lv][2];
+      const double r    = Aux_Coord_CellIdx2AdoptedCoord( lv, PID, 0, i );
+
+      dh_max = fmax( dr, dz );
+      dh_max = fmax( dh_max, r*dphi );
+
+#     elif ( COORDINATE == SPHERICAL )
+      const double dr     = amr->dh[lv][0];
+      const double dtheta = amr->dh[lv][1];
+      const double dphi   = amr->dh[lv][2];
+      const double r      = Aux_Coord_CellIdx2AdoptedCoord( lv, PID, 0, i );
+      const double theta  = Aux_Coord_CellIdx2AdoptedCoord( lv, PID, 1, j );
+
+      dh_max = fmax( dr, r*dtheta );
+      dh_max = fmax( dh_max, r*sin(theta)*dphi );
+
+#     else
+#     error : ERROR : UNSUPPORTED COORDINATE
+#     endif // COORDINATE
+
+      Flag |= ( SQR(dh_max) > JeansCoeff*Pres/SQR(Dens) );
       if ( Flag )    return Flag;
-   }
+   } // if ( OPT__FLAG_JEANS )
 #  endif
 
 

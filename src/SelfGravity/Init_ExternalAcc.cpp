@@ -45,9 +45,9 @@ void Init_ExternalAcc()
    const double GM  = NEWTON_G*M;
    const double Eps = 0.0;
 
-   ExtAcc_AuxArray[0] = 0.5*amr->BoxSize[0];
-   ExtAcc_AuxArray[1] = 0.5*amr->BoxSize[1];
-   ExtAcc_AuxArray[2] = 0.5*amr->BoxSize[2];
+   ExtAcc_AuxArray[0] = amr->BoxCenter[0];
+   ExtAcc_AuxArray[1] = amr->BoxCenter[1];
+   ExtAcc_AuxArray[2] = amr->BoxCenter[2];
    ExtAcc_AuxArray[3] = GM;
    ExtAcc_AuxArray[4] = Eps;
    */

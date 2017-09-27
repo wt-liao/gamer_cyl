@@ -41,8 +41,8 @@ void YT_SetParameter( const int NPatchAllLv )
    for (int d=0; d<3; d++)
    {
       param_yt.domain_dimensions[d] = NX0_TOT[d];
-      param_yt.domain_left_edge [d] = 0.0;
-      param_yt.domain_right_edge[d] = amr->BoxSize[d];
+      param_yt.domain_left_edge [d] = amr->BoxEdgeL[d];
+      param_yt.domain_right_edge[d] = amr->BoxEdgeR[d];
       param_yt.periodicity      [d] = ( OPT__BC_FLU[0] == BC_FLU_PERIODIC ) ? 1 : 0;
    }
 

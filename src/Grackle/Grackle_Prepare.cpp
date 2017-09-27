@@ -27,7 +27,7 @@ void Grackle_Prepare( const int lv, real h_Che_Array[], const int NPG, const int
    const int  Idx_sEint       = 1;
    const int  Idx_Ek          = 2;
    const int  Idx_Metal       = 3;
-   const real dh              = (real)amr->dh[lv];
+   const real dh              = (real)amr->dh[lv][0];    // Grackle assumes dh[0]==dh[1]==dh[2] which is only used for H2 self-shielding approximation
    const int  Size1pg         = CUBE(PS2);
    const int  Size1v          = NPG*Size1pg;
 #  ifdef DUAL_ENERGY

@@ -37,7 +37,7 @@
 //                   --> SOFTEN_PLUMMER & SOFTEN_RUFFERT
 //
 // Parameter   :  Acc       : Array to store the output external acceleration
-//                x/y/z     : Target spatial coordinates
+//                X/Y/Z     : Target spatial coordinates in the adopted coordinate system
 //                Time      : Current physical time
 //                UserArray : User-provided auxiliary array (set by "Init_ExternalAcc_Ptr")
 //
@@ -45,18 +45,18 @@
 //-----------------------------------------------------------------------------------------
 #ifdef __CUDACC__
 __forceinline__ __device__
-void CUPOT_ExternalAcc( real Acc[], const double x, const double y, const double z, const double Time, const double UserArray[] )
+void CUPOT_ExternalAcc( real Acc[], const double X, const double Y, const double Z, const double Time, const double UserArray[] )
 #else
-void   CPU_ExternalAcc( real Acc[], const double x, const double y, const double z, const double Time, const double UserArray[] )
+void   CPU_ExternalAcc( real Acc[], const double X, const double Y, const double Z, const double Time, const double UserArray[] )
 #endif
 {
 
    const double Cen[3] = { UserArray[0], UserArray[1], UserArray[2] };
    const real GM       = (real)UserArray[3];
    const real eps      = (real)UserArray[4];
-   const real dx       = (real)(x - Cen[0]);
-   const real dy       = (real)(y - Cen[1]);
-   const real dz       = (real)(z - Cen[2]);
+   const real dx       = (real)(X - Cen[0]);
+   const real dy       = (real)(Y - Cen[1]);
+   const real dz       = (real)(Z - Cen[2]);
    const real r        = SQRT( dx*dx + dy*dy + dz*dz );
 
 // Plummer

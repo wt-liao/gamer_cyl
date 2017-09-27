@@ -42,7 +42,14 @@ void Flag_Real( const int lv, const UseLBFunc_t UseLBFunc )
    const int  FlagBuf                 = ( lv == MAX_LEVEL-1 ) ? FLAG_BUFFER_SIZE_MAXM1_LV :
                                         ( lv == MAX_LEVEL-2 ) ? FLAG_BUFFER_SIZE_MAXM2_LV :
                                                                 FLAG_BUFFER_SIZE;
-   const real dv                      = CUBE( amr->dh[lv] );
+//###: COORD-FIX: support non-Cartesian coordinates for OPT__FLAG_PAR_MASS_CELL
+// assuming Cartesian coordinates since currently "dv" is only used for OPT__FLAG_PAR_MASS_CELL and
+// particles do not support non-Cartesian coordinates, at least not for now
+#  if ( COORDINATE == CARTESIAN )
+   const real dv                      = Aux_Coord_CellIdx2Volume( lv, NULL_INT, NULL_INT, NULL_INT, NULL_INT );
+#  else
+   const real dv                      = NULL_REAL;
+#  endif
    const bool IntPhase_No             = false;                 // for invoking "Prepare_PatchData"
    const bool DE_Consistency_No       = false;                 // for invoking "Prepare_PatchData"
    const int  NPG                     = 1;                     // for invoking "Prepare_PatchData"
@@ -195,7 +202,7 @@ void Flag_Real( const int lv, const UseLBFunc_t UseLBFunc )
                for (int d=0; d<3; d++)
                {
                   int CornerL = amr->patch[0][lv][PID]->corner[d];
-                  int CornerR = CornerL + Mis_Cell2Scale( PS1, lv );
+                  int CornerR = CornerL + PS1*amr->scale[lv];
 
                   if ( CornerL <= 0                + NoRefineBoundaryRegion  ||
                        CornerR >= amr->BoxScale[d] - NoRefineBoundaryRegion     )
@@ -481,7 +488,7 @@ void Flag_Real( const int lv, const UseLBFunc_t UseLBFunc )
         for (int d=0; d<3; d++)
         {
            int CornerL = amr->patch[0][lv][PID]->corner[d];
-           int CornerR = CornerL + Mis_Cell2Scale( PS1, lv );
+           int CornerR = CornerL + PS1*amr->scale[lv];
 
            if ( CornerL <= 0                + NoRefineBoundaryRegion  ||
                 CornerR >= amr->BoxScale[d] - NoRefineBoundaryRegion     )

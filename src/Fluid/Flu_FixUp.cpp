@@ -18,9 +18,9 @@
 void Flu_FixUp( const int lv )
 {
 
-   const real Const[6]   = { real(-1.0/amr->dh[lv]), real(+1.0/amr->dh[lv]),
-                             real(-1.0/amr->dh[lv]), real(+1.0/amr->dh[lv]),
-                             real(-1.0/amr->dh[lv]), real(+1.0/amr->dh[lv]) };
+   const real Const[6]   = { real(-1.0/amr->dh[lv][0]), real(+1.0/amr->dh[lv][0]),
+                             real(-1.0/amr->dh[lv][1]), real(+1.0/amr->dh[lv][1]),
+                             real(-1.0/amr->dh[lv][2]), real(+1.0/amr->dh[lv][2]) };
    const int  FluSg      = amr->FluSg[lv];
    const int  Offset[6]  = { 0, PS1-1, 0, (PS1-1)*PS1, 0, (PS1-1)*SQR(PS1) }; // x=0/PS1-1, y=0/PS1-1, z=0/PS1-1 faces
    const int  didx[3][2] = { PS1, SQR(PS1), 1, SQR(PS1), 1, PS1 };
@@ -92,6 +92,10 @@ void Flu_FixUp( const int lv )
 #     endif // #if ( MODEL == ELBDM ) ... elif ...
 
 #     endif // #ifdef GAMER_DEBUG
+
+#     if ( COORDINATE != CARTESIAN )
+      Aux_Error( ERROR_INFO, "non-Cartesian coordinates do not support %s() yet !!\n", __FUNCTION__ );
+#     endif
 
 
 #     if (  ( MODEL == HYDRO || MODEL == MHD )  &&  defined DUAL_ENERGY  )

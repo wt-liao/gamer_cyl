@@ -41,11 +41,17 @@ void Par_PassParticle2Sibling( const int lv, const bool TimingSendPar )
    const int    SibID[3][3][3]   = {  { {18, 10, 19}, {14,  4, 16}, {20, 11, 21} },
                                       { { 6,  2,  7}, { 0, -1,  1}, { 8,  3,  9} },
                                       { {22, 12, 23}, {15,  5, 17}, {24, 13, 25} }  };
-   const double dh_min           = amr->dh[TOP_LEVEL];
-   const double BoxEdge[3]       = { (NX0_TOT[0]*(1<<TOP_LEVEL))*dh_min,
-                                     (NX0_TOT[1]*(1<<TOP_LEVEL))*dh_min,
-                                     (NX0_TOT[2]*(1<<TOP_LEVEL))*dh_min }; // prevent from the round-off error problem
-// ParPos should NOT be used after calling Par_LB_ExchangeParticleBetweenPatch since amr->Par->ParVar may be reallocated
+   const double *dh_min          = amr->dh[TOP_LEVEL];
+
+// instead of using amr->BoxEdgeR[] directly, here we calculate it similarly to patch->EdgeR[] to prevent from the round-off
+// error problem (not sure if necessary)
+   const double *BoxSize         = amr->BoxSize;
+   const double *BoxEdgeL        = amr->BoxEdgeL;
+   const double  BoxEdgeR[3]     = { amr->BoxEdgeL[0] + amr->BoxScale[0]*dh_min[0],
+                                     amr->BoxEdgeL[1] + amr->BoxScale[1]*dh_min[1],
+                                     amr->BoxEdgeL[2] + amr->BoxScale[2]*dh_min[2] };
+
+// ParPos should NOT be used after calling Par_LB_ExchangeParticleBetweenPatch() since amr->Par->ParVar may be reallocated
    real *ParPos[3]               = { amr->Par->PosX, amr->Par->PosY, amr->Par->PosZ };
 
    int     NPar_Remove_Tot=0;
@@ -97,36 +103,40 @@ void Par_PassParticle2Sibling( const int lv, const bool TimingSendPar )
 //          2-2. reset particle position for periodic B.C.
             if ( OPT__BC_POT == BC_POT_PERIODIC  &&  ijk[d] != 1 )
             {
-               if ( ParPos[d][ParID] < 0.0 )
+               if ( ParPos[d][ParID] < BoxEdgeL[d] )
                {
-                  ParPos[d][ParID] = ParPos[d][ParID] + BoxEdge[d];
+                  ParPos[d][ParID] = ParPos[d][ParID] + BoxSize[d];
 
 //                prevent from the round-off error problem
-                  if ( ParPos[d][ParID] == BoxEdge[d] )
+                  if ( ParPos[d][ParID] == BoxEdgeR[d] )
                   {
                      ijk[d]           = 1;
-                     ParPos[d][ParID] = 0.0;
+                     ParPos[d][ParID] = BoxEdgeL[d];
                   }
 
 #                 ifdef DEBUG_PARTICLE
-                  if ( ParPos[d][ParID] < 0.0  ||  ParPos[d][ParID] >= BoxEdge[d] )
-                     Aux_Error( ERROR_INFO, "Dim %d: ParPos[%ld] (%20.14e) < 0.0  ||  >= BoxEdge (%20.14e) !!\n",
-                                d, ParID, ParPos[d][ParID], BoxEdge[d] );
+                  if ( BoxEdgeL[d] != EdgeL[d] )
+                     Aux_Error( ERROR_INFO, "Dim %d: BoxEdgeL (%20.14e) != EdgeL (%20.14e) !!\n",
+                                d, BoxEdgeL[d], EdgeL[d] );
+
+                  if ( ParPos[d][ParID] < BoxEdgeL[d]  ||  ParPos[d][ParID] >= BoxEdgeR[d] )
+                     Aux_Error( ERROR_INFO, "Dim %d: ParPos[%ld] (%20.14e) < BoxEdgeL (%20.14e)  ||  >= BoxEdgeR (%20.14e) !!\n",
+                                d, ParID, ParPos[d][ParID], BoxEdgeL[d], BoxEdgeR[d] );
 #                 endif
                }
 
-               else if ( ijk[d] == 2  &&  ParPos[d][ParID] >= BoxEdge[d] )
+               else if ( ijk[d] == 2  &&  ParPos[d][ParID] >= BoxEdgeR[d] )
                {
-                  ParPos[d][ParID] = ParPos[d][ParID] - BoxEdge[d];
+                  ParPos[d][ParID] = ParPos[d][ParID] - BoxSize[d];
 
 #                 ifdef DEBUG_PARTICLE
-                  if ( BoxEdge[d] != EdgeR[d] )
-                     Aux_Error( ERROR_INFO, "Dim %d: BoxEdge (%20.14e) != EdgeR (%20.14e) !!\n",
-                                d, BoxEdge[d], EdgeR[d] );
+                  if ( BoxEdgeR[d] != EdgeR[d] )
+                     Aux_Error( ERROR_INFO, "Dim %d: BoxEdgeR (%20.14e) != EdgeR (%20.14e) !!\n",
+                                d, BoxEdgeR[d], EdgeR[d] );
 
-                  if ( ParPos[d][ParID] < 0.0  ||  ParPos[d][ParID] >= BoxEdge[d] )
-                     Aux_Error( ERROR_INFO, "Dim %d: ParPos[%ld] (%20.14e) < 0.0  ||  >= BoxEdge (%20.14e) !!\n",
-                                d, ParID, ParPos[d][ParID], BoxEdge[d] );
+                  if ( ParPos[d][ParID] < BoxEdgeL[d]  ||  ParPos[d][ParID] >= BoxEdgeR[d] )
+                     Aux_Error( ERROR_INFO, "Dim %d: ParPos[%ld] (%20.14e) < BoxEdgeL (%20.14e)  ||  >= BoxEdgeR (%20.14e) !!\n",
+                                d, ParID, ParPos[d][ParID], BoxEdgeL[d], BoxEdgeR[d] );
 #                 endif
                }
             } // if ( OPT__BC_POT == BC_POT_PERIODIC  &&  ijk[d] != 1 )
@@ -382,23 +392,25 @@ void Par_PassParticle2Sibling( const int lv, const bool TimingSendPar )
 // Function    :  Par_WithinActiveRegion
 // Description :  Check whether the input coordinates are within the active region
 //
-// Note        :  1. Active region is defined as [RemoveCell ... BoxSize-RemoveCell]
+// Note        :  1. Active region is defined as [BoxEdgeL+RemoveCell ... BoxEdgeR-RemoveCell]
 //                2. Useful only for non-periodic particles
 //                   --> For removing particles lying too close to the simulation boundaries, where
 //                       the potential extrapolation can lead to large errors
 //
-// Parameter   :  x/y/z : Input coordinates
+// Parameter   :  X/Y/Z : Input coordinates in the adopted coordinate system
 //
 // Return      :  true/false  : inside/outside the active region
 //-------------------------------------------------------------------------------------------------------
-bool Par_WithinActiveRegion( const real x, const real y, const real z )
+bool Par_WithinActiveRegion( const real X, const real Y, const real Z )
 {
 
-   const double RemoveZone = amr->Par->RemoveCell*amr->dh[0];
+   const double RemoveZone[3] = { amr->Par->RemoveCell*amr->dh[0][0],
+                                  amr->Par->RemoveCell*amr->dh[0][1],
+                                  amr->Par->RemoveCell*amr->dh[0][2] };
 
-   if ( x < RemoveZone  ||  x > amr->BoxSize[0]-RemoveZone )   return false;
-   if ( y < RemoveZone  ||  y > amr->BoxSize[1]-RemoveZone )   return false;
-   if ( z < RemoveZone  ||  z > amr->BoxSize[2]-RemoveZone )   return false;
+   if ( X < amr->BoxEdgeL[0]+RemoveZone[0]  ||  X > amr->BoxEdgeR[0]-RemoveZone[0] )   return false;
+   if ( Y < amr->BoxEdgeL[1]+RemoveZone[1]  ||  Y > amr->BoxEdgeR[1]-RemoveZone[1] )   return false;
+   if ( Z < amr->BoxEdgeL[2]+RemoveZone[2]  ||  Z > amr->BoxEdgeR[2]-RemoveZone[2] )   return false;
 
    return true;
 

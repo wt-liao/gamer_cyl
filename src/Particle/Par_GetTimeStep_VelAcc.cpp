@@ -31,8 +31,18 @@
 void Par_GetTimeStep_VelAcc( double &dt_vel, double &dt_acc, const int lv )
 {
 
+// check
 #  ifdef COMOVING
 #  error : ERROR : COMOVING is not supported yet !!
+#  endif
+
+#  if ( COORDINATE == CARTESIAN )
+   if (  !Mis_CompareRealValue( amr->dh[lv][0], amr->dh[lv][1], NULL, false )  ||
+         !Mis_CompareRealValue( amr->dh[lv][0], amr->dh[lv][2], NULL, false )    )
+      Aux_Error( ERROR_INFO, "Currently the Cartesian coordinates assume dh[0] (%20.14e) = dh[1] (%20.14e) = dh[2] (%20.14e) !!\n",
+                 amr->dh[lv][0], amr->dh[lv][1], amr->dh[lv][2] );
+#  else
+   Aux_Error( ERROR_INFO, "non-Cartesian coordinates do not support %s() yet !!\n", __FUNCTION__ );
 #  endif
 
 
@@ -110,11 +120,13 @@ void Par_GetTimeStep_VelAcc( double &dt_vel, double &dt_acc, const int lv )
 
 
 // get the time-step in this rank
+//###: COORD-FIX: use dh instead of dh[0]
    double dt_vel_local, dt_acc_local;
-   dt_vel_local =       amr->dh[lv] / MaxVel;
+   dt_vel_local =       amr->dh[lv][0] / MaxVel;
 
+//###: COORD-FIX: use dh instead of dh[0]
    if ( UseAcc )
-   dt_acc_local = sqrt( amr->dh[lv] / MaxAcc );
+   dt_acc_local = sqrt( amr->dh[lv][0] / MaxAcc );
 
 
 // get the minimum time-step in all ranks

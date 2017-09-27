@@ -78,7 +78,7 @@ extern cudaStream_t *Stream;
 //-------------------------------------------------------------------------------------------------------
 void CUAPI_Asyn_dtSolver( const Solver_t TSolver, real h_dt_Array[], const real h_Flu_Array[][NCOMP_FLUID][ CUBE(PS1) ],
                           const real h_Pot_Array[][ CUBE(GRA_NXT) ], const double h_Corner_Array[][3],
-                          const int NPatchGroup, const real dh, const real Safety, const real Gamma, const real MinPres,
+                          const int NPatchGroup, const real dh[], const real Safety, const real Gamma, const real MinPres,
                           const bool P5_Gradient, const OptGravityType_t GravityType, const bool ExtPot,
                           const double TargetTime, const int GPU_NStream )
 {
@@ -111,6 +111,15 @@ void CUAPI_Asyn_dtSolver( const Solver_t TSolver, real h_dt_Array[], const real 
    }
 #  endif
 #  endif // #ifdef GAMER_DEBUG
+
+#  if ( COORDINATE == CARTESIAN )
+   if (  !Mis_CompareRealValue( dh[0], dh[1], NULL, false )  ||
+         !Mis_CompareRealValue( dh[0], dh[2], NULL, false )    )
+      Aux_Error( ERROR_INFO, "Currently the Cartesian coordinates assume dh[0] (%20.14e) = dh[1] (%20.14e) = dh[2] (%20.14e) !!\n",
+                 dh[0], dh[1], dh[2] );
+#  else
+   Aux_Error( ERROR_INFO, "non-Cartesian coordinates do not support %s() yet !!\n", __FUNCTION__ );
+#  endif
 
 
 // set the block size
@@ -222,20 +231,22 @@ void CUAPI_Asyn_dtSolver( const Solver_t TSolver, real h_dt_Array[], const real 
 #     if   ( MODEL == HYDRO )
       switch ( TSolver )
       {
+//###: COORD-FIX: use dh instead of dh[0]
          case DT_FLU_SOLVER:
             CUFLU_dtSolver_HydroCFL <<< NPatch_per_Stream[s], BlockDim_dtSolver, 0, Stream[s] >>>
                                     ( d_dt_Array_T  + UsedPatch[s],
                                       d_Flu_Array_T + UsedPatch[s],
-                                      dh, Safety, Gamma, MinPres );
+                                      dh[0], Safety, Gamma, MinPres );
          break;
 
 #        ifdef GRAVITY
+//###: COORD-FIX: use dh instead of dh[0]
          case DT_GRA_SOLVER:
             CUPOT_dtSolver_HydroGravity <<< NPatch_per_Stream[s], BlockDim_dtSolver, 0, Stream[s] >>>
                                         ( d_dt_Array_T     + UsedPatch[s],
                                           d_Pot_Array_T    + UsedPatch[s],
                                           d_Corner_Array_G + UsedPatch[s],
-                                          dh, Safety, P5_Gradient, GravityType, TargetTime );
+                                          dh[0], Safety, P5_Gradient, GravityType, TargetTime );
          break;
 #        endif
 

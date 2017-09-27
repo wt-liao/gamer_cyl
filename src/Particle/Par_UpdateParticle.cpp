@@ -58,12 +58,24 @@ void Par_UpdateParticle( const int lv, const double TimeNew, const double TimeOl
                          const bool StoreAcc, const bool UseStoredAcc )
 {
 
+// check
+#  if ( COORDINATE == CARTESIAN )
+   if (  !Mis_CompareRealValue( amr->dh[lv][0], amr->dh[lv][1], NULL, false )  ||
+         !Mis_CompareRealValue( amr->dh[lv][0], amr->dh[lv][2], NULL, false )    )
+      Aux_Error( ERROR_INFO, "Currently the Cartesian coordinates assume dh[0] (%20.14e) = dh[1] (%20.14e) = dh[2] (%20.14e) !!\n",
+                 amr->dh[lv][0], amr->dh[lv][1], amr->dh[lv][2] );
+#  else
+   Aux_Error( ERROR_INFO, "non-Cartesian coordinates do not support %s() yet !!\n", __FUNCTION__ );
+#  endif
+
+
    const ParInterp_t IntScheme    = amr->Par->Interp;
    const bool   IntPhase_No       = false;
    const bool   DE_Consistency_No = false;
    const real   MinDens_No        = -1.0;
    const real   MinPres_No        = -1.0;
-   const double dh                = amr->dh[lv];
+//###: COORD-FIX: use dh instead of dh[0]
+   const double dh                = amr->dh[lv][0];
    const double _dh               = 1.0/dh;
    const double PrepPotTime       = ( UpdateStep==PAR_UPSTEP_CORR || UpdateStep==PAR_UPSTEP_ACC_ONLY ) ? TimeNew : TimeOld;
 

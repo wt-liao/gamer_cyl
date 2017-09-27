@@ -261,9 +261,9 @@ void Init_Parallelization()
    } // if ( OPT__BC_FLU[0] == BC_FLU_PERIODIC ) ... else ...
 
 
-// 5. left/right edges of each subdomain
+// 5. left/right edges of each subdomain (in the adopted coordinate system)
 #  ifndef SERIAL
-   const double dh_min             = amr->dh[TOP_LEVEL];
+   const double *dh_min            = amr->dh[TOP_LEVEL];
    const int    SubDomain_Scale[3] = { amr->BoxScale[0]/MPI_NRank_X[0],
                                        amr->BoxScale[1]/MPI_NRank_X[1],
                                        amr->BoxScale[2]/MPI_NRank_X[2] };
@@ -286,9 +286,9 @@ void Init_Parallelization()
       for (int j=0; j<MPI_NRank_X[1]; j++)
       for (int i=0; i<MPI_NRank_X[0]; i++)
       {
-         SubDomain_EdgeL3D[k][j][i][0] = (double)(i*SubDomain_Scale[0])*dh_min;
-         SubDomain_EdgeL3D[k][j][i][1] = (double)(j*SubDomain_Scale[1])*dh_min;
-         SubDomain_EdgeL3D[k][j][i][2] = (double)(k*SubDomain_Scale[2])*dh_min;
+         SubDomain_EdgeL3D[k][j][i][0] = amr->BoxEdgeL[0] + (double)(i*SubDomain_Scale[0])*dh_min[0];
+         SubDomain_EdgeL3D[k][j][i][1] = amr->BoxEdgeL[1] + (double)(j*SubDomain_Scale[1])*dh_min[1];
+         SubDomain_EdgeL3D[k][j][i][2] = amr->BoxEdgeL[2] + (double)(k*SubDomain_Scale[2])*dh_min[2];
       }
 
 //    force EdgeR == EdgeL at the same sub-domain interfaces
@@ -296,9 +296,9 @@ void Init_Parallelization()
       for (int j=0; j<MPI_NRank_X[1]; j++)
       for (int i=0; i<MPI_NRank_X[0]; i++)
       {
-         SubDomain_EdgeR3D[k][j][i][0] = ( i == MPI_NRank_X[0]-1 ) ? amr->BoxSize[0] : SubDomain_EdgeL3D[k  ][j  ][i+1][0];
-         SubDomain_EdgeR3D[k][j][i][1] = ( j == MPI_NRank_X[1]-1 ) ? amr->BoxSize[1] : SubDomain_EdgeL3D[k  ][j+1][i  ][1];
-         SubDomain_EdgeR3D[k][j][i][2] = ( k == MPI_NRank_X[2]-1 ) ? amr->BoxSize[2] : SubDomain_EdgeL3D[k+1][j  ][i  ][2];
+         SubDomain_EdgeR3D[k][j][i][0] = ( i == MPI_NRank_X[0]-1 ) ? amr->BoxEdgeR[0] : SubDomain_EdgeL3D[k  ][j  ][i+1][0];
+         SubDomain_EdgeR3D[k][j][i][1] = ( j == MPI_NRank_X[1]-1 ) ? amr->BoxEdgeR[1] : SubDomain_EdgeL3D[k  ][j+1][i  ][1];
+         SubDomain_EdgeR3D[k][j][i][2] = ( k == MPI_NRank_X[2]-1 ) ? amr->BoxEdgeR[2] : SubDomain_EdgeL3D[k+1][j  ][i  ][2];
       }
    } // if ( MPI_Rank == 0 )
 

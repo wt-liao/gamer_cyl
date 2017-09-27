@@ -1,12 +1,12 @@
 #include "GAMER.h"
 
 // declare as static so that other functions cannot invoke them directly and must use the function pointers
-static bool Flu_ResetByUser_Func( real fluid[], const double x, const double y, const double z, const double Time,
+static bool Flu_ResetByUser_Func( real fluid[], const double X, const double Y, const double Z, const double Time,
                                   const int lv, double AuxArray[] );
 static void Flu_ResetByUser_API( const int lv, const int FluSg, const double TTime );
 
 // these function pointers may be overwritten by various test problem initializers
-bool (*Flu_ResetByUser_Func_Ptr)( real fluid[], const double x, const double y, const double z, const double Time,
+bool (*Flu_ResetByUser_Func_Ptr)( real fluid[], const double X, const double Y, const double Z, const double Time,
                                   const int lv, double AuxArray[] ) = Flu_ResetByUser_Func;
 void (*Flu_ResetByUser_API_Ptr)( const int lv, const int FluSg, const double TTime ) = Flu_ResetByUser_API;
 
@@ -31,7 +31,7 @@ void (*Flu_ResetByUser_API_Ptr)( const int lv, const int FluSg, const double TTi
 //
 // Parameter   :  fluid    : Fluid array storing both the input (origial) and reset values
 //                           --> Including both active and passive variables
-//                x/y/z    : Target physical coordinates
+//                x/y/z    : Target physical coordinates in the adopted coordinate system
 //                Time     : Target physical time
 //                lv       : Target refinement level
 //                AuxArray : Auxiliary array
@@ -39,18 +39,20 @@ void (*Flu_ResetByUser_API_Ptr)( const int lv, const int FluSg, const double TTi
 // Return      :  true  : This cell has been reset
 //                false : This cell has not been reset
 //-------------------------------------------------------------------------------------------------------
-bool Flu_ResetByUser_Func( real fluid[], const double x, const double y, const double z, const double Time,
+bool Flu_ResetByUser_Func( real fluid[], const double X, const double Y, const double Z, const double Time,
                            const int lv, double AuxArray[] )
 {
 
 // Example : reset fluid variables to extremely small values if the cell is within a specific sphere
    /*
-   const real dr[3]   = { x-0.5*amr->BoxSize[0], y-0.5*amr->BoxSize[1], z-0.5*amr->BoxSize[2] };
-   const real r       = SQRT( dr[0]*dr[0] + dr[1]*dr[1] + dr[2]*dr[2] );
+   const double dr[3]     = { X - amr->BoxCenter[0],
+                              Y - amr->BoxCenter[1],
+                              Z - amr->BoxCenter[2] };
+   const real r           = SQRT( dr[0]*dr[0] + dr[1]*dr[1] + dr[2]*dr[2] );
 
-   const real TRad    = 0.3;
-   const real MaxDens = 1.0e15;
-   const real MaxPres = 1.0e15;
+   const real TRad        = 0.3;
+   const real MaxDens     = 1.0e15;
+   const real MaxPres     = 1.0e15;
 
    if ( r <= TRad )
    {
@@ -110,7 +112,7 @@ void Flu_ResetByUser_API( const int lv, const int FluSg, const double TTime )
    }
 
 
-   const double dh       = amr->dh[lv];
+   const double *dh      = amr->dh[lv];
 #  if ( MODEL == HYDRO  ||  MODEL == MHD )
    const real   Gamma_m1 = GAMMA - (real)1.0;
    const real  _Gamma_m1 = (real)1.0 / Gamma_m1;
@@ -118,24 +120,24 @@ void Flu_ResetByUser_API( const int lv, const int FluSg, const double TTime )
 
    bool   Reset;
    real   fluid[NCOMP_TOTAL];
-   double x, y, z, x0, y0, z0;
+   double X, Y, Z, X0, Y0, Z0;
 
 
-#  pragma omp parallel for private( Reset, fluid, x, y, z, x0, y0, z0 ) schedule( runtime )
+#  pragma omp parallel for private( Reset, fluid, X, Y, Z, X0, Y0, Z0 ) schedule( runtime )
    for (int PID=0; PID<amr->NPatchComma[lv][1]; PID++)
    {
-      x0 = amr->patch[0][lv][PID]->EdgeL[0] + 0.5*dh;
-      y0 = amr->patch[0][lv][PID]->EdgeL[1] + 0.5*dh;
-      z0 = amr->patch[0][lv][PID]->EdgeL[2] + 0.5*dh;
+      X0 = amr->patch[0][lv][PID]->EdgeL[0] + 0.5*dh[0];
+      Y0 = amr->patch[0][lv][PID]->EdgeL[1] + 0.5*dh[1];
+      Z0 = amr->patch[0][lv][PID]->EdgeL[2] + 0.5*dh[2];
 
-      for (int k=0; k<PS1; k++)  {  z = z0 + k*dh;
-      for (int j=0; j<PS1; j++)  {  y = y0 + j*dh;
-      for (int i=0; i<PS1; i++)  {  x = x0 + i*dh;
+      for (int k=0; k<PS1; k++)  {  Z = Z0 + k*dh[2];
+      for (int j=0; j<PS1; j++)  {  Y = Y0 + j*dh[1];
+      for (int i=0; i<PS1; i++)  {  X = X0 + i*dh[0];
 
          for (int v=0; v<NCOMP_TOTAL; v++)   fluid[v] = amr->patch[FluSg][lv][PID]->fluid[v][k][j][i];
 
 //       reset this cell
-         Reset = Flu_ResetByUser_Func_Ptr( fluid, x, y, z, TTime, lv, NULL );
+         Reset = Flu_ResetByUser_Func_Ptr( fluid, X, Y, Z, TTime, lv, NULL );
 
 //       operations necessary only when this cell has been reset
          if ( Reset )

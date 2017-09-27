@@ -48,7 +48,7 @@ void Aux_Check_ProperNesting( const int lv, const char *comment )
                   Aux_Message( stderr, "\"%s\" : <%s> FAILED at level %2d, Time = %13.7e, Step = %ld !!\n",
                                comment, __FUNCTION__, lv, Time[lv], Step );
                   Aux_Message( stderr, "%4s\t%7s\t%7s\t\t%19s\n", 
-                               "Rank", "PID", "FaPID", "Coordinate" );
+                               "Rank", "PID", "FaPID", "Corner" );
 
                   Pass = false;
                }
@@ -71,7 +71,7 @@ void Aux_Check_ProperNesting( const int lv, const char *comment )
                      Aux_Message( stderr, "\"%s\" : <%s> FAILED at level %2d, Time = %13.7e, Step = %ld !!\n",
                                   comment, __FUNCTION__, lv, Time[lv], Step );
                      Aux_Message( stderr, "%4s\t%7s\t%7s\t%7s\t\t%19s\n", 
-                                  "Rank", "PID", "FaPID", "Sib", "Coordinate" );
+                                  "Rank", "PID", "FaPID", "Sib", "Corner" );
 
                      Pass = false;
                   }

@@ -73,8 +73,8 @@ void Aux_Check_Conservation( const char *comment )
    const int    NPG               = 1;
    const double _2Eta2            = 0.5/SQR(ELBDM_ETA);
 
-   real GradR[3], GradI[3], _dh2;
-   int  ip, im, jp, jm, kp, km;
+   real GradR[3], GradI[3], _dh2[3];
+   int  ii, jj, kk, ip, im, jp, jm, kp, km;
 
    real (*Flu_ELBDM)[2][Size_Flu][Size_Flu][Size_Flu] = new real [NPG*8][2][Size_Flu][Size_Flu][Size_Flu];
 
@@ -86,7 +86,7 @@ void Aux_Check_Conservation( const char *comment )
 // NCOMP_PASSIVE + 1: individual passive scalars and the sum of scalars to be normalized
    const int NVar = NVar_NoPassive + ( (NCOMP_PASSIVE>0)?(NCOMP_PASSIVE+1):0 );
 
-   double dv, Fluid_ThisRank[NVar], Fluid_AllRank[NVar], Fluid_lv[NVar];   // dv : cell volume at each level
+   double Fluid_ThisRank[NVar], Fluid_AllRank[NVar], Fluid_lv[NVar];
    int    FluSg;
 #  ifdef GRAVITY
    int    PotSg;
@@ -103,13 +103,13 @@ void Aux_Check_Conservation( const char *comment )
    {
       for (int v=0; v<NVar; v++)    Fluid_lv[v] = 0.0;
 
-      dv    = CUBE( amr->dh[lv] );
       FluSg = amr->FluSg[lv];
 #     ifdef GRAVITY
       PotSg = amr->PotSg[lv];
 #     endif
+
 #     if ( MODEL == ELBDM )
-      _dh2  = 0.5/amr->dh[lv];
+      for (int d=0; d<3; d++)    _dh2[d] = 0.5/amr->dh[lv][d];
 #     endif
 
 
@@ -126,100 +126,105 @@ void Aux_Check_Conservation( const char *comment )
 
          for (int PID=PID0; PID<PID0+8; PID++)
          {
+#           if ( MODEL == ELBDM )
+            const int t = PID - PID0;
+#           endif
+
 //          only check the leaf patches
             if ( amr->patch[0][lv][PID]->son == -1 )
             {
-#              if   ( MODEL == HYDRO )
                for (int k=0; k<PATCH_SIZE; k++)
                for (int j=0; j<PATCH_SIZE; j++)
                for (int i=0; i<PATCH_SIZE; i++)
                {
+                  const double dv = Aux_Coord_CellIdx2Volume( lv, PID, i, j, k );
+
+#                 if   ( MODEL == HYDRO )
+
                   double Ekin, Ethe;
 #                 ifdef GRAVITY
                   double Epot;
 #                 endif
 
-                  Fluid_lv[0] += amr->patch[FluSg][lv][PID]->fluid[DENS][k][j][i];
-                  Fluid_lv[1] += amr->patch[FluSg][lv][PID]->fluid[MOMX][k][j][i];
-                  Fluid_lv[2] += amr->patch[FluSg][lv][PID]->fluid[MOMY][k][j][i];
-                  Fluid_lv[3] += amr->patch[FluSg][lv][PID]->fluid[MOMZ][k][j][i];
+                  Fluid_lv[0] += dv*amr->patch[FluSg][lv][PID]->fluid[DENS][k][j][i];
+                  Fluid_lv[1] += dv*amr->patch[FluSg][lv][PID]->fluid[MOMX][k][j][i];
+                  Fluid_lv[2] += dv*amr->patch[FluSg][lv][PID]->fluid[MOMY][k][j][i];
+                  Fluid_lv[3] += dv*amr->patch[FluSg][lv][PID]->fluid[MOMZ][k][j][i];
 
                   Ekin         = 0.5*( SQR(amr->patch[FluSg][lv][PID]->fluid[MOMX][k][j][i])
                                       +SQR(amr->patch[FluSg][lv][PID]->fluid[MOMY][k][j][i])
                                       +SQR(amr->patch[FluSg][lv][PID]->fluid[MOMZ][k][j][i]) )
                                     / amr->patch[FluSg][lv][PID]->fluid[DENS][k][j][i];
                   Ethe         = amr->patch[FluSg][lv][PID]->fluid[ENGY][k][j][i] - Ekin;
-                  Fluid_lv[4] += Ekin;
-                  Fluid_lv[5] += Ethe;
+                  Fluid_lv[4] += dv*Ekin;
+                  Fluid_lv[5] += dv*Ethe;
 
 #                 ifdef GRAVITY
                   Epot         = 0.5*amr->patch[FluSg][lv][PID]->fluid[DENS][k][j][i]
                                     *amr->patch[PotSg][lv][PID]->pot        [k][j][i];
-                  Fluid_lv[6] += Epot;
+                  Fluid_lv[6] += dv*Epot;
 #                 endif
-               } // i,j,k
 
-#              elif ( MODEL == MHD )
-#              warning : WAIT MHD !!!
 
-#              elif ( MODEL == ELBDM )
-               for (int k=0; k<PATCH_SIZE; k++)
-               for (int j=0; j<PATCH_SIZE; j++)
-               for (int i=0; i<PATCH_SIZE; i++)
-               {
+#                 elif ( MODEL == MHD )
+#                 warning : WAIT MHD !!!
+
+
+#                 elif ( MODEL == ELBDM )
 //                [0] mass
-                  Fluid_lv[0] += amr->patch[FluSg][lv][PID]->fluid[DENS][k][j][i];
+                  Fluid_lv[0] += dv*amr->patch[FluSg][lv][PID]->fluid[DENS][k][j][i];
 
 //                [2] potential energy in ELBDM
 #                 ifdef GRAVITY
-                  Fluid_lv[2] += 0.5*amr->patch[FluSg][lv][PID]->fluid[DENS][k][j][i]
-                                    *amr->patch[PotSg][lv][PID]->pot        [k][j][i];
+                  Fluid_lv[2] += dv*0.5*amr->patch[FluSg][lv][PID]->fluid[DENS][k][j][i]
+                                       *amr->patch[PotSg][lv][PID]->pot        [k][j][i];
 #                 endif
 
 //                [3] quartic self-interaction potential
 #                 ifdef QUARTIC_SELF_INTERACTION
-                  Fluid_lv[3] += 0.5*ELBDM_LAMBDA*SQR( amr->patch[FluSg][lv][PID]->fluid[DENS][k][j][i] );
+                  Fluid_lv[3] += dv*0.5*ELBDM_LAMBDA*SQR( amr->patch[FluSg][lv][PID]->fluid[DENS][k][j][i] );
 #                 endif
-               }
 
-//             [1] kinematic energy in ELBDM
-               const int t = PID - PID0;
+//                [1] kinematic energy in ELBDM
+                  ii = i + NGhost;
+                  jj = j + NGhost;
+                  kk = k + NGhost;
+                  ip = ii + 1;
+                  jp = jj + 1;
+                  kp = kk + 1;
+                  im = ii - 1;
+                  jm = jj - 1;
+                  km = kk - 1;
 
-               for (int k=NGhost; k<Size_Flu-NGhost; k++)   { kp = k+1; km = k-1;
-               for (int j=NGhost; j<Size_Flu-NGhost; j++)   { jp = j+1; jm = j-1;
-               for (int i=NGhost; i<Size_Flu-NGhost; i++)   { ip = i+1; im = i-1;
+                  GradR[0] = _dh2[0]*( Flu_ELBDM[t][0][kk][jj][ip] - Flu_ELBDM[t][0][kk][jj][im] );
+                  GradR[1] = _dh2[1]*( Flu_ELBDM[t][0][kk][jp][ii] - Flu_ELBDM[t][0][kk][jm][ii] );
+                  GradR[2] = _dh2[2]*( Flu_ELBDM[t][0][kp][jj][ii] - Flu_ELBDM[t][0][km][jj][ii] );
 
-                  GradR[0] = _dh2*( Flu_ELBDM[t][0][k ][j ][ip] - Flu_ELBDM[t][0][k ][j ][im] );
-                  GradR[1] = _dh2*( Flu_ELBDM[t][0][k ][jp][i ] - Flu_ELBDM[t][0][k ][jm][i ] );
-                  GradR[2] = _dh2*( Flu_ELBDM[t][0][kp][j ][i ] - Flu_ELBDM[t][0][km][j ][i ] );
+                  GradI[0] = _dh2[0]*( Flu_ELBDM[t][1][kk][jj][ip] - Flu_ELBDM[t][1][kk][jj][im] );
+                  GradI[1] = _dh2[1]*( Flu_ELBDM[t][1][kk][jp][ii] - Flu_ELBDM[t][1][kk][jm][ii] );
+                  GradI[2] = _dh2[2]*( Flu_ELBDM[t][1][kp][jj][ii] - Flu_ELBDM[t][1][km][jj][ii] );
 
-                  GradI[0] = _dh2*( Flu_ELBDM[t][1][k ][j ][ip] - Flu_ELBDM[t][1][k ][j ][im] );
-                  GradI[1] = _dh2*( Flu_ELBDM[t][1][k ][jp][i ] - Flu_ELBDM[t][1][k ][jm][i ] );
-                  GradI[2] = _dh2*( Flu_ELBDM[t][1][kp][j ][i ] - Flu_ELBDM[t][1][km][j ][i ] );
+                  Fluid_lv[1] += dv*_2Eta2*( SQR(GradR[0]) + SQR(GradR[1]) + SQR(GradR[2]) +
+                                             SQR(GradI[0]) + SQR(GradI[1]) + SQR(GradI[2])   );
 
-                  Fluid_lv[1] += _2Eta2*( SQR(GradR[0]) + SQR(GradR[1]) + SQR(GradR[2]) +
-                                          SQR(GradI[0]) + SQR(GradI[1]) + SQR(GradI[2])   );
-               }}}
+#                 else
+#                 error : ERROR : unsupported MODEL !!
 
-#              else
-#              error : ERROR : unsupported MODEL !!
-
-#              endif // MODEL
+#                 endif // MODEL
 
 
-//             individual passive scalars
-#              if ( NCOMP_PASSIVE > 0 )
-               for (int v=0; v<NCOMP_PASSIVE; v++)
-               {
-                  const int v1 = NVar_NoPassive + v;
-                  const int v2 = NCOMP_FLUID    + v;
+//                individual passive scalars
+#                 if ( NCOMP_PASSIVE > 0 )
+                  for (int v=0; v<NCOMP_PASSIVE; v++)
+                  {
+                     const int v1 = NVar_NoPassive + v;
+                     const int v2 = NCOMP_FLUID    + v;
 
-                  for (int k=0; k<PATCH_SIZE; k++)
-                  for (int j=0; j<PATCH_SIZE; j++)
-                  for (int i=0; i<PATCH_SIZE; i++)
-                     Fluid_lv[v1] += amr->patch[FluSg][lv][PID]->fluid[v2][k][j][i];
-               }
-#              endif
+                     Fluid_lv[v1] += dv*amr->patch[FluSg][lv][PID]->fluid[v2][k][j][i];
+                  }
+#                 endif
+               } // i,j,k
+
             } // if ( amr->patch[0][lv][PID]->son == -1 )
          } // for (int PID=PID0; PID<PID0+8; PID++)
       } // for (int PID0=0; PID0<amr->NPatchComma[lv][1]; PID0+=8)
@@ -241,7 +246,7 @@ void Aux_Check_Conservation( const char *comment )
 #     endif
 
 //    sum over all levels
-      for (int v=0; v<NVar; v++)    Fluid_ThisRank[v] += Fluid_lv[v]*dv;
+      for (int v=0; v<NVar; v++)    Fluid_ThisRank[v] += Fluid_lv[v];
    } // for (int lv=0; lv<NLEVEL; lv++)
 
 

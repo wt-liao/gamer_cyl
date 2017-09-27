@@ -465,10 +465,10 @@ void PrepareCData( const int FaLv, const int FaPID, real *const FaData,
 
    int    Loop[3], Disp1[3], Disp2[3], I2, J2, K2, SibPID;
    int    BC_Sibling, BC_Idx_Start[3], BC_Idx_End[3];
-   double xyz[3];
+   double XYZ[3];
 
 // calculate the corner coordinates of the coarse-grid data for the user-specified B.C.
-   for (int d=0; d<3; d++)    xyz[d] = amr->patch[0][FaLv][FaPID]->EdgeL[d] + (0.5-FaGhost_Flu)*amr->dh[FaLv];
+   for (int d=0; d<3; d++)    XYZ[d] = amr->patch[0][FaLv][FaPID]->EdgeL[d] + (0.5-FaGhost_Flu)*amr->dh[FaLv][d];
 
 // 2.1 fluid data
    for (int sib=0; sib<NSide_Flu; sib++)
@@ -531,7 +531,7 @@ void PrepareCData( const int FaLv, const int FaPID, real *const FaData,
             case BC_FLU_USER:
                Flu_BoundaryCondition_User        ( FaData_Flu,                      NCOMP_TOTAL,
                                                    FaSize_Flu, FaSize_Flu, FaSize_Flu, BC_Idx_Start, BC_Idx_End, 
-                                                   FluVarIdxList, Time[FaLv], amr->dh[FaLv], xyz, _TOTAL, FaLv );
+                                                   FluVarIdxList, Time[FaLv], amr->dh[FaLv], XYZ, _TOTAL, FaLv );
             break;
 
             default: 

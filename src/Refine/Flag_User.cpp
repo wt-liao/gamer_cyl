@@ -32,16 +32,14 @@ bool Flag_User( const int i, const int j, const int k, const int lv, const int P
 {
 
    /*
-   const double dh     = amr->dh[lv];                                                  // grid size
-   const int    scale  = amr->scale[lv];                                               // grid scale
-   const double Pos[3] = { amr->patch[0][lv][PID]->EdgeL[0] + (i+0.5)*dh,              // x,y,z position
-                           amr->patch[0][lv][PID]->EdgeL[1] + (j+0.5)*dh,
-                           amr->patch[0][lv][PID]->EdgeL[2] + (k+0.5)*dh  };
+   const double Pos[3] = { Aux_Coord_CellIdx2AdoptedCoord( lv, PID, 0, i ),
+                           Aux_Coord_CellIdx2AdoptedCoord( lv, PID, 1, j ),
+                           Aux_Coord_CellIdx2AdoptedCoord( lv, PID, 2, k ) };
 
    const real (*Rho )[PS1][PS1] = amr->patch[ amr->FluSg[lv] ][lv][PID]->fluid[DENS];  // density
-   const real (*MomX)[PS1][PS1] = amr->patch[ amr->FluSg[lv] ][lv][PID]->fluid[MOMX];  // momentum x
-   const real (*MomY)[PS1][PS1] = amr->patch[ amr->FluSg[lv] ][lv][PID]->fluid[MOMY];  // momentum y
-   const real (*MomZ)[PS1][PS1] = amr->patch[ amr->FluSg[lv] ][lv][PID]->fluid[MOMZ];  // momentum z
+   const real (*MomX)[PS1][PS1] = amr->patch[ amr->FluSg[lv] ][lv][PID]->fluid[MOMX];  // momentum X
+   const real (*MomY)[PS1][PS1] = amr->patch[ amr->FluSg[lv] ][lv][PID]->fluid[MOMY];  // momentum Y
+   const real (*MomZ)[PS1][PS1] = amr->patch[ amr->FluSg[lv] ][lv][PID]->fluid[MOMZ];  // momentum Z
    const real (*Egy )[PS1][PS1] = amr->patch[ amr->FluSg[lv] ][lv][PID]->fluid[ENGY];  // total energy
 #  ifdef GRAVITY
    const real (*Pot )[PS1][PS1] = amr->patch[ amr->PotSg[lv] ][lv][PID]->pot;          // potential
@@ -65,8 +63,9 @@ bool Flag_User( const int i, const int j, const int k, const int lv, const int P
    /*
 // Example 2 : flag if the grid is within a sphere with the radius eqaul to the input "Threshold" and the origin
 //             in the center of the simulation box
-   const double Center[3] = { 0.5*amr->BoxSize[0], 0.5*amr->BoxSize[1], 0.5*amr->BoxSize[2] };
-   const double dr[3]     = { Pos[0]-Center[0], Pos[1]-Center[1], Pos[2]-Center[2] };
+   const double dr[3]     = { Pos[0] - amr->BoxCenter[0],
+                              Pos[1] - amr->BoxCenter[1],
+                              Pos[2] - amr->BoxCenter[2] };
    const double Radius    = sqrt( dr[0]*dr[0] + dr[1]*dr[1] + dr[2]*dr[2] );
 
    Flag = Radius < Threshold;
