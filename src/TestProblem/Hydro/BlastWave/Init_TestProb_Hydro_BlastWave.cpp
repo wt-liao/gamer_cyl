@@ -99,9 +99,9 @@ void SetParameter()
    ReadPara->Add( "Blast_Engy_Bg",     &Blast_Engy_Bg,         -1.0,          Eps_double,       NoMax_double      );
    ReadPara->Add( "Blast_Engy_Exp",    &Blast_Engy_Exp,        -1.0,          Eps_double,       NoMax_double      );
    ReadPara->Add( "Blast_Radius",      &Blast_Radius,          -1.0,          Eps_double,       NoMax_double      );
-   ReadPara->Add( "Blast_Center_X",    &Blast_Center[0],        NoDef_double, NoMin_double,     NoMin_double      );
-   ReadPara->Add( "Blast_Center_Y",    &Blast_Center[1],        NoDef_double, NoMin_double,     NoMin_double      );
-   ReadPara->Add( "Blast_Center_Z",    &Blast_Center[2],        NoDef_double, NoMin_double,     NoMin_double      );
+   ReadPara->Add( "Blast_Center_X",    &Blast_Center[0],        NoDef_double, NoMin_double,     NoMax_double      );
+   ReadPara->Add( "Blast_Center_Y",    &Blast_Center[1],        NoDef_double, NoMin_double,     NoMax_double      );
+   ReadPara->Add( "Blast_Center_Z",    &Blast_Center[2],        NoDef_double, NoMin_double,     NoMax_double      );
 
    ReadPara->Read( FileName );
 
