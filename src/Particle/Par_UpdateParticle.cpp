@@ -62,7 +62,7 @@ void Par_UpdateParticle( const int lv, const double TimeNew, const double TimeOl
 #  if ( COORDINATE == CARTESIAN )
    if (  !Mis_CompareRealValue( amr->dh[lv][0], amr->dh[lv][1], NULL, false )  ||
          !Mis_CompareRealValue( amr->dh[lv][0], amr->dh[lv][2], NULL, false )    )
-      Aux_Error( ERROR_INFO, "Currently the Cartesian coordinates assume dh[0] (%20.14e) = dh[1] (%20.14e) = dh[2] (%20.14e) !!\n",
+      Aux_Error( ERROR_INFO, "currently the Cartesian coordinates only work with cubic cells --> dh = (%20.14e, %20.14e, %20.14e) !!\n",
                  amr->dh[lv][0], amr->dh[lv][1], amr->dh[lv][2] );
 #  else
    Aux_Error( ERROR_INFO, "non-Cartesian coordinates do not support %s() yet !!\n", __FUNCTION__ );

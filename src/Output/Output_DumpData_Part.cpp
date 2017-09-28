@@ -60,10 +60,10 @@ void Output_DumpData_Part( const OptOutputPart_t Part, const bool BaseOnly, cons
 
       if (  !Mis_CompareRealValue( amr->dh[0][0], amr->dh[0][1], NULL, false )  ||
             !Mis_CompareRealValue( amr->dh[0][0], amr->dh[0][2], NULL, false )    )
-         Aux_Error( ERROR_INFO, "Currently the Cartesian coordinates assume dh[0] (%20.14e) = dh[1] (%20.14e) = dh[2] (%20.14e) !!\n",
+         Aux_Error( ERROR_INFO, "currently the Cartesian coordinates only work with cubic cells --> dh[lv=0] = (%20.14e, %20.14e, %20.14e) !!\n",
                     amr->dh[0][0], amr->dh[0][1], amr->dh[0][2] );
 #     else
-      Aux_Error( ERROR_INFO, "non-Cartesian coordinates do not support %s()\n", __FUNCTION__ );
+      Aux_Error( ERROR_INFO, "non-Cartesian coordinates do not support %s() !!\n", __FUNCTION__ );
 #     endif
    }
 

@@ -106,7 +106,7 @@ void Par_MassAssignment( const long *ParList, const long NPar, const ParInterp_t
 #  if ( COORDINATE == CARTESIAN )
    if (  !Mis_CompareRealValue( dh3[0], dh3[1], NULL, false )  ||
          !Mis_CompareRealValue( dh3[0], dh3[2], NULL, false )    )
-      Aux_Error( ERROR_INFO, "Currently the Cartesian coordinates assume dh[0] (%20.14e) = dh[1] (%20.14e) = dh[2] (%20.14e) !!\n",
+      Aux_Error( ERROR_INFO, "currently the Cartesian coordinates only work with cubic cells --> dh = (%20.14e, %20.14e, %20.14e) !!\n",
                  dh3[0], dh3[1], dh3[2] );
 #  else
    Aux_Error( ERROR_INFO, "non-Cartesian coordinates do not support %s() yet !!\n", __FUNCTION__ );

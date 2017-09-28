@@ -257,7 +257,7 @@ void CUAPI_Asyn_FluidSolver( real h_Flu_Array_In [][FLU_NIN    ][ FLU_NXT*FLU_NX
 #  if ( COORDINATE == CARTESIAN )
    if (  !Mis_CompareRealValue( dh[0], dh[1], NULL, false )  ||
          !Mis_CompareRealValue( dh[0], dh[2], NULL, false )    )
-      Aux_Error( ERROR_INFO, "Currently the Cartesian coordinates assume dh[0] (%20.14e) = dh[1] (%20.14e) = dh[2] (%20.14e) !!\n",
+      Aux_Error( ERROR_INFO, "currently the Cartesian coordinates only work with cubic cells --> dh = (%20.14e, %20.14e, %20.14e) !!\n",
                  dh[0], dh[1], dh[2] );
 #  endif
 
