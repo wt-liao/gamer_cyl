@@ -56,7 +56,7 @@ void Aux_Check_Parameter()
 #  if ( COORDINATE == CARTESIAN )
    if (  !Mis_CompareRealValue( amr->dh[0][0], amr->dh[0][1], NULL, false )  ||
          !Mis_CompareRealValue( amr->dh[0][0], amr->dh[0][2], NULL, false )    )
-      Aux_Error( ERROR_INFO, "Currently the Cartesian coordinates assume dh[0] (%20.14e) = dh[1] (%20.14e) = dh[2] (%20.14e) !!\n",
+      Aux_Error( ERROR_INFO, "currently the Cartesian coordinates only work with cubic cells --> dh[lv=0] = (%20.14e, %20.14e, %20.14e) !!\n",
                  amr->dh[0][0], amr->dh[0][1], amr->dh[0][2] );
 
 #  else
