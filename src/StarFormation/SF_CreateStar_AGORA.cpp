@@ -105,7 +105,7 @@ void SF_CreateStar_AGORA( const int lv, const real TimeNew, const real dt, struc
    const int TID = 0;
 #  endif
 
-   double X, Y, Z;
+   double X0, Y0, Z0, X, Y, Z;
    real   GasDens, _GasDens, GasMass, _Time_FreeFall, StarMFrac, StarMass, GasMFracLeft;
    real   (*fluid)[PS1][PS1][PS1]      = NULL;
    real   (*pot_ext)[GRA_NXT][GRA_NXT] = NULL;
@@ -143,6 +143,9 @@ void SF_CreateStar_AGORA( const int lv, const real TimeNew, const real dt, struc
 
       fluid   = amr->patch[FluSg][lv][PID]->fluid;
       pot_ext = amr->patch[PotSg][lv][PID]->pot_ext;
+      X0      = amr->patch[0][lv][PID]->EdgeL[0] + 0.5*dh[0];
+      Y0      = amr->patch[0][lv][PID]->EdgeL[1] + 0.5*dh[1];
+      Z0      = amr->patch[0][lv][PID]->EdgeL[2] + 0.5*dh[2];
       NNewPar = 0;
 
       for (int k=0; k<PS1; k++)
@@ -204,9 +207,9 @@ void SF_CreateStar_AGORA( const int lv, const real TimeNew, const real dt, struc
 
 //       2-1. intrinsic attributes
          _GasDens = (real)1.0 / GasDens;
-         X        = Aux_Coord_CellIdx2AdoptedCoord( lv, PID, 0, i );
-         Y        = Aux_Coord_CellIdx2AdoptedCoord( lv, PID, 1, j );
-         Z        = Aux_Coord_CellIdx2AdoptedCoord( lv, PID, 2, k );
+         X        = X0 + i*dh[0];
+         Y        = Y0 + j*dh[1];
+         Z        = Z0 + k*dh[2];
 
          NewParVar[NNewPar][PAR_MASS] = StarMass;
          NewParVar[NNewPar][PAR_POSX] = X;
