@@ -67,7 +67,7 @@ void Output_Patch( const int lv, const int PID, const int FluSg, const int PotSg
    fprintf( File, "Rank %d  Lv %d  PID %d  Local ID %d  FluSg %d  PotSg %d  Time %13.7e  Step %ld  Counter %ld\n", 
             MPI_Rank, lv, PID, PID%8, FluSg, PotSg, Time[lv], Step, AdvanceCounter[lv] );
 
-   fprintf( File, "Father %d  Son %d  Corner (%10d,%10d,%10d)  Size (%13.7e,%13.7e,%13.7e)",
+   fprintf( File, "Father %d  Son %d  Corner (%10d, %10d, %10d)  Size (%13.7e, %13.7e, %13.7e)",
             Relation->father, Relation->son, Relation->corner[0], Relation->corner[1], Relation->corner[2],
             PS1*amr->dh[lv][0], PS1*amr->dh[lv][1], PS1*amr->dh[lv][2] );
 #  ifdef LOAD_BALANCE

@@ -191,29 +191,25 @@ void Init_ResetParameter()
 
 
 // derived parameters related to the simulation scale
-   for (int d=0; d<3; d++)    amr->BoxCenter[d] = 0.5*( amr->BoxEdgeL[d] + amr->BoxEdgeR[d] );
-
-#  if   ( COORDINATE == CARTESIAN )
-   amr->BoxSize[0] = amr->BoxEdgeR[0] - amr->BoxEdgeL[0];   // x
-   amr->BoxSize[1] = amr->BoxEdgeR[1] - amr->BoxEdgeL[1];   // y
-   amr->BoxSize[2] = amr->BoxEdgeR[2] - amr->BoxEdgeL[2];   // z
-#  elif ( COORDINATE == CYLINDRICAL )
-   amr->BoxSize[0] = amr->BoxEdgeR[0] - amr->BoxEdgeL[0];   // r
-   amr->BoxSize[1] = 2.0*M_PI;                              // phi
-   amr->BoxSize[2] = amr->BoxEdgeR[2] - amr->BoxEdgeL[2];   // z
+#  if   ( COORDINATE == CYLINDRICAL )
+   amr->BoxEdgeL[1] = 0.0;          // phi in the range [0, 2*pi]
+   amr->BoxEdgeR[1] = 2.0*M_PI;
 #  elif ( COORDINATE == SPHERICAL )
-   amr->BoxSize[0] = amr->BoxEdgeR[0] - amr->BoxEdgeL[0];   // r
-   amr->BoxSize[1] = M_PI;                                  // theta
-   amr->BoxSize[2] = 2.0*M_PI;                              // phi
-#  else
-#  error : UNSUPPORTED COORDINATE !!
+   amr->BoxEdgeL[1] = 0.0;          // theta in the range [0, pi]
+   amr->BoxEdgeR[1] = M_PI;
+   amr->BoxEdgeL[2] = 0.0;          // phi in the range [0, 2*pi]
+   amr->BoxEdgeR[2] = 2.0*M_PI;
 #  endif
 
-   for (int lv=0; lv<NLEVEL; lv++)
    for (int d=0; d<3; d++)
-      amr->dh[lv][d] = amr->BoxSize[d] / (double)( NX0_TOT[d]*(1<<lv) );
+   {
+      amr->BoxCenter[d] = 0.5*( amr->BoxEdgeL[d] + amr->BoxEdgeR[d] );
+      amr->BoxSize  [d] = amr->BoxEdgeR[d] - amr->BoxEdgeL[d];
+      amr->BoxScale [d] = NX0_TOT[d]*amr->scale[0];
 
-   for (int d=0; d<3; d++)    amr->BoxScale[d] = NX0_TOT[d]*amr->scale[0];
+      for (int lv=0; lv<NLEVEL; lv++)
+         amr->dh[lv][d] = amr->BoxSize[d] / (double)( NX0_TOT[d]*(1<<lv) );
+   }
 
 
 // workload weighting at each level
