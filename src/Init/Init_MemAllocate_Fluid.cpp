@@ -16,6 +16,20 @@ void Init_MemAllocate_Fluid( const int Flu_NPatchGroup )
 
    const int Flu_NPatch = 8*Flu_NPatchGroup;
 
+
+// determine whether or not to allocate the corner array
+   bool AllocateCorner = false;
+
+#  ifdef UNSPLIT_GRAVITY
+   if ( OPT__GRAVITY_TYPE == GRAVITY_EXTERNAL  ||  OPT__GRAVITY_TYPE == GRAVITY_BOTH )
+      AllocateCorner = true;
+#  endif
+
+#  if ( COORDINATE != CARTESIAN )
+      AllocateCorner = true;
+#  endif
+
+
    for (int t=0; t<2; t++)
    {
       h_Flu_Array_F_In [t] = new real [Flu_NPatchGroup][FLU_NIN ][   FLU_NXT   *FLU_NXT   *FLU_NXT    ];
@@ -26,10 +40,10 @@ void Init_MemAllocate_Fluid( const int Flu_NPatchGroup )
 
 #     ifdef UNSPLIT_GRAVITY
       h_Pot_Array_USG_F[t] = new real [Flu_NPatchGroup][USG_NXT_F][USG_NXT_F][USG_NXT_F];
-
-      if ( OPT__GRAVITY_TYPE == GRAVITY_EXTERNAL  ||  OPT__GRAVITY_TYPE == GRAVITY_BOTH  ||  OPT__EXTERNAL_POT )
-      h_Corner_Array_F [t] = new double [Flu_NPatchGroup][3];
 #     endif
+
+      if ( AllocateCorner )
+      h_Corner_Array_F [t] = new double [Flu_NPatchGroup][3];
 
       h_dt_Array_T     [t] = new real [Flu_NPatch];
       h_Flu_Array_T    [t] = new real [Flu_NPatch][NCOMP_FLUID][ CUBE(PS1) ];

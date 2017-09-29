@@ -9,9 +9,7 @@
 extern real (*d_Flu_Array_F_In )[FLU_NIN ][ FLU_NXT*FLU_NXT*FLU_NXT ];
 extern real (*d_Flu_Array_F_Out)[FLU_NOUT][ PS2*PS2*PS2 ];
 extern real (*d_Flux_Array)[9][NFLUX_TOTAL][ PS2*PS2 ];
-#ifdef UNSPLIT_GRAVITY
 extern double (*d_Corner_Array_F)[3];
-#endif
 #ifdef DUAL_ENERGY
 extern char (*d_DE_Array_F_Out)[ PS2*PS2*PS2 ];
 #endif
@@ -61,9 +59,7 @@ void CUAPI_MemFree_Fluid( const int GPU_NStream )
    if ( d_Flu_Array_F_In        != NULL )    CUDA_CHECK_ERROR(  cudaFree( d_Flu_Array_F_In        )  );
    if ( d_Flu_Array_F_Out       != NULL )    CUDA_CHECK_ERROR(  cudaFree( d_Flu_Array_F_Out       )  );
    if ( d_Flux_Array            != NULL )    CUDA_CHECK_ERROR(  cudaFree( d_Flux_Array            )  );
-#  ifdef UNSPLIT_GRAVITY
    if ( d_Corner_Array_F        != NULL )    CUDA_CHECK_ERROR(  cudaFree( d_Corner_Array_F        )  );
-#  endif
 #  ifdef DUAL_ENERGY
    if ( d_DE_Array_F_Out        != NULL )    CUDA_CHECK_ERROR(  cudaFree( d_DE_Array_F_Out        )  );
 #  endif
@@ -73,9 +69,7 @@ void CUAPI_MemFree_Fluid( const int GPU_NStream )
    d_Flu_Array_F_In        = NULL;
    d_Flu_Array_F_Out       = NULL;
    d_Flux_Array            = NULL;
-#  ifdef UNSPLIT_GRAVITY
    d_Corner_Array_F        = NULL;
-#  endif
 #  ifdef DUAL_ENERGY
    d_DE_Array_F_Out        = NULL;
 #  endif
@@ -135,9 +129,7 @@ void CUAPI_MemFree_Fluid( const int GPU_NStream )
       if ( h_Flu_Array_F_In [t] != NULL ) CUDA_CHECK_ERROR(  cudaFreeHost( h_Flu_Array_F_In [t] )  );
       if ( h_Flu_Array_F_Out[t] != NULL ) CUDA_CHECK_ERROR(  cudaFreeHost( h_Flu_Array_F_Out[t] )  );
       if ( h_Flux_Array     [t] != NULL ) CUDA_CHECK_ERROR(  cudaFreeHost( h_Flux_Array     [t] )  );
-#     ifdef UNSPLIT_GRAVITY
       if ( h_Corner_Array_F [t] != NULL ) CUDA_CHECK_ERROR(  cudaFreeHost( h_Corner_Array_F [t] )  );
-#     endif
 #     ifdef DUAL_ENERGY
       if ( h_DE_Array_F_Out [t] != NULL ) CUDA_CHECK_ERROR(  cudaFreeHost( h_DE_Array_F_Out [t] )  );
 #     endif
@@ -147,9 +139,7 @@ void CUAPI_MemFree_Fluid( const int GPU_NStream )
       h_Flu_Array_F_In      [t] = NULL;
       h_Flu_Array_F_Out     [t] = NULL;
       h_Flux_Array          [t] = NULL;
-#     ifdef UNSPLIT_GRAVITY
       h_Corner_Array_F      [t] = NULL;
-#     endif
 #     ifdef DUAL_ENERGY
       h_DE_Array_F_Out      [t] = NULL;
 #     endif

@@ -22,17 +22,29 @@ void Flu_Prepare( const int lv, const double PrepTime, real h_Flu_Array_F_In[], 
                   double h_Corner_Array_F[][3], const int NPG, const int *PID0_List )
 {
 
+// determine whether or not to prepare the corner array
+   bool PrepareCorner = false;
+
+#  ifdef UNSPLIT_GRAVITY
+   if ( OPT__GRAVITY_TYPE == GRAVITY_EXTERNAL  ||  OPT__GRAVITY_TYPE == GRAVITY_BOTH )
+      PrepareCorner = true;
+#  endif
+
+#  if ( COORDINATE != CARTESIAN )
+      PrepareCorner = true;
+#  endif
+
+
 // check
 #  ifdef GAMER_DEBUG
 #  ifdef UNSPLIT_GRAVITY
    if (  ( OPT__GRAVITY_TYPE == GRAVITY_SELF || OPT__GRAVITY_TYPE == GRAVITY_BOTH )  &&
          ( h_Pot_Array_USG_F == NULL )  )
       Aux_Error( ERROR_INFO, "h_Pot_Array_USG_F == NULL !!\n" );
-
-   if (  ( OPT__GRAVITY_TYPE == GRAVITY_EXTERNAL || OPT__GRAVITY_TYPE == GRAVITY_BOTH || OPT__EXTERNAL_POT )  &&
-         ( h_Corner_Array_F == NULL )  )
-      Aux_Error( ERROR_INFO, "h_Corner_Array_F == NULL !!\n" );
 #  endif
+
+   if ( PrepareCorner  &&  h_Corner_Array_F == NULL )
+      Aux_Error( ERROR_INFO, "h_Corner_Array_F == NULL !!\n" );
 #  endif
 
 
@@ -62,28 +74,27 @@ void Flu_Prepare( const int lv, const double PrepTime, real h_Flu_Array_F_In[], 
                       OPT__BC_FLU, BC_POT_NONE, MinDens, MinPres, DE_Consistency );
 #  endif
 
-#  ifdef UNSPLIT_GRAVITY
+
 // prepare the potential array
+#  ifdef UNSPLIT_GRAVITY
    if ( OPT__GRAVITY_TYPE == GRAVITY_SELF  ||  OPT__GRAVITY_TYPE == GRAVITY_BOTH )
    Prepare_PatchData( lv, PrepTime, h_Pot_Array_USG_F, USG_GHOST_SIZE, NPG, PID0_List,
                       _POTE,         OPT__GRA_INT_SCHEME, UNIT_PATCHGROUP, NSIDE_26, IntPhase_No,
                       OPT__BC_FLU, OPT__BC_POT, MinDens_No, MinPres_No, DE_Consistency_No );
+#  endif // #ifdef UNSPLIT_GRAVITY
+
 
 // prepare the corner array
-   if ( OPT__GRAVITY_TYPE == GRAVITY_EXTERNAL  ||  OPT__GRAVITY_TYPE == GRAVITY_BOTH  ||  OPT__EXTERNAL_POT )
+   if ( PrepareCorner )
    {
       const double dh_half[3] = { 0.5*amr->dh[lv][0], 0.5*amr->dh[lv][1], 0.5*amr->dh[lv][2] };
 
-      int PID0;
-
-//#     pragma omp parallel for private(  PID0 ) schedule( runtime )
       for (int TID=0; TID<NPG; TID++)
       {
-         PID0 = PID0_List[TID];
+         const int PID0 = PID0_List[TID];
 
          for (int d=0; d<3; d++)    h_Corner_Array_F[TID][d] = amr->patch[0][lv][PID0]->EdgeL[d] + dh_half[d];
       } // for (int TID=0; TID<NPG; TID++)
    }
-#  endif // #ifdef UNSPLIT_GRAVITY
 
 } // FUNCTION : Flu_Prepare

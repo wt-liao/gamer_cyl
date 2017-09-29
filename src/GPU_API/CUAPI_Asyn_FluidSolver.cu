@@ -217,6 +217,19 @@ void CUAPI_Asyn_FluidSolver( real h_Flu_Array_In [][FLU_NIN    ][ FLU_NXT*FLU_NX
                              const bool JeansMinPres, const real JeansMinPres_Coeff )
 {
 
+// determine whether or not to prepare the corner array
+   bool PrepareCorner = false;
+
+#  ifdef UNSPLIT_GRAVITY
+   if ( OPT__GRAVITY_TYPE == GRAVITY_EXTERNAL  ||  OPT__GRAVITY_TYPE == GRAVITY_BOTH )
+      PrepareCorner = true;
+#  endif
+
+#  if ( COORDINATE != CARTESIAN )
+      PrepareCorner = true;
+#  endif
+
+
 // check
 #  ifdef GAMER_DEBUG
 #  if   ( MODEL == HYDRO )
@@ -230,13 +243,13 @@ void CUAPI_Asyn_FluidSolver( real h_Flu_Array_In [][FLU_NIN    ][ FLU_NXT*FLU_NX
       if ( h_Pot_Array_USG   == NULL )   Aux_Error( ERROR_INFO, "h_Pot_Array_USG == NULL !!\n" );
       if ( d_Pot_Array_USG_F == NULL )   Aux_Error( ERROR_INFO, "d_Pot_Array_USG_F == NULL !!\n" );
    }
+#  endif
 
-   if ( GravityType == GRAVITY_EXTERNAL  ||  GravityType == GRAVITY_BOTH )
+   if ( PrepareCorner )
    {
       if ( h_Corner_Array   == NULL )    Aux_Error( ERROR_INFO, "h_Corner_Array == NULL !!\n" );
       if ( d_Corner_Array_F == NULL )    Aux_Error( ERROR_INFO, "d_Corner_Array_F == NULL !!\n" );
    }
-#  endif
 
 #  elif ( MODEL == MHD )
 #  warning : WAIT MHD !!!
@@ -288,8 +301,8 @@ void CUAPI_Asyn_FluidSolver( real h_Flu_Array_In [][FLU_NIN    ][ FLU_NXT*FLU_NX
    int *Flux_MemSize       = new int [GPU_NStream];
 #  ifdef UNSPLIT_GRAVITY
    int *USG_MemSize        = new int [GPU_NStream];
-   int *Corner_MemSize     = new int [GPU_NStream];
 #  endif
+   int *Corner_MemSize     = ( PrepareCorner ) ? new int [GPU_NStream] : NULL;
 #  ifdef DUAL_ENERGY
    int *DE_MemSize_Out     = new int [GPU_NStream];
 #  endif
@@ -319,8 +332,9 @@ void CUAPI_Asyn_FluidSolver( real h_Flu_Array_In [][FLU_NIN    ][ FLU_NXT*FLU_NX
       Flux_MemSize   [s] = sizeof(real  )*NPatch_per_Stream[s]*NFLUX_TOTAL*9*PS2*PS2;
 #     ifdef UNSPLIT_GRAVITY
       USG_MemSize    [s] = sizeof(real  )*NPatch_per_Stream[s]*CUBE(USG_NXT_F);
-      Corner_MemSize [s] = sizeof(double)*NPatch_per_Stream[s]*3;
 #     endif
+      if ( PrepareCorner )
+      Corner_MemSize [s] = sizeof(double)*NPatch_per_Stream[s]*3;
 #     ifdef DUAL_ENERGY
       DE_MemSize_Out [s] = sizeof(char  )*NPatch_per_Stream[s]*CUBE(PS2);
 #     endif
@@ -339,11 +353,11 @@ void CUAPI_Asyn_FluidSolver( real h_Flu_Array_In [][FLU_NIN    ][ FLU_NXT*FLU_NX
 #     ifdef UNSPLIT_GRAVITY
       CUDA_CHECK_ERROR(  cudaMemcpyAsync( d_Pot_Array_USG_F + UsedPatch[s], h_Pot_Array_USG + UsedPatch[s],
                          USG_MemSize   [s], cudaMemcpyHostToDevice, Stream[s] )  );
+#     endif
 
-      if ( GravityType == GRAVITY_EXTERNAL  ||  GravityType == GRAVITY_BOTH )
+      if ( PrepareCorner )
       CUDA_CHECK_ERROR(  cudaMemcpyAsync( d_Corner_Array_F  + UsedPatch[s], h_Corner_Array  + UsedPatch[s],
                          Corner_MemSize[s], cudaMemcpyHostToDevice, Stream[s] )  );
-#     endif
    } // for (int s=0; s<GPU_NStream; s++)
 
 
@@ -492,8 +506,9 @@ void CUAPI_Asyn_FluidSolver( real h_Flu_Array_In [][FLU_NIN    ][ FLU_NXT*FLU_NX
    delete [] Flux_MemSize;
 #  ifdef UNSPLIT_GRAVITY
    delete [] USG_MemSize;
-   delete [] Corner_MemSize;
 #  endif
+   if ( PrepareCorner )
+   delete [] Corner_MemSize;
 #  ifdef DUAL_ENERGY
    delete [] DE_MemSize_Out;
 #  endif

@@ -17,8 +17,8 @@ extern real (*d_Flu_Array_F_Out)[FLU_NOUT][ PS2*PS2*PS2 ];
 extern real (*d_Flux_Array)[9][NFLUX_TOTAL][ PS2*PS2 ];
 #ifdef UNSPLIT_GRAVITY
 extern real (*d_Pot_Array_USG_F)[ USG_NXT_F*USG_NXT_F*USG_NXT_F ];
-extern double (*d_Corner_Array_F)[3];
 #endif
+extern double (*d_Corner_Array_F)[3];
 #ifdef DUAL_ENERGY
 extern char (*d_DE_Array_F_Out)[ PS2*PS2*PS2 ];
 #endif
@@ -65,6 +65,19 @@ extern real (*d_FC_Flux_z)  [NCOMP_TOTAL][ N_FC_FLUX*N_FC_FLUX*N_FC_FLUX ];
 void CUAPI_MemAllocate_Fluid( const int Flu_NPG, const int Pot_NPG, const int GPU_NStream )
 {
 
+// determine whether or not to allocate the corner array
+   bool AllocateCorner = false;
+
+#  ifdef UNSPLIT_GRAVITY
+   if ( OPT__GRAVITY_TYPE == GRAVITY_EXTERNAL  ||  OPT__GRAVITY_TYPE == GRAVITY_BOTH )
+      AllocateCorner = true;
+#  endif
+
+#  if ( COORDINATE != CARTESIAN )
+      AllocateCorner = true;
+#  endif
+
+
 // size of the global memory arrays in all models
    const int  Flu_NP            = 8*Flu_NPG;
 #  ifdef GRAVITY
@@ -75,8 +88,8 @@ void CUAPI_MemAllocate_Fluid( const int Flu_NPG, const int Pot_NPG, const int GP
    const long Flux_MemSize      = sizeof(real  )*Flu_NPG*9*NFLUX_TOTAL*PS2*PS2;
 #  ifdef UNSPLIT_GRAVITY
    const long Pot_MemSize_USG_F = sizeof(real  )*Flu_NPG*USG_NXT_F*USG_NXT_F*USG_NXT_F;
-   const long Corner_MemSize    = sizeof(double)*Flu_NPG*3;
 #  endif
+   const long Corner_MemSize    = ( AllocateCorner ) ? sizeof(double)*Flu_NPG*3 : 0;
 #  ifdef DUAL_ENERGY
    const long DE_MemSize_F_Out  = sizeof(char  )*Flu_NPG*PS2*PS2*PS2;
 #  endif
@@ -116,10 +129,10 @@ void CUAPI_MemAllocate_Fluid( const int Flu_NPG, const int Pot_NPG, const int GP
 
 #  ifdef UNSPLIT_GRAVITY
    TotalSize += Pot_MemSize_USG_F;
-
-   if ( OPT__GRAVITY_TYPE == GRAVITY_EXTERNAL  ||  OPT__GRAVITY_TYPE == GRAVITY_BOTH  ||  OPT__EXTERNAL_POT )
-   TotalSize += Corner_MemSize;
 #  endif
+
+   if ( AllocateCorner )
+   TotalSize += Corner_MemSize;
 
 #  ifdef DUAL_ENERGY
    TotalSize += DE_MemSize_F_Out;
@@ -155,10 +168,10 @@ void CUAPI_MemAllocate_Fluid( const int Flu_NPG, const int Pot_NPG, const int GP
 
 #  ifdef UNSPLIT_GRAVITY
    CUDA_CHECK_ERROR(  cudaMalloc( (void**) &d_Pot_Array_USG_F,       Pot_MemSize_USG_F       )  );
-
-   if ( OPT__GRAVITY_TYPE == GRAVITY_EXTERNAL  ||  OPT__GRAVITY_TYPE == GRAVITY_BOTH  ||  OPT__EXTERNAL_POT )
-   CUDA_CHECK_ERROR(  cudaMalloc( (void**) &d_Corner_Array_F,        Corner_MemSize          )  );
 #  endif
+
+   if ( AllocateCorner )
+   CUDA_CHECK_ERROR(  cudaMalloc( (void**) &d_Corner_Array_F,        Corner_MemSize          )  );
 
 #  ifdef DUAL_ENERGY
    CUDA_CHECK_ERROR(  cudaMalloc( (void**) &d_DE_Array_F_Out,        DE_MemSize_F_Out        )  );
@@ -210,10 +223,10 @@ void CUAPI_MemAllocate_Fluid( const int Flu_NPG, const int Pot_NPG, const int GP
 
 #     ifdef UNSPLIT_GRAVITY
       CUDA_CHECK_ERROR(  cudaMallocHost( (void**) &h_Pot_Array_USG_F[t], Pot_MemSize_USG_F       )  );
-
-      if ( OPT__GRAVITY_TYPE == GRAVITY_EXTERNAL  ||  OPT__GRAVITY_TYPE == GRAVITY_BOTH  ||  OPT__EXTERNAL_POT )
-      CUDA_CHECK_ERROR(  cudaMallocHost( (void**) &h_Corner_Array_F [t], Corner_MemSize          )  );
 #     endif
+
+      if ( AllocateCorner )
+      CUDA_CHECK_ERROR(  cudaMallocHost( (void**) &h_Corner_Array_F [t], Corner_MemSize          )  );
 
 #     ifdef DUAL_ENERGY
       CUDA_CHECK_ERROR(  cudaMallocHost( (void**) &h_DE_Array_F_Out [t], DE_MemSize_F_Out        )  );

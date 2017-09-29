@@ -143,17 +143,30 @@ void CPU_FluidSolver( real h_Flu_Array_In [][FLU_NIN    ][ FLU_NXT*FLU_NXT*FLU_N
                       const bool JeansMinPres, const real JeansMinPres_Coeff )
 {
 
+// determine whether or not to prepare the corner array
+   bool PrepareCorner = false;
+
+#  ifdef UNSPLIT_GRAVITY
+   if ( OPT__GRAVITY_TYPE == GRAVITY_EXTERNAL  ||  OPT__GRAVITY_TYPE == GRAVITY_BOTH )
+      PrepareCorner = true;
+#  endif
+
+#  if ( COORDINATE != CARTESIAN )
+      PrepareCorner = true;
+#  endif
+
+
 // check
 #  ifdef GAMER_DEBUG
    if ( StoreFlux  &&  h_Flux_Array == NULL )   Aux_Error( ERROR_INFO, "Flux_Array is not allocated !!\n" );
 
 #  ifdef UNSPLIT_GRAVITY
    if (  ( GravityType == GRAVITY_SELF || GravityType == GRAVITY_BOTH )  &&  h_Pot_Array_USG == NULL  )
-   Aux_Error( ERROR_INFO, "h_Pot_Array_USG == NULL !!\n" );
-
-   if (  ( GravityType == GRAVITY_EXTERNAL || GravityType == GRAVITY_BOTH )  &&  h_Corner_Array == NULL  )
-   Aux_Error( ERROR_INFO, "h_Corner_Array == NULL !!\n" );
+      Aux_Error( ERROR_INFO, "h_Pot_Array_USG == NULL !!\n" );
 #  endif
+
+   if ( PrepareCorner  &&  h_Corner_Array == NULL )
+      Aux_Error( ERROR_INFO, "h_Corner_Array == NULL !!\n" );
 #  endif
 
 #  if ( COORDINATE == CARTESIAN )
