@@ -75,8 +75,8 @@ void Par_LB_Init_RedistributeByRectangular()
             Aux_Error( ERROR_INFO, "cannot determine the target rank for ParID %ld with Pos = (%20.14e, %20.14e, %20.14e) !!\n",
                        ParID, Pos[0][ParID], Pos[1][ParID], Pos[2][ParID] );
 
-         if ( Pos[d][ParID] < (real)0.0 )
-            Aux_Error( ERROR_INFO, "Pos[%d][%ld] = %21.14e < 0.0 !!\n", d, ParID, Pos[d][ParID] );
+         if ( Pos[d][ParID] < amr->BoxEdgeL[d] )
+            Aux_Error( ERROR_INFO, "Pos[%d][%ld] (%21.14e) < BoxEdgeL (%21.14e) !!\n", d, ParID, Pos[d][ParID], amr->BoxEdgeL[d] );
       } // for (int d=0; d<3; d++)
 
       TRank[ParID] = (int)Mis_Idx3D2Idx1D( MPI_NRank_X, TRank_3D );

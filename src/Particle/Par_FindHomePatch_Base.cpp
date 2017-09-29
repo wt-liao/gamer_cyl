@@ -62,7 +62,7 @@ void Par_FindHomePatch_Base( const int *BaseP )
          for (int d=0; d<3; d++)
          {
 #           ifdef SERIAL
-            dr [d] = Pos[d][ParID];
+            dr [d] = Pos[d][ParID] - amr->BoxEdgeL[d];
 #           else
             dr [d] = Pos[d][ParID] - amr->ParaVar->SubDomain_EdgeL[d];
 #           endif
