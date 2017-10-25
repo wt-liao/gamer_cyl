@@ -732,18 +732,22 @@ int AllocateSonPatch( const int FaLv, const int *Cr, const int PScale, const int
 
 
 // 3.2 perform spatial interpolation
-   const int   CSize_Flu_Temp[3]      = { CSize_Flu, CSize_Flu, CSize_Flu };
-   const int   FSize_Temp    [3]      = { PS2, PS2, PS2 };
-   const int   CSize_Flu1v            = CSize_Flu*CSize_Flu*CSize_Flu;
-   const bool  PhaseUnwrapping_Yes    = true;
-   const bool  PhaseUnwrapping_No     = false;
-   const bool  EnsureMonotonicity_Yes = true;
-   const bool  EnsureMonotonicity_No  = false;
-   real *const CData_Flu              = CData;
+   const int    CSize_Flu_Temp[3]      = { CSize_Flu, CSize_Flu, CSize_Flu };
+   const int    FSize_Temp    [3]      = { PS2, PS2, PS2 };
+   const int    CSize_Flu1v            = CSize_Flu*CSize_Flu*CSize_Flu;
+   const bool   PhaseUnwrapping_Yes    = true;
+   const bool   PhaseUnwrapping_No     = false;
+   const bool   EnsureMonotonicity_Yes = true;
+   const bool   EnsureMonotonicity_No  = false;
+   const double CPhyCorner[3]          = { Aux_Coord_CellIdx2AdoptedCoord( FaLv, FaPID, 0, 0 ),
+                                           Aux_Coord_CellIdx2AdoptedCoord( FaLv, FaPID, 1, 0 ),
+                                           Aux_Coord_CellIdx2AdoptedCoord( FaLv, FaPID, 2, 0 ) };
+
+   real *const CData_Flu  = CData;
 #  if ( MODEL == ELBDM )
-   real *const CData_Dens             = CData_Flu + DENS*CSize_Flu1v;
-   real *const CData_Real             = CData_Flu + REAL*CSize_Flu1v;
-   real *const CData_Imag             = CData_Flu + IMAG*CSize_Flu1v;
+   real *const CData_Dens = CData_Flu + DENS*CSize_Flu1v;
+   real *const CData_Real = CData_Flu + REAL*CSize_Flu1v;
+   real *const CData_Imag = CData_Flu + IMAG*CSize_Flu1v;
 #  endif
 
 // 3.2.1 determine which variables require **monotonic** interpolation
@@ -781,18 +785,21 @@ int AllocateSonPatch( const int FaLv, const int *Cr, const int PScale, const int
 
 //    interpolate density
       Interpolate( CData_Dens, CSize_Flu_Temp, CStart_Flu, CRange, &FData_Flu[DENS][0][0][0],
-                   FSize_Temp, FStart, 1, OPT__REF_FLU_INT_SCHEME, PhaseUnwrapping_No, &EnsureMonotonicity_Yes, NULL, NULL );
+                   FSize_Temp, FStart, 1, OPT__REF_FLU_INT_SCHEME, PhaseUnwrapping_No, &EnsureMonotonicity_Yes,
+                   CPhyCorner, amr->dh[FaLv] );
 
 //    interpolate phase
       Interpolate( CData_Real, CSize_Flu_Temp, CStart_Flu, CRange, &FData_Flu[REAL][0][0][0],
-                   FSize_Temp, FStart, 1, OPT__REF_FLU_INT_SCHEME, PhaseUnwrapping_Yes, &EnsureMonotonicity_No, NULL, NULL );
+                   FSize_Temp, FStart, 1, OPT__REF_FLU_INT_SCHEME, PhaseUnwrapping_Yes, &EnsureMonotonicity_No,
+                   CPhyCorner, amr->dh[FaLv] );
    }
 
    else // if ( OPT__INT_PHASE )
    {
       for (int v=0; v<NCOMP_TOTAL; v++)
       Interpolate( CData_Flu+v*CSize_Flu1v, CSize_Flu_Temp, CStart_Flu, CRange, &FData_Flu[v][0][0][0],
-                   FSize_Temp, FStart, 1, OPT__REF_FLU_INT_SCHEME, PhaseUnwrapping_No, Monotonicity, NULL, NULL );
+                   FSize_Temp, FStart, 1, OPT__REF_FLU_INT_SCHEME, PhaseUnwrapping_No, Monotonicity,
+                   CPhyCorner, amr->dh[FaLv] );
    }
 
    if ( OPT__INT_PHASE )
@@ -824,7 +831,8 @@ int AllocateSonPatch( const int FaLv, const int *Cr, const int PScale, const int
 
    for (int v=0; v<NCOMP_TOTAL; v++)
    Interpolate( CData_Flu+v*CSize_Flu1v, CSize_Flu_Temp, CStart_Flu, CRange, &FData_Flu[v][0][0][0],
-                FSize_Temp, FStart, 1, OPT__REF_FLU_INT_SCHEME, PhaseUnwrapping_No, Monotonicity, NULL, NULL );
+                FSize_Temp, FStart, 1, OPT__REF_FLU_INT_SCHEME, PhaseUnwrapping_No, Monotonicity,
+                CPhyCorner, amr->dh[FaLv] );
 
 #  endif // #if ( MODEL == ELBDM ) ... else
 
@@ -833,7 +841,8 @@ int AllocateSonPatch( const int FaLv, const int *Cr, const int PScale, const int
    real *const CData_Pot = CData + NCOMP_TOTAL*CSize_Flu*CSize_Flu*CSize_Flu;
 
    Interpolate( CData_Pot, CSize_Pot_Temp, CStart_Pot, CRange, &FData_Pot[0][0][0],
-                FSize_Temp, FStart,     1, OPT__REF_POT_INT_SCHEME, PhaseUnwrapping_No, &EnsureMonotonicity_No, NULL, NULL );
+                FSize_Temp, FStart,     1, OPT__REF_POT_INT_SCHEME, PhaseUnwrapping_No, &EnsureMonotonicity_No,
+                CPhyCorner, amr->dh[FaLv] );
 #  endif
 
 // 3.2.3 check minimum density and pressure
