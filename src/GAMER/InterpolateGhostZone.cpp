@@ -62,13 +62,16 @@ static int Table_01( const int SibID, const int Side, const char dim, const int 
 //                MinPres        : Minimum allowed pressure
 //                DE_Consistency : Ensure the consistency between pressure, total energy density, and the dual-energy variable
 //                                 when DUAL_ENERGY is on
+//                CenPID         : Patch ID at level "lv" with amr->patch[0][lv][CenPID]->sibling[SibID] == PID
+//                                 --> Only used for calculating the physical corner coordinates of the coarse grid
+//                                     useful for the non-Cartesian coordinates
 //-------------------------------------------------------------------------------------------------------
 void InterpolateGhostZone( const int lv, const int PID, real IntData[], const int SibID, const double PrepTime,
                            const int GhostSize, const IntScheme_t IntScheme, const int NTSib[], int *TSib[],
                            const int TVar, const int NVar_Tot, const int NVar_Flu, const int TFluVarIdxList[],
                            const int NVar_Der, const int TDerVarList[], const bool IntPhase,
                            const OptFluBC_t FluBC[], const OptPotBC_t PotBC, const int BC_Face[], const real MinPres,
-                           const bool DE_Consistency )
+                           const bool DE_Consistency, const int CenPID )
 {
 
 // check
@@ -735,17 +738,21 @@ void InterpolateGhostZone( const int lv, const int PID, real IntData[], const in
 
 // c. interpolation : CData --> IntData
 // ------------------------------------------------------------------------------------------------------------
-   const bool PhaseUnwrapping_Yes    = true;
-   const bool PhaseUnwrapping_No     = false;
-   const bool EnsureMonotonicity_Yes = true;
-   const bool EnsureMonotonicity_No  = false;
-   int CStart[3], CRange[3], FStart[3], NVar_SoFar;
+   const bool   PhaseUnwrapping_Yes    = true;
+   const bool   PhaseUnwrapping_No     = false;
+   const bool   EnsureMonotonicity_Yes = true;
+   const bool   EnsureMonotonicity_No  = false;
+
+   int    CStart[3], CRange[3], FStart[3], NVar_SoFar;
+   double CPhyCorner[3];
 
    for (int d=0; d<3; d++)
    {
-      CStart[d] = CGhost;
-      CRange[d] = CSize[d] - 2*CGhost;
-      FStart[d] = 0;
+      CStart    [d] = CGhost;
+      CRange    [d] = CSize[d] - 2*CGhost;
+      FStart    [d] = 0;
+      CPhyCorner[d] = amr->patch[0][lv][CenPID]->EdgeL[d]
+                      + ( TABLE_01(SibID, 'x'+d, -GhostSize_Padded/2, 0, PATCH_SIZE+GhostSize_Padded/2-1) + 0.5 )*dh[d];
    }
 
 
@@ -831,11 +838,11 @@ void InterpolateGhostZone( const int lv, const int PID, real IntData[], const in
 
 //    interpolate density
       Interpolate( CData_Dens, CSize, CStart, CRange, FData_Dens, FSize, FStart, 1, IntScheme,
-                   PhaseUnwrapping_No, &EnsureMonotonicity_Yes );
+                   PhaseUnwrapping_No, &EnsureMonotonicity_Yes, CPhyCorner, dh );
 
 //    interpolate phase
       Interpolate( CData_Real, CSize, CStart, CRange, FData_Real, FSize, FStart, 1, IntScheme,
-                   PhaseUnwrapping_Yes, &EnsureMonotonicity_No );
+                   PhaseUnwrapping_Yes, &EnsureMonotonicity_No, CPhyCorner, dh );
    } // if ( IntPhase )
 
 
@@ -844,7 +851,7 @@ void InterpolateGhostZone( const int lv, const int PID, real IntData[], const in
    {
       for (int v=0; v<NVar_Flu; v++)
       Interpolate( CData+CSize3D*v, CSize, CStart, CRange, IntData+FSize3D*v, FSize, FStart, 1,
-                   IntScheme, PhaseUnwrapping_No, Monotonicity );
+                   IntScheme, PhaseUnwrapping_No, Monotonicity, CPhyCorner, dh );
    } // if ( IntPhase ) ... else ...
 
 // retrieve real and imaginary parts when phase interpolation is adopted
@@ -877,7 +884,7 @@ void InterpolateGhostZone( const int lv, const int PID, real IntData[], const in
 // c3. interpolation on original variables for models != ELBDM
    for (int v=0; v<NVar_Flu; v++)
       Interpolate( CData+CSize3D*v, CSize, CStart, CRange, IntData+FSize3D*v, FSize, FStart, 1,
-                   IntScheme, PhaseUnwrapping_No, Monotonicity );
+                   IntScheme, PhaseUnwrapping_No, Monotonicity, CPhyCorner, dh );
 
 #  endif // #if ( MODEL == ELBDM ) ... else ...
 
@@ -890,35 +897,35 @@ void InterpolateGhostZone( const int lv, const int PID, real IntData[], const in
    if ( PrepVx )
    {
       Interpolate( CData+CSize3D*NVar_SoFar, CSize, CStart, CRange, IntData+FSize3D*NVar_SoFar, FSize, FStart, 1,
-                   IntScheme, PhaseUnwrapping_No, &EnsureMonotonicity_Yes );
+                   IntScheme, PhaseUnwrapping_No, &EnsureMonotonicity_Yes, CPhyCorner, dh );
       NVar_SoFar ++;
    }
 
    if ( PrepVy )
    {
       Interpolate( CData+CSize3D*NVar_SoFar, CSize, CStart, CRange, IntData+FSize3D*NVar_SoFar, FSize, FStart, 1,
-                   IntScheme, PhaseUnwrapping_No, &EnsureMonotonicity_Yes );
+                   IntScheme, PhaseUnwrapping_No, &EnsureMonotonicity_Yes, CPhyCorner, dh );
       NVar_SoFar ++;
    }
 
    if ( PrepVz )
    {
       Interpolate( CData+CSize3D*NVar_SoFar, CSize, CStart, CRange, IntData+FSize3D*NVar_SoFar, FSize, FStart, 1,
-                   IntScheme, PhaseUnwrapping_No, &EnsureMonotonicity_Yes );
+                   IntScheme, PhaseUnwrapping_No, &EnsureMonotonicity_Yes, CPhyCorner, dh );
       NVar_SoFar ++;
    }
 
    if ( PrepPres )
    {
       Interpolate( CData+CSize3D*NVar_SoFar, CSize, CStart, CRange, IntData+FSize3D*NVar_SoFar, FSize, FStart, 1,
-                   IntScheme, PhaseUnwrapping_No, &EnsureMonotonicity_Yes );
+                   IntScheme, PhaseUnwrapping_No, &EnsureMonotonicity_Yes, CPhyCorner, dh );
       NVar_SoFar ++;
    }
 
    if ( PrepTemp )
    {
       Interpolate( CData+CSize3D*NVar_SoFar, CSize, CStart, CRange, IntData+FSize3D*NVar_SoFar, FSize, FStart, 1,
-                   IntScheme, PhaseUnwrapping_No, &EnsureMonotonicity_Yes );
+                   IntScheme, PhaseUnwrapping_No, &EnsureMonotonicity_Yes, CPhyCorner, dh );
       NVar_SoFar ++;
    }
 

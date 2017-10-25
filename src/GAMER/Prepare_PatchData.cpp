@@ -6,7 +6,7 @@ void InterpolateGhostZone( const int lv, const int PID, real IntData[], const in
                            const int TVar, const int NVar_Tot, const int NVar_Flu, const int TFluVarIdxList[],
                            const int NVar_Der, const int TDerVarList[], const bool IntPhase,
                            const OptFluBC_t FluBC[], const OptPotBC_t PotBC, const int BC_Face[], const real MinPres,
-                           const bool DE_Consistency );
+                           const bool DE_Consistency, const int CenPID );
 static void SetTargetSibling( int NTSib[], int *TSib[] );
 static int Table_01( const int SibID, const char dim, const int Count, const int GhostSize );
 static int Table_02( const int lv, const int PID, const int Side );
@@ -1160,7 +1160,7 @@ void Prepare_PatchData( const int lv, const double PrepTime, real *h_Input_Array
 //             perform interpolation and store the results in IntData
                InterpolateGhostZone( lv-1, FaSibPID, IntData, Side, PrepTime, GhostSize, IntScheme, NTSib, TSib,
                                      TVar, NVar_Tot, NVar_Flu, TFluVarIdxList, NVar_Der, TDerVarList, IntPhase,
-                                     FluBC, PotBC, BC_Face, MinPres, DE_Consistency );
+                                     FluBC, PotBC, BC_Face, MinPres, DE_Consistency, FaPID );
 
 
 //             properly copy data from IntData array to Array

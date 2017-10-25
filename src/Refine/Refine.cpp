@@ -396,12 +396,12 @@ void Refine( const int lv, const UseLBFunc_t UseLBFunc )
 //          interpolate density
             Interpolate( &Flu_CData[DENS][0][0][0], CSize_Flu3, CStart_Flu, CRange, &Flu_FData[DENS][0][0][0],
                          FSize3, FStart, 1, OPT__REF_FLU_INT_SCHEME, PhaseUnwrapping_No,
-                         &EnsureMonotonicity_Yes );
+                         &EnsureMonotonicity_Yes, NULL, NULL );
 
 //          interpolate phase
             Interpolate( &Flu_CData[REAL][0][0][0], CSize_Flu3, CStart_Flu, CRange, &Flu_FData[REAL][0][0][0],
                          FSize3, FStart, 1, OPT__REF_FLU_INT_SCHEME, PhaseUnwrapping_Yes,
-                         &EnsureMonotonicity_No );
+                         &EnsureMonotonicity_No, NULL, NULL );
          }
 
          else // if ( OPT__INT_PHASE )
@@ -409,7 +409,7 @@ void Refine( const int lv, const UseLBFunc_t UseLBFunc )
             for (int v=0; v<NCOMP_TOTAL; v++)
             Interpolate( &Flu_CData[v][0][0][0], CSize_Flu3, CStart_Flu, CRange, &Flu_FData[v][0][0][0],
                          FSize3, FStart, 1, OPT__REF_FLU_INT_SCHEME, PhaseUnwrapping_No,
-                         Monotonicity );
+                         Monotonicity, NULL, NULL );
          }
 
          if ( OPT__INT_PHASE )
@@ -442,7 +442,7 @@ void Refine( const int lv, const UseLBFunc_t UseLBFunc )
          for (int v=0; v<NCOMP_TOTAL; v++)
          Interpolate( &Flu_CData[v][0][0][0], CSize_Flu3, CStart_Flu, CRange, &Flu_FData[v][0][0][0],
                       FSize3, FStart, 1, OPT__REF_FLU_INT_SCHEME, PhaseUnwrapping_No,
-                      Monotonicity );
+                      Monotonicity, NULL, NULL );
 
 #        endif // #if ( MODEL == ELBDM ) ... else
 
@@ -453,7 +453,7 @@ void Refine( const int lv, const UseLBFunc_t UseLBFunc )
          if ( SelfGravity )
          Interpolate( &Pot_CData[0][0][0], CSize_Pot_Temp, CStart_Pot, CRange, &Pot_FData[0][0][0],
                       FSize3, FStart, 1, OPT__REF_POT_INT_SCHEME, PhaseUnwrapping_No,
-                      &EnsureMonotonicity_No );
+                      &EnsureMonotonicity_No, NULL, NULL );
 #        endif
 
 //       (c1.3.3.3) check minimum density and pressure

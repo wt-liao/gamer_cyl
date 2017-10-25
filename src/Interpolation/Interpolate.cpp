@@ -51,10 +51,15 @@ void Int_Quartic   (       real CData[], const int CSize[3], const int CStart[3]
 //                UnwrapPhase : Unwrap phase when OPT__INT_PHASE is on (for ELBDM only)
 //                Monotonic   : Ensure that all interpolation results are monotonic
 //                              --> Useful for interpolating positive-definite variables, such as density, energy, ...
+//                CPhyCorner  : Physical coordinates of the CStart[] cell in CData[] (defined at the cell center)
+//                              --> Useful for the non-Cartesian coordinates
+//                dh          : Coarse-grid cell size
+//                              --> Useful for the non-Cartesian coordinates
 //-------------------------------------------------------------------------------------------------------
 void Interpolate( real CData [], const int CSize[3], const int CStart[3], const int CRange[3],
                   real FData [], const int FSize[3], const int FStart[3],
-                  const int NComp, const IntScheme_t IntScheme, const bool UnwrapPhase, const bool Monotonic[] )
+                  const int NComp, const IntScheme_t IntScheme, const bool UnwrapPhase, const bool Monotonic[],
+                  const double CPhyCornder[3], const double dh[3] )
 {
 
 // check
