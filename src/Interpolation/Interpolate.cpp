@@ -56,10 +56,10 @@ void Int_Quartic   (       real CData[], const int CSize[3], const int CStart[3]
 //                dh          : Coarse-grid cell size
 //                              --> Useful for the non-Cartesian coordinates
 //-------------------------------------------------------------------------------------------------------
-void Interpolate( real CData [], const int CSize[3], const int CStart[3], const int CRange[3],
-                  real FData [], const int FSize[3], const int FStart[3],
+void Interpolate( real CData[], const int CSize[3], const int CStart[3], const int CRange[3],
+                  real FData[], const int FSize[3], const int FStart[3],
                   const int NComp, const IntScheme_t IntScheme, const bool UnwrapPhase, const bool Monotonic[],
-                  const double CPhyCornder[3], const double dh[3] )
+                  const double CPhyCorner[3], const double dh[3] )
 {
 
 // check
