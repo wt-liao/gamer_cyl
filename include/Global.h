@@ -218,7 +218,7 @@ extern double                SF_CREATE_STAR_MAX_STAR_MFRAC;
 // ============================================================================================================
 extern real       (*h_Flu_Array_F_In [2])[FLU_NIN ][  FLU_NXT   *FLU_NXT   *FLU_NXT   ];
 extern real       (*h_Flu_Array_F_Out[2])[FLU_NOUT][8*PATCH_SIZE*PATCH_SIZE*PATCH_SIZE];
-extern real       (*h_Flux_Array[2])[9][NFLUX_TOTAL][4*PATCH_SIZE*PATCH_SIZE];
+extern real       (*h_Flux_Array     [2])[9][NFLUX_TOTAL][4*PATCH_SIZE*PATCH_SIZE];
 extern double     (*h_Corner_Array_F [2])[3];
 #ifdef DUAL_ENERGY
 extern char       (*h_DE_Array_F_Out [2])[8*PATCH_SIZE*PATCH_SIZE*PATCH_SIZE];
@@ -242,15 +242,16 @@ extern real       (*h_Flu_Array_USG_G[2])[GRA_NIN-1][PS1][PS1][PS1];
 #endif
 
 #ifdef SUPPORT_GRACKLE
-extern real       (*h_Che_Array      [2]);
+extern real       (*h_Che_Array[2]);
 extern grackle_field_data *Che_FieldData;
 extern code_units Che_Units;
 #endif
 
-extern real        *h_dt_Array_T[2];
-extern real       (*h_Flu_Array_T[2])[NCOMP_FLUID][ CUBE(PS1) ];
+extern real        *h_dt_Array_T    [2];
+extern real       (*h_Flu_Array_T   [2])[NCOMP_FLUID][ CUBE(PS1) ];
+extern double     (*h_Corner_Array_T[2])[3];
 #ifdef GRAVITY
-extern real       (*h_Pot_Array_T[2])[ CUBE(GRA_NXT) ];
+extern real       (*h_Pot_Array_T   [2])[ CUBE(GRA_NXT) ];
 #endif
 
 

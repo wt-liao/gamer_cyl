@@ -199,6 +199,7 @@ void   dt_Prepare_Flu( const int lv, real h_Flu_Array_T[][NCOMP_FLUID][ CUBE(PS1
 void   dt_Prepare_Pot( const int lv, real h_Pot_Array_T[][ CUBE(GRA_NXT) ], const int NPG, const int *PID0_List,
                        const double PrepTime );
 #endif
+void   dt_Prepare_Corner( const int lv, double h_Corner_Array_T[][3], const int NPG, const int *PID0_List );
 void   dt_Close( const real h_dt_Array_T[], const int NPG );
 void   CPU_dtSolver( const Solver_t TSolver, real dt_Array[], const real Flu_Array[][NCOMP_FLUID][ CUBE(PS1) ],
                      const real Pot_Array[][ CUBE(GRA_NXT) ], const double Corner_Array[][3],

@@ -26,6 +26,7 @@ void End_MemFree_Fluid()
       if ( h_Corner_Array_F [t] != NULL )    delete [] h_Corner_Array_F [t];
       if ( h_dt_Array_T     [t] != NULL )    delete [] h_dt_Array_T     [t];
       if ( h_Flu_Array_T    [t] != NULL )    delete [] h_Flu_Array_T    [t];
+      if ( h_Corner_Array_T [t] != NULL )    delete [] h_Corner_Array_T [t];
 #     ifdef DUAL_ENERGY
       if ( h_DE_Array_F_Out [t] != NULL )    delete [] h_DE_Array_F_Out [t];
 #     endif
@@ -39,6 +40,7 @@ void End_MemFree_Fluid()
       h_Corner_Array_F [t] = NULL;
       h_dt_Array_T     [t] = NULL;
       h_Flu_Array_T    [t] = NULL;
+      h_Corner_Array_T [t] = NULL;
 #     ifdef DUAL_ENERGY
       h_DE_Array_F_Out [t] = NULL;
 #     endif

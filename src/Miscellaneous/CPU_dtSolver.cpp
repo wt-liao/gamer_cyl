@@ -12,7 +12,7 @@ extern double ExtAcc_AuxArray[EXT_ACC_NAUX_MAX];
 
 
 #if   ( MODEL == HYDRO )
-void CPU_dtSolver_HydroCFL( real dt_Array[], const real Flu_Array[][NCOMP_FLUID][ CUBE(PS1) ],
+void CPU_dtSolver_HydroCFL( real dt_Array[], const real Flu_Array[][NCOMP_FLUID][ CUBE(PS1) ], const double Corner_Array[][3],
                             const int NPG, const real dh, const real Safety, const real Gamma, const real MinPres );
 #ifdef GRAVITY
 void CPU_dtSolver_HydroGravity( real dt_Array[],
@@ -83,7 +83,7 @@ void CPU_dtSolver( const Solver_t TSolver, real dt_Array[], const real Flu_Array
 #     if   ( MODEL == HYDRO )
 //###: COORD-FIX: use dh instead of dh[0]
       case DT_FLU_SOLVER:
-         CPU_dtSolver_HydroCFL( dt_Array, Flu_Array, NPatchGroup, dh[0], Safety, Gamma, MinPres );
+         CPU_dtSolver_HydroCFL( dt_Array, Flu_Array, Corner_Array, NPatchGroup, dh[0], Safety, Gamma, MinPres );
       break;
 
 #     ifdef GRAVITY

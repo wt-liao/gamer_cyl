@@ -86,7 +86,9 @@ __global__ void CUFLU_FluidSolver_CTU( const real g_Fluid_In[]   [NCOMP_TOTAL][ 
 int CUFLU_FluidSolver_SetConstMem_NormIdx( int NormIdx_h[] );
 #endif
 #endif // FLU_SCHEME
-__global__ void CUFLU_dtSolver_HydroCFL( real g_dt_Array[], const real g_Flu_Array[][NCOMP_FLUID][ CUBE(PS1) ],
+__global__ void CUFLU_dtSolver_HydroCFL( real g_dt_Array[],
+                                         const real g_Flu_Array[][NCOMP_FLUID][ CUBE(PS1) ],
+                                         const double g_Corner_Array[][3],
                                          const real dh, const real Safety, const real Gamma, const real MinPres );
 #ifdef GRAVITY
 __global__ void CUPOT_dtSolver_HydroGravity( real g_dt_Array[],

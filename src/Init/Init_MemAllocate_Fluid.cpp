@@ -42,11 +42,13 @@ void Init_MemAllocate_Fluid( const int Flu_NPatchGroup )
       h_Pot_Array_USG_F[t] = new real [Flu_NPatchGroup][USG_NXT_F][USG_NXT_F][USG_NXT_F];
 #     endif
 
-      if ( AllocateCorner )
+      if ( AllocateCorner ) {
       h_Corner_Array_F [t] = new double [Flu_NPatchGroup][3];
+      h_Corner_Array_T [t] = new double [Flu_NPatch][3]; }
 
       h_dt_Array_T     [t] = new real [Flu_NPatch];
       h_Flu_Array_T    [t] = new real [Flu_NPatch][NCOMP_FLUID][ CUBE(PS1) ];
+
 
 #     ifdef DUAL_ENERGY
       h_DE_Array_F_Out [t] = new char [Flu_NPatchGroup][ 8*PATCH_SIZE*PATCH_SIZE*PATCH_SIZE ];

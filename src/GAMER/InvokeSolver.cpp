@@ -350,14 +350,20 @@ void Preparation_Step( const Solver_t TSolver, const int lv, const double TimeNe
 
       case DT_FLU_SOLVER:
          dt_Prepare_Flu( lv, h_Flu_Array_T[ArrayID], NPG, PID0_List );
+
+#        if ( COORDINATE != CARTESIAN )
+         dt_Prepare_Corner( lv, h_Corner_Array_T[ArrayID], NPG, PID0_List );
+#        endif
       break;
 
 #     ifdef GRAVITY
       case DT_GRA_SOLVER:
          dt_Prepare_Pot( lv, h_Pot_Array_T[ArrayID], NPG, PID0_List, TimeNew );
 
+#        if ( COORDINATE == CARTESIAN )
          if ( OPT__GRAVITY_TYPE == GRAVITY_EXTERNAL  ||  OPT__GRAVITY_TYPE == GRAVITY_BOTH  ||  OPT__EXTERNAL_POT )
-         Gra_Prepare_Corner( lv, h_Corner_Array_G[ArrayID], NPG, PID0_List );
+#        endif
+         dt_Prepare_Corner( lv, h_Corner_Array_T[ArrayID], NPG, PID0_List );
       break;
 #     endif
 
@@ -595,11 +601,11 @@ void Solver( const Solver_t TSolver, const int lv, const double TimeNew, const d
 #     if   ( MODEL == HYDRO )
       case DT_FLU_SOLVER:
 #        ifdef GPU
-         CUAPI_Asyn_dtSolver( TSolver, h_dt_Array_T[ArrayID], h_Flu_Array_T[ArrayID], NULL, NULL,
+         CUAPI_Asyn_dtSolver( TSolver, h_dt_Array_T[ArrayID], h_Flu_Array_T[ArrayID], NULL, h_Corner_Array_T[ArrayID],
                               NPG, dh_real, (Step==0)?DT__FLUID_INIT:DT__FLUID, GAMMA, MIN_PRES,
                               NULL_BOOL, GRAVITY_NONE, NULL_BOOL, NULL_REAL, GPU_NSTREAM );
 #        else
-         CPU_dtSolver       ( TSolver, h_dt_Array_T[ArrayID], h_Flu_Array_T[ArrayID], NULL, NULL,
+         CPU_dtSolver       ( TSolver, h_dt_Array_T[ArrayID], h_Flu_Array_T[ArrayID], NULL, h_Corner_Array_T[ArrayID],
                               NPG, dh_real, (Step==0)?DT__FLUID_INIT:DT__FLUID, GAMMA, MIN_PRES,
                               NULL_BOOL, GRAVITY_NONE, NULL_BOOL, NULL_REAL );
 #        endif
@@ -608,11 +614,11 @@ void Solver( const Solver_t TSolver, const int lv, const double TimeNew, const d
 #     ifdef GRAVITY
       case DT_GRA_SOLVER:
 #        ifdef GPU
-         CUAPI_Asyn_dtSolver( TSolver, h_dt_Array_T[ArrayID], NULL, h_Pot_Array_T[ArrayID], h_Corner_Array_G[ArrayID],
+         CUAPI_Asyn_dtSolver( TSolver, h_dt_Array_T[ArrayID], NULL, h_Pot_Array_T[ArrayID], h_Corner_Array_T[ArrayID],
                               NPG, dh_real, DT__GRAVITY, NULL_REAL, NULL_REAL, OPT__GRA_P5_GRADIENT, OPT__GRAVITY_TYPE, NULL_BOOL,
                               TimeNew, GPU_NSTREAM );
 #        else
-         CPU_dtSolver       ( TSolver, h_dt_Array_T[ArrayID], NULL, h_Pot_Array_T[ArrayID], h_Corner_Array_G[ArrayID],
+         CPU_dtSolver       ( TSolver, h_dt_Array_T[ArrayID], NULL, h_Pot_Array_T[ArrayID], h_Corner_Array_T[ArrayID],
                               NPG, dh_real, DT__GRAVITY, NULL_REAL, NULL_REAL, OPT__GRA_P5_GRADIENT, OPT__GRAVITY_TYPE, NULL_BOOL,
                               TimeNew );
 #        endif

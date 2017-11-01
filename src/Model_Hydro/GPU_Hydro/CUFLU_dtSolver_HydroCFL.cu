@@ -34,16 +34,19 @@
 //                       in the comoving coordinates, in Mis_GetTimeStep()
 //                2. time-step is estimated by the stability criterion from the von Neumann stability analysis
 //
-// Parameter   :  g_dt_Array  : Global memory array to store the minimum dt in each target patch
-//                g_Flu_Array : Global memory array storing the prepared fluid data of each target patch
-//                dh          : Grid size
-//                Safety      : dt safety factor
-//                Gamma       : Ratio of specific heats
-//                MinPres     : Minimum allowed pressure
+// Parameter   :  g_dt_Array     : Global memory array to store the minimum dt in each target patch
+//                g_Flu_Array    : Global memory array storing the prepared fluid data of each target patch
+//                g_Corner_Array : Global memory array storing the physical corner coordinates of each patch
+//                dh             : Grid size
+//                Safety         : dt safety factor
+//                Gamma          : Ratio of specific heats
+//                MinPres        : Minimum allowed pressure
 //
 // Return      :  g_dt_Array
 //-------------------------------------------------------------------------------------------------------
-__global__ void CUFLU_dtSolver_HydroCFL( real g_dt_Array[], const real g_Flu_Array[][NCOMP_FLUID][ CUBE(PS1) ],
+__global__ void CUFLU_dtSolver_HydroCFL( real g_dt_Array[],
+                                         const real g_Flu_Array[][NCOMP_FLUID][ CUBE(PS1) ],
+                                         const double g_Corner_Array[][3],
                                          const real dh, const real Safety, const real Gamma, const real MinPres )
 {
 

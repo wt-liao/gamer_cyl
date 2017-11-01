@@ -945,7 +945,7 @@ void InterpolateGhostZone( const int lv, const int PID, real IntData[], const in
    if ( PrepPot )
    {
       Interpolate( CData+CSize3D*NVar_SoFar, CSize, CStart, CRange, IntData+FSize3D*NVar_SoFar, FSize, FStart, 1,
-                   IntScheme, PhaseUnwrapping_No, &EnsureMonotonicity_No );
+                   IntScheme, PhaseUnwrapping_No, &EnsureMonotonicity_No, CPhyCorner, dh );
       NVar_SoFar ++;
    }
 #  endif

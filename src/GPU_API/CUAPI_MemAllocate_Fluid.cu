@@ -24,6 +24,7 @@ extern char (*d_DE_Array_F_Out)[ PS2*PS2*PS2 ];
 #endif
 extern real *d_dt_Array_T;
 extern real (*d_Flu_Array_T)[NCOMP_FLUID][ CUBE(PS1) ];
+extern double (*d_Corner_Array_T)[3];
 
 // global memory arrays in different models
 #if ( MODEL == HYDRO )
@@ -89,7 +90,7 @@ void CUAPI_MemAllocate_Fluid( const int Flu_NPG, const int Pot_NPG, const int GP
 #  ifdef UNSPLIT_GRAVITY
    const long Pot_MemSize_USG_F = sizeof(real  )*Flu_NPG*USG_NXT_F*USG_NXT_F*USG_NXT_F;
 #  endif
-   const long Corner_MemSize    = ( AllocateCorner ) ? sizeof(double)*Flu_NPG*3 : 0;
+   const long Corner_MemSize_F  = ( AllocateCorner ) ? sizeof(double)*Flu_NPG*3 : 0;
 #  ifdef DUAL_ENERGY
    const long DE_MemSize_F_Out  = sizeof(char  )*Flu_NPG*PS2*PS2*PS2;
 #  endif
@@ -99,6 +100,7 @@ void CUAPI_MemAllocate_Fluid( const int Flu_NPG, const int Pot_NPG, const int GP
    const long dt_MemSize_T      = sizeof(real  )*Flu_NP;
 #  endif
    const long Flu_MemSize_T     = sizeof(real  )*Flu_NP*NCOMP_FLUID*CUBE(PS1);
+   const long Corner_MemSize_T  = ( AllocateCorner ) ? sizeof(double)*Flu_NP*3 : 0;
 
 // the size of the global memory arrays in different models
 #  if   ( MODEL == HYDRO )
@@ -131,8 +133,9 @@ void CUAPI_MemAllocate_Fluid( const int Flu_NPG, const int Pot_NPG, const int GP
    TotalSize += Pot_MemSize_USG_F;
 #  endif
 
-   if ( AllocateCorner )
-   TotalSize += Corner_MemSize;
+   if ( AllocateCorner ) {
+   TotalSize += Corner_MemSize_F;
+   TotalSize += Corner_MemSize_T; }
 
 #  ifdef DUAL_ENERGY
    TotalSize += DE_MemSize_F_Out;
@@ -171,7 +174,7 @@ void CUAPI_MemAllocate_Fluid( const int Flu_NPG, const int Pot_NPG, const int GP
 #  endif
 
    if ( AllocateCorner )
-   CUDA_CHECK_ERROR(  cudaMalloc( (void**) &d_Corner_Array_F,        Corner_MemSize          )  );
+   CUDA_CHECK_ERROR(  cudaMalloc( (void**) &d_Corner_Array_F,        Corner_MemSize_F        )  );
 
 #  ifdef DUAL_ENERGY
    CUDA_CHECK_ERROR(  cudaMalloc( (void**) &d_DE_Array_F_Out,        DE_MemSize_F_Out        )  );
@@ -179,6 +182,9 @@ void CUAPI_MemAllocate_Fluid( const int Flu_NPG, const int Pot_NPG, const int GP
 
    CUDA_CHECK_ERROR(  cudaMalloc( (void**) &d_dt_Array_T,            dt_MemSize_T            )  );
    CUDA_CHECK_ERROR(  cudaMalloc( (void**) &d_Flu_Array_T,           Flu_MemSize_T           )  );
+
+   if ( AllocateCorner )
+   CUDA_CHECK_ERROR(  cudaMalloc( (void**) &d_Corner_Array_T,        Corner_MemSize_T        )  );
 
 
 // allocate the device memory (in different models)
@@ -226,7 +232,7 @@ void CUAPI_MemAllocate_Fluid( const int Flu_NPG, const int Pot_NPG, const int GP
 #     endif
 
       if ( AllocateCorner )
-      CUDA_CHECK_ERROR(  cudaMallocHost( (void**) &h_Corner_Array_F [t], Corner_MemSize          )  );
+      CUDA_CHECK_ERROR(  cudaMallocHost( (void**) &h_Corner_Array_F [t], Corner_MemSize_F        )  );
 
 #     ifdef DUAL_ENERGY
       CUDA_CHECK_ERROR(  cudaMallocHost( (void**) &h_DE_Array_F_Out [t], DE_MemSize_F_Out        )  );
@@ -234,6 +240,9 @@ void CUAPI_MemAllocate_Fluid( const int Flu_NPG, const int Pot_NPG, const int GP
 
       CUDA_CHECK_ERROR(  cudaMallocHost( (void**) &h_dt_Array_T     [t], dt_MemSize_T            )  );
       CUDA_CHECK_ERROR(  cudaMallocHost( (void**) &h_Flu_Array_T    [t], Flu_MemSize_T           )  );
+
+      if ( AllocateCorner )
+      CUDA_CHECK_ERROR(  cudaMallocHost( (void**) &h_Corner_Array_T [t], Corner_MemSize_T        )  );
    } // for (int t=0; t<2; t++)
 
 
