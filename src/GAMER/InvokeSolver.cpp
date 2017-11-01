@@ -105,10 +105,9 @@ void InvokeSolver( const Solver_t TSolver, const int lv, const double TimeNew, c
       case GRACKLE_SOLVER:             NPG_Max = CHE_GPU_NPGROUP;    break;
 #     endif
 
-//    currently we use FLU_GPU_NPGROUP and POT_GPU_NPGROUP for the dt solvers
-      case DT_FLU_SOLVER:              NPG_Max = FLU_GPU_NPGROUP;    break;
+      case DT_FLU_SOLVER:              NPG_Max = DT_GPU_NPGROUP;     break;
 #     ifdef GRAVITY
-      case DT_GRA_SOLVER:              NPG_Max = POT_GPU_NPGROUP;    break;
+      case DT_GRA_SOLVER:              NPG_Max = DT_GPU_NPGROUP;     break;
 #     endif
 
       default :

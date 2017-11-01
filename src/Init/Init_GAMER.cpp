@@ -96,7 +96,7 @@ void Init_GAMER( int *argc, char ***argv )
 #  endif
    CUAPI_SetDevice( OPT__GPUID_SELECT );
 
-   CUAPI_Set_Default_GPU_Parameter( GPU_NSTREAM, FLU_GPU_NPGROUP, POT_GPU_NPGROUP, CHE_GPU_NPGROUP );
+   CUAPI_Set_Default_GPU_Parameter( GPU_NSTREAM, FLU_GPU_NPGROUP, POT_GPU_NPGROUP, CHE_GPU_NPGROUP, DT_GPU_NPGROUP );
 #  endif
 
 

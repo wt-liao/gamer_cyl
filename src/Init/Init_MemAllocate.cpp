@@ -24,11 +24,7 @@ void Init_MemAllocate()
 
 // b. allocate memory for all GPU (or CPU) solvers (including the global memory in GPU)
 #  ifdef GPU
-#  ifdef GRAVITY
-   CUAPI_MemAllocate_Fluid( FLU_GPU_NPGROUP, POT_GPU_NPGROUP, GPU_NSTREAM );
-#  else
-   CUAPI_MemAllocate_Fluid( FLU_GPU_NPGROUP, NULL_INT,        GPU_NSTREAM );
-#  endif
+   CUAPI_MemAllocate_Fluid( FLU_GPU_NPGROUP, GPU_NSTREAM );
 #  else
    Init_MemAllocate_Fluid ( FLU_GPU_NPGROUP );
 #  endif
@@ -53,6 +49,12 @@ void Init_MemAllocate()
 //    initialize the "grackle_field_data" objects of Grackle
       if ( GRACKLE_MODE == GRACKLE_MODE_ORI )   Grackle_Init_FieldData( CHE_GPU_NPGROUP );
    }
+#  endif
+
+#  ifdef GPU
+   CUAPI_MemAllocate_dt( DT_GPU_NPGROUP );
+#  else
+   Init_MemAllocate_dt ( DT_GPU_NPGROUP );
 #  endif
 
 

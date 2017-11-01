@@ -16,7 +16,7 @@ EXECUTABLE := gamer
 SIMU_OPTION += -DMODEL=HYDRO
 
 # coordinate system: CARTESIAN/CYLINDRICAL/SPHERICAL (experimental)
-SIMU_OPTION += -DCOORDINATE=CYLINDRICAL
+SIMU_OPTION += -DCOORDINATE=CARTESIAN
 
 # self-gravity
 #SIMU_OPTION += -DGRAVITY
@@ -112,10 +112,10 @@ SIMU_OPTION += -DPAR_NPASSIVE_MAKEFILE=1
 # (d) optimization options and other features
 # ------------------------------------------------------------------------------------
 # GPU acceleration (to disable GPU, please comment out both -DGPU and -DGPU_ARCH)
-#SIMU_OPTION += -DGPU
+SIMU_OPTION += -DGPU
 
 # GPU architecture: FERMI/KEPLER/MAXWELL/PASCAL
-#SIMU_OPTION += -DGPU_ARCH=KEPLER
+SIMU_OPTION += -DGPU_ARCH=KEPLER
 
 # debug mode
 #SIMU_OPTION += -DGAMER_DEBUG
@@ -166,7 +166,7 @@ SIMU_OPTION += -DSUPPORT_HDF5
 # Cuda source files (compiled with nvcc)
 CUDA_FILE   := CUAPI_Asyn_FluidSolver.cu  CUAPI_DiagnoseDevice.cu  CUAPI_MemAllocate_Fluid.cu \
                CUAPI_MemFree_Fluid.cu  CUAPI_Set_Default_GPU_Parameter.cu  CUAPI_SetDevice.cu \
-               CUAPI_Synchronize.cu  CUAPI_Asyn_dtSolver.cu
+               CUAPI_Synchronize.cu  CUAPI_Asyn_dtSolver.cu  CUAPI_MemAllocate_dt.cu  CUAPI_MemFree_dt.cu
 
 
 # C/C++ source files (compiled with c++ compiler)
@@ -191,7 +191,7 @@ CC_FILE     += End_GAMER.cpp  End_MemFree.cpp  End_MemFree_Fluid.cpp  End_StopMa
                Init_MemAllocate_Fluid.cpp  Init_Parallelization.cpp  Init_RecordBasePatch.cpp  Init_Refine.cpp \
                Init_Restart_v1.cpp  Init_StartOver.cpp  Init_TestProb.cpp  Init_UM.cpp  Init_OpenMP.cpp \
                Init_Restart_HDF5.cpp  Init_ResetParameter.cpp  Init_Restart_v2.cpp  Init_MemoryPool.cpp \
-               Init_Unit.cpp  Init_PassiveVariable.cpp
+               Init_Unit.cpp  Init_PassiveVariable.cpp  Init_MemAllocate_dt.cpp  End_MemFree_dt.cpp
 
 CC_FILE     += Interpolate.cpp  Int_CQuadratic.cpp  Int_MinMod1D.cpp  Int_MinMod3D.cpp  Int_vanLeer.cpp \
                Int_Quadratic.cpp  Int_Table.cpp  Int_CQuartic.cpp  Int_Quartic.cpp

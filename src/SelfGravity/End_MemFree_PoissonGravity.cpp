@@ -29,7 +29,6 @@ void End_MemFree_PoissonGravity()
 #     ifdef DUAL_ENERGY
       if ( h_DE_Array_G     [t] != NULL )    delete [] h_DE_Array_G     [t];
 #     endif
-      if ( h_Pot_Array_T    [t] != NULL )    delete [] h_Pot_Array_T    [t];
 
       h_Rho_Array_P    [t] = NULL;
       h_Pot_Array_P_In [t] = NULL;
@@ -43,7 +42,6 @@ void End_MemFree_PoissonGravity()
 #     ifdef DUAL_ENERGY
       h_DE_Array_G     [t] = NULL;
 #     endif
-      h_Pot_Array_T    [t] = NULL;
    }
 
    if ( GreenFuncK != NULL )  delete [] GreenFuncK;

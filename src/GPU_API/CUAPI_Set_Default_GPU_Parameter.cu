@@ -179,8 +179,10 @@ int CUPOT_PoissonSolver_SetConstMem();
 //                Flu_GPU_NPGroup : Number of patch groups sent into GPU simultaneously for the fluid solver
 //                Pot_GPU_NPGroup : Number of patch groups sent into GPU simultaneously for the Poisson solver
 //                Che_GPU_NPGroup : Number of patch groups sent into GPU simultaneously for the Grackle solver
+//                dt_GPU_NPGroup  : Number of patch groups sent into GPU simultaneously for the dt      solver
 //-------------------------------------------------------------------------------------------------------
-void CUAPI_Set_Default_GPU_Parameter( int &GPU_NStream, int &Flu_GPU_NPGroup, int &Pot_GPU_NPGroup, int &Che_GPU_NPGroup )
+void CUAPI_Set_Default_GPU_Parameter( int &GPU_NStream, int &Flu_GPU_NPGroup, int &Pot_GPU_NPGroup,
+                                      int &Che_GPU_NPGroup, int &dt_GPU_NPGroup )
 {
 
    if ( MPI_Rank == 0 )    Aux_Message( stdout, "%s ... \n", __FUNCTION__ );
@@ -324,6 +326,25 @@ void CUAPI_Set_Default_GPU_Parameter( int &GPU_NStream, int &Flu_GPU_NPGroup, in
                                          "CHE_GPU_NPGROUP", Che_GPU_NPGroup );
    } // if ( Che_GPU_NPGroup <= 0 )
 #  endif
+
+// (2-4) DT_GPU_NPGROUP
+   if ( dt_GPU_NPGroup <= 0 )
+   {
+#     if   ( GPU_ARCH == FERMI )
+      dt_GPU_NPGroup = 1*GPU_NStream*DeviceProp.multiProcessorCount;    // not optimized yet
+#     elif ( GPU_ARCH == KEPLER )
+      dt_GPU_NPGroup = 32*DeviceProp.multiProcessorCount;               // not optimized yet
+#     elif ( GPU_ARCH == MAXWELL )
+      dt_GPU_NPGroup = 32*DeviceProp.multiProcessorCount;               // not optimized yet
+#     elif ( GPU_ARCH == PASCAL )
+      dt_GPU_NPGroup = 32*DeviceProp.multiProcessorCount;               // not optimized yet
+#     else
+#     error : UNKNOWN GPU_ARCH !!
+#     endif
+
+      if ( MPI_Rank == 0 )  Aux_Message( stdout, "NOTE : parameter \"%s\" is set to the default value = %d\n",
+                                         "DT_GPU_NPGROUP", dt_GPU_NPGroup );
+   } // if ( dt_GPU_NPGroup <= 0 )
 
 
 // (3) cache preference

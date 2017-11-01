@@ -17,7 +17,6 @@ extern double (*d_Corner_Array_G)[3];
 #ifdef DUAL_ENERGY
 extern char (*d_DE_Array_G     )[ PS1*PS1*PS1 ];
 #endif
-extern real (*d_Pot_Array_T)    [ CUBE(GRA_NXT) ];
 
 
 
@@ -44,11 +43,10 @@ void CUAPI_MemAllocate_PoissonGravity( const int Pot_NPG )
 #  ifdef DUAL_ENERGY
    const long DE_MemSize_G      = sizeof(char  )*Pot_NP*CUBE(PS1);
 #  endif
-   const long Pot_MemSize_T     = sizeof(real  )*Pot_NP*CUBE(GRA_NXT);
 
 
 // output the total memory requirement
-   long TotalSize = Rho_MemSize_P + Pot_MemSize_P_In + Pot_MemSize_P_Out + Flu_MemSize_G + Pot_MemSize_T;
+   long TotalSize = Rho_MemSize_P + Pot_MemSize_P_In + Pot_MemSize_P_Out + Flu_MemSize_G;
 #  ifdef UNSPLIT_GRAVITY
    TotalSize += Pot_MemSize_USG_G + Flu_MemSize_USG_G;
 #  endif
@@ -78,8 +76,6 @@ void CUAPI_MemAllocate_PoissonGravity( const int Pot_NPG )
    CUDA_CHECK_ERROR(  cudaMalloc( (void**) &d_DE_Array_G,      DE_MemSize_G      )  );
 #  endif
 
-   CUDA_CHECK_ERROR(  cudaMalloc( (void**) &d_Pot_Array_T,     Pot_MemSize_T     )  );
-
 
 // allocate the host memory by CUDA
    for (int t=0; t<2; t++)
@@ -99,8 +95,6 @@ void CUAPI_MemAllocate_PoissonGravity( const int Pot_NPG )
 #     ifdef DUAL_ENERGY
       CUDA_CHECK_ERROR(  cudaMallocHost( (void**) &h_DE_Array_G     [t], DE_MemSize_G      )  );
 #     endif
-
-      CUDA_CHECK_ERROR(  cudaMallocHost( (void**) &h_Pot_Array_T    [t], Pot_MemSize_T     )  );
    } // for (int t=0; t<2; t++)
 
 } // FUNCTION : CUAPI_MemAllocate_PoissonGravity

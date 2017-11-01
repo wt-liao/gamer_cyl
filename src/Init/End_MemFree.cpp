@@ -77,6 +77,12 @@ void End_MemFree()
    }
 #  endif
 
+#  ifdef GPU
+   CUAPI_MemFree_dt();
+#  else
+   End_MemFree_dt();
+#  endif
+
 
 // 4. dump table
    if ( DumpTable != NULL )

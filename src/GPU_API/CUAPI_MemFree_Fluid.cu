@@ -13,9 +13,6 @@ extern double (*d_Corner_Array_F)[3];
 #ifdef DUAL_ENERGY
 extern char (*d_DE_Array_F_Out)[ PS2*PS2*PS2 ];
 #endif
-extern real *d_dt_Array_T;
-extern real (*d_Flu_Array_T)[NCOMP_FLUID][ CUBE(PS1) ];
-extern double (*d_Corner_Array_T)[3];
 
 // global memory arrays in different models
 #if   ( MODEL == HYDRO )
@@ -64,9 +61,6 @@ void CUAPI_MemFree_Fluid( const int GPU_NStream )
 #  ifdef DUAL_ENERGY
    if ( d_DE_Array_F_Out        != NULL )    CUDA_CHECK_ERROR(  cudaFree( d_DE_Array_F_Out        )  );
 #  endif
-   if ( d_dt_Array_T            != NULL )    CUDA_CHECK_ERROR(  cudaFree( d_dt_Array_T            )  );
-   if ( d_Flu_Array_T           != NULL )    CUDA_CHECK_ERROR(  cudaFree( d_Flu_Array_T           )  );
-   if ( d_Corner_Array_T        != NULL )    CUDA_CHECK_ERROR(  cudaFree( d_Corner_Array_T        )  );
 
    d_Flu_Array_F_In        = NULL;
    d_Flu_Array_F_Out       = NULL;
@@ -75,9 +69,6 @@ void CUAPI_MemFree_Fluid( const int GPU_NStream )
 #  ifdef DUAL_ENERGY
    d_DE_Array_F_Out        = NULL;
 #  endif
-   d_dt_Array_T            = NULL;
-   d_Flu_Array_T           = NULL;
-   d_Corner_Array_T        = NULL;
 
 
 // free the device memory (in different models)
@@ -136,9 +127,6 @@ void CUAPI_MemFree_Fluid( const int GPU_NStream )
 #     ifdef DUAL_ENERGY
       if ( h_DE_Array_F_Out [t] != NULL ) CUDA_CHECK_ERROR(  cudaFreeHost( h_DE_Array_F_Out [t] )  );
 #     endif
-      if ( h_dt_Array_T     [t] != NULL ) CUDA_CHECK_ERROR(  cudaFreeHost( h_dt_Array_T     [t] )  );
-      if ( h_Flu_Array_T    [t] != NULL ) CUDA_CHECK_ERROR(  cudaFreeHost( h_Flu_Array_T    [t] )  );
-      if ( h_Corner_Array_T [t] != NULL ) CUDA_CHECK_ERROR(  cudaFreeHost( h_Corner_Array_T [t] )  );
 
       h_Flu_Array_F_In      [t] = NULL;
       h_Flu_Array_F_Out     [t] = NULL;
@@ -147,9 +135,6 @@ void CUAPI_MemFree_Fluid( const int GPU_NStream )
 #     ifdef DUAL_ENERGY
       h_DE_Array_F_Out      [t] = NULL;
 #     endif
-      h_dt_Array_T          [t] = NULL;
-      h_Flu_Array_T         [t] = NULL;
-      h_Corner_Array_T      [t] = NULL;
    } // for (int t=0; t<2; t++)
 
 

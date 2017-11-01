@@ -89,8 +89,8 @@ void CUAPI_Asyn_dtSolver( const Solver_t TSolver, real h_dt_Array[], const real 
    bool PrepareCorner = false;
 
 #  ifdef GRAVITY
-// currently we set PrepareCorner=false even when ExtPot==false since ExtPot is not actually used here yet
-   if (  TSolver == DT_GRA_SOLVER  && ( GravityType == GRAVITY_EXTERNAL || GravityType == GRAVITY_BOTH )  )
+// ExtPot is not actually used in this function yet
+   if (  TSolver == DT_GRA_SOLVER  && ( GravityType == GRAVITY_EXTERNAL || GravityType == GRAVITY_BOTH || ExtPot )  )
       PrepareCorner = true;
 #  endif
 
