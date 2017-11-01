@@ -133,6 +133,7 @@ void Init_Load_Parameter()
    ReadPara->Add( "AUTO_REDUCE_DT",             &AUTO_REDUCE_DT,                  true,            Useless_bool,  Useless_bool   );
    ReadPara->Add( "AUTO_REDUCE_DT_FACTOR",      &AUTO_REDUCE_DT_FACTOR,           0.8,             Eps_double,    1.0            );
    ReadPara->Add( "AUTO_REDUCE_DT_FACTOR_MIN",  &AUTO_REDUCE_DT_FACTOR_MIN,       0.1,             0.0,           1.0            );
+   ReadPara->Add( "DT_GPU_NPGROUP",             &DT_GPU_NPGROUP,                 -1,               NoMin_int,     NoMax_int      );
 
 
 // grid refinement

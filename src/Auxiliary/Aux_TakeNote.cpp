@@ -668,6 +668,7 @@ void Aux_TakeNote()
       fprintf( Note, "AUTO_REDUCE_DT_FACTOR           %13.7e\n",  AUTO_REDUCE_DT_FACTOR     );
       fprintf( Note, "AUTO_REDUCE_DT_FACTOR_MIN       %13.7e\n",  AUTO_REDUCE_DT_FACTOR_MIN );
       fprintf( Note, "OPT__RECORD_DT                  %d\n",      OPT__RECORD_DT            );
+      fprintf( Note, "DT_GPU_NPGROUP                  %d\n",      DT_GPU_NPGROUP            );
       fprintf( Note, "***********************************************************************************\n" );
       fprintf( Note, "\n\n");
 

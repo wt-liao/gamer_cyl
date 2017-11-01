@@ -70,7 +70,7 @@ Procedure for outputting new variables:
 
 
 //-------------------------------------------------------------------------------------------------------
-// Function    :  Output_DumpData_Total_HDF5 (FormatVersion = 2300)
+// Function    :  Output_DumpData_Total_HDF5 (FormatVersion = 2301)
 // Description :  Output all simulation data in the HDF5 format, which can be used as a restart file
 //                or loaded by YT
 //
@@ -148,6 +148,7 @@ Procedure for outputting new variables:
 //                2258 : 2017/09/21 --> output OPT__MINIMIZE_MPI_BARRIER
 //                2259 : 2017/09/23 --> output COORDINATE
 //                2300 : 2017/09/26 --> output BoxEdgeL/R[3] instead of BoxSize, dh[3] instead of dh
+//                2301 : 2017/11.01 --> output DT_GPU_NPGROUP
 //-------------------------------------------------------------------------------------------------------
 void Output_DumpData_Total_HDF5( const char *FileName )
 {
@@ -1256,7 +1257,7 @@ void FillIn_KeyInfo( KeyInfo_t &KeyInfo )
 
    const time_t CalTime  = time( NULL );   // calendar time
 
-   KeyInfo.FormatVersion = 2300;
+   KeyInfo.FormatVersion = 2301;
    KeyInfo.Model         = MODEL;
    KeyInfo.Coordinate    = COORDINATE;
    KeyInfo.NLevel        = NLEVEL;
@@ -1796,6 +1797,7 @@ void FillIn_InputPara( InputPara_t &InputPara )
    InputPara.AutoReduceDt            = AUTO_REDUCE_DT;
    InputPara.AutoReduceDtFactor      = AUTO_REDUCE_DT_FACTOR;
    InputPara.AutoReduceDtFactorMin   = AUTO_REDUCE_DT_FACTOR_MIN;
+   InputPara.Dt_GPU_NPGroup          = DT_GPU_NPGROUP;
 
 // domain refinement
    InputPara.RegridCount             = REGRID_COUNT;
@@ -2476,6 +2478,7 @@ void GetCompound_InputPara( hid_t &H5_TypeID )
    H5Tinsert( H5_TypeID, "AutoReduceDt",            HOFFSET(InputPara_t,AutoReduceDt           ), H5T_NATIVE_INT     );
    H5Tinsert( H5_TypeID, "AutoReduceDtFactor",      HOFFSET(InputPara_t,AutoReduceDtFactor     ), H5T_NATIVE_DOUBLE  );
    H5Tinsert( H5_TypeID, "AutoReduceDtFactorMin",   HOFFSET(InputPara_t,AutoReduceDtFactorMin  ), H5T_NATIVE_DOUBLE  );
+   H5Tinsert( H5_TypeID, "Dt_GPU_NPGroup",          HOFFSET(InputPara_t,Dt_GPU_NPGroup         ), H5T_NATIVE_INT     );
 
 
 // domain refinement

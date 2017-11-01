@@ -354,6 +354,7 @@ struct InputPara_t
    int    AutoReduceDt;
    double AutoReduceDtFactor;
    double AutoReduceDtFactorMin;
+   int    Dt_GPU_NPGroup;
 
 // domain refinement
    int    RegridCount;

@@ -305,6 +305,10 @@ void Aux_Check_Parameter()
          Aux_Message( stderr, "WARNING : AUTO_REDUCE_DT will introduce an extra MPI barrier for OPT__MINIMIZE_MPI_BARRIER !!\n" );
    }
 
+   if ( DT_GPU_NPGROUP % GPU_NSTREAM != 0 )
+      Aux_Error( ERROR_INFO, "DT_GPU_NPGROUP (%d) %%GPU_NSTREAM (%d) != 0 !!\n",
+                 DT_GPU_NPGROUP, GPU_NSTREAM );
+
 
 // general warnings
 // =======================================================================================

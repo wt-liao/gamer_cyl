@@ -1587,6 +1587,7 @@ void Check_InputPara( const char *FileName )
    LoadField( "AutoReduceDt",            &RS.AutoReduceDt,            SID, TID, NonFatal, &RT.AutoReduceDt,             1, NonFatal );
    LoadField( "AutoReduceDtFactor",      &RS.AutoReduceDtFactor,      SID, TID, NonFatal, &RT.AutoReduceDtFactor,       1, NonFatal );
    LoadField( "AutoReduceDtFactorMin",   &RS.AutoReduceDtFactorMin,   SID, TID, NonFatal, &RT.AutoReduceDtFactorMin,    1, NonFatal );
+   LoadField( "Dt_GPU_NPGroup",          &RS.Dt_GPU_NPGroup,          SID, TID, NonFatal, &RT.Dt_GPU_NPGroup,           1, NonFatal );
 
 
 // domain refinement

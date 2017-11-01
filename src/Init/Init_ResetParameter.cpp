@@ -187,6 +187,17 @@ void Init_ResetParameter()
       PRINT_WARNING( CHE_GPU_NPGROUP, FORMAT_INT, "since GPU is disabled" );
    }
 #  endif
+
+   if ( DT_GPU_NPGROUP <= 0 )
+   {
+#     ifdef OPENMP
+      DT_GPU_NPGROUP = OMP_NTHREAD*20;
+#     else
+      DT_GPU_NPGROUP = 1;
+#     endif
+
+      PRINT_WARNING( DT_GPU_NPGROUP, FORMAT_INT, "since GPU is disabled" );
+   }
 #  endif // #ifndef GPU
 
 
