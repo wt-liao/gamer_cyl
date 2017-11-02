@@ -739,9 +739,11 @@ int AllocateSonPatch( const int FaLv, const int *Cr, const int PScale, const int
    const bool   PhaseUnwrapping_No     = false;
    const bool   EnsureMonotonicity_Yes = true;
    const bool   EnsureMonotonicity_No  = false;
-   const double CPhyCorner[3]          = { Aux_Coord_CellIdx2AdoptedCoord( FaLv, FaPID, 0, 0 ),
-                                           Aux_Coord_CellIdx2AdoptedCoord( FaLv, FaPID, 1, 0 ),
-                                           Aux_Coord_CellIdx2AdoptedCoord( FaLv, FaPID, 2, 0 ) };
+
+// do not need to check the periodicity for Cr[] since the newly allocated patches must be real rather than buffer patches
+   const double CPhyCorner[3]          = { amr->BoxEdgeL[0] + (double)Cr[0]*amr->dh[TOP_LEVEL][0] + 0.5*amr->dh[FaLv][0],
+                                           amr->BoxEdgeL[1] + (double)Cr[1]*amr->dh[TOP_LEVEL][1] + 0.5*amr->dh[FaLv][1],
+                                           amr->BoxEdgeL[2] + (double)Cr[2]*amr->dh[TOP_LEVEL][2] + 0.5*amr->dh[FaLv][2] };
 
    real *const CData_Flu  = CData;
 #  if ( MODEL == ELBDM )

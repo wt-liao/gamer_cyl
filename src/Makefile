@@ -16,7 +16,7 @@ EXECUTABLE := gamer
 SIMU_OPTION += -DMODEL=HYDRO
 
 # coordinate system: CARTESIAN/CYLINDRICAL/SPHERICAL (experimental)
-SIMU_OPTION += -DCOORDINATE=CARTESIAN
+SIMU_OPTION += -DCOORDINATE=CYLINDRICAL
 
 # self-gravity
 #SIMU_OPTION += -DGRAVITY
@@ -112,10 +112,10 @@ SIMU_OPTION += -DPAR_NPASSIVE_MAKEFILE=1
 # (d) optimization options and other features
 # ------------------------------------------------------------------------------------
 # GPU acceleration (to disable GPU, please comment out both -DGPU and -DGPU_ARCH)
-SIMU_OPTION += -DGPU
+#SIMU_OPTION += -DGPU
 
 # GPU architecture: FERMI/KEPLER/MAXWELL/PASCAL
-SIMU_OPTION += -DGPU_ARCH=KEPLER
+#SIMU_OPTION += -DGPU_ARCH=KEPLER
 
 # debug mode
 #SIMU_OPTION += -DGAMER_DEBUG

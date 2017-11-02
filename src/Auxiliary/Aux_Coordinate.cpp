@@ -28,6 +28,16 @@
 double Aux_Coord_CellIdx2AdoptedCoord( const int lv, const int PID, const int dim, const int idx )
 {
 
+// check
+#  ifdef GAMER_DEBUG
+   if ( lv < 0  ||  lv > TOP_LEVEL )
+      Aux_Error( ERROR_INFO, "lv = %d lies outside the accepted range !!\n", lv );
+
+   if ( PID < 0  ||  PID >= amr->num[lv] )
+      Aux_Error( ERROR_INFO, "PID = %d lies outside the accepted range (lv %d, NPatch %d) !!\n", PID, lv, amr->num[lv] );
+#  endif
+
+
    return amr->patch[0][lv][PID]->EdgeL[dim] + (idx+0.5)*amr->dh[lv][dim];
 
 } // FUNCTION : Aux_Coord_CellIdx2AdoptedCoord
@@ -53,6 +63,16 @@ double Aux_Coord_CellIdx2AdoptedCoord( const int lv, const int PID, const int di
 //-------------------------------------------------------------------------------------------------------
 void Aux_Coord_CellIdx2CartesianCoord( const int lv, const int PID, const int i, const int j, const int k, double xyz[] )
 {
+
+// check
+#  ifdef GAMER_DEBUG
+   if ( lv < 0  ||  lv > TOP_LEVEL )
+      Aux_Error( ERROR_INFO, "lv = %d lies outside the accepted range !!\n", lv );
+
+   if ( PID < 0  ||  PID >= amr->num[lv] )
+      Aux_Error( ERROR_INFO, "PID = %d lies outside the accepted range (lv %d, NPatch %d) !!\n", PID, lv, amr->num[lv] );
+#  endif
+
 
    double XYZ[3];
 
@@ -84,6 +104,16 @@ void Aux_Coord_CellIdx2CartesianCoord( const int lv, const int PID, const int i,
 //-------------------------------------------------------------------------------------------------------
 double Aux_Coord_CellIdx2Volume( const int lv, const int PID, const int i, const int j, const int k )
 {
+
+// check
+#  ifdef GAMER_DEBUG
+   if ( lv < 0  ||  lv > TOP_LEVEL )
+      Aux_Error( ERROR_INFO, "lv = %d lies outside the accepted range !!\n", lv );
+
+   if ( PID < 0  ||  PID >= amr->num[lv] )
+      Aux_Error( ERROR_INFO, "PID = %d lies outside the accepted range (lv %d, NPatch %d) !!\n", PID, lv, amr->num[lv] );
+#  endif
+
 
    double dv;
 
