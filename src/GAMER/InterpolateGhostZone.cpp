@@ -752,7 +752,7 @@ void InterpolateGhostZone( const int lv, const int PID, real IntData[], const in
       CRange    [d] = CSize[d] - 2*CGhost;
       FStart    [d] = 0;
       CPhyCorner[d] = amr->patch[0][lv][CenPID]->EdgeL[d]
-                      + ( TABLE_01(SibID, 'x'+d, -GhostSize_Padded/2, 0, PATCH_SIZE+GhostSize_Padded/2-1) + 0.5 )*dh[d];
+                      + ( TABLE_01(SibID, 'x'+d, -GhostSize_Padded/2, 0, PATCH_SIZE) + 0.5 )*dh[d];
    }
 
 
