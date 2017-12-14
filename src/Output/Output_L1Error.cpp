@@ -1,4 +1,3 @@
-#include "Copyright.h"
 #include "GAMER.h"
 
 static void WriteFile( void (*AnalFunc)( real fluid[], const double X, const double Y, const double Z, const double Time,
