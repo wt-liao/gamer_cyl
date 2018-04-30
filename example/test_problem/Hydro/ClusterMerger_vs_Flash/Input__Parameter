@@ -14,12 +14,12 @@
 
 
 # simulation scale
-BOX_EDGE_LEFT_X               0.0         # domain left  edge (x/      r/      r in Cartesian/cylindrical/spherical coord)
-BOX_EDGE_LEFT_Y               0.0         # domain left  edge (y/useless/useless in Cartesian/cylindrical/spherical coord)
-BOX_EDGE_LEFT_Z               0.0         # domain left  edge (z/      z/useless in Cartesian/cylindrical/spherical coord)
-BOX_EDGE_RIGHT_X              14.26       # domain right edge (x/      r/      r in Cartesian/cylindrical/spherical coord)
-BOX_EDGE_RIGHT_Y              14.26       # domain right edge (y/useless/useless in Cartesian/cylindrical/spherical coord)
-BOX_EDGE_RIGHT_Z              14.26       # domain right edge (z/      z/useless in Cartesian/cylindrical/spherical coord)
+BOX_EDGE_LEFT_X               0.0         # domain left  edge (x/  r/    r in Cartesian/cylindrical/spherical coord) [none/none/none]
+BOX_EDGE_LEFT_Y               0.0         # domain left  edge (y/phi/theta in Cartesian/cylindrical/spherical coord) [none/ 0.0/ 0.0]
+BOX_EDGE_LEFT_Z               0.0         # domain left  edge (z/  z/  phi in Cartesian/cylindrical/spherical coord) [none/none/ 0.0]
+BOX_EDGE_RIGHT_X              14.26       # domain right edge (x/  r/    r in Cartesian/cylindrical/spherical coord) [none/none/none]
+BOX_EDGE_RIGHT_Y              14.26       # domain right edge (y/phi/theta in Cartesian/cylindrical/spherical coord) [none/2*pi/  pi]
+BOX_EDGE_RIGHT_Z              14.26       # domain right edge (z/  z/  phi in Cartesian/cylindrical/spherical coord) [none/none/2*pi]
 NX0_TOT_X                     128         # number of base-level cells along x
 NX0_TOT_Y                     128         # number of base-level cells along y
 NX0_TOT_Z                     128         # number of base-level cells along z
