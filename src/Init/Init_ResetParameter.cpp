@@ -200,17 +200,6 @@ void Init_ResetParameter()
 #  endif // #ifndef GPU
 
 
-// derived parameters related to the simulation scale
-#  if   ( COORDINATE == CYLINDRICAL )
-   amr->BoxEdgeL[1] = 0.0;          // phi in the range [0, 2*pi]
-   amr->BoxEdgeR[1] = 2.0*M_PI;
-#  elif ( COORDINATE == SPHERICAL )
-   amr->BoxEdgeL[1] = 0.0;          // theta in the range [0, pi]
-   amr->BoxEdgeR[1] = M_PI;
-   amr->BoxEdgeL[2] = 0.0;          // phi in the range [0, 2*pi]
-   amr->BoxEdgeR[2] = 2.0*M_PI;
-#  endif
-
    for (int d=0; d<3; d++)
    {
       amr->BoxCenter[d] = 0.5*( amr->BoxEdgeL[d] + amr->BoxEdgeR[d] );
