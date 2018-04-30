@@ -1062,6 +1062,11 @@ void Aux_Check_Parameter()
    if ( OPT__BC_POT != BC_POT_PERIODIC  &&  OPT__BC_POT != BC_POT_ISOLATED )
       Aux_Error( ERROR_INFO, "unsupported option \"OPT__BC_POT = %d\" [1/2] !!\n", OPT__BC_POT );
 
+#  if ( COORDINATE != CARTESIAN )
+   if ( OPT__BC_POT != BC_POT_ISOLATED )
+      Aux_Error( ERROR_INFO, "non-Cartesian coordinates only support isolated gravity (OPT__BC_POT=2) !!\n" );
+#  endif
+
    if ( OPT__GRAVITY_TYPE != GRAVITY_SELF  &&  OPT__GRAVITY_TYPE != GRAVITY_EXTERNAL  &&  OPT__GRAVITY_TYPE != GRAVITY_BOTH )
       Aux_Error( ERROR_INFO, "unsupported option \"%s = %d\" [1/2/3] !!\n", "OPT__GRAVITY_TYPE", OPT__GRAVITY_TYPE );
 
