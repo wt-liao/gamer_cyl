@@ -109,8 +109,10 @@ double Aux_Coord_CellIdx2Volume( const int lv, const int PID, const int i, const
    if ( lv < 0  ||  lv > TOP_LEVEL )
       Aux_Error( ERROR_INFO, "lv = %d lies outside the accepted range !!\n", lv );
 
+#  if ( COORDINATE != CARTESIAN )
    if ( PID < 0  ||  PID >= amr->num[lv] )
       Aux_Error( ERROR_INFO, "PID = %d lies outside the accepted range (lv %d, NPatch %d) !!\n", PID, lv, amr->num[lv] );
+#  endif
 #  endif
 
 
