@@ -1103,6 +1103,22 @@ void Aux_Check_Parameter()
    if ( OPT__EXTERNAL_POT  &&  OPT__OUTPUT_POT )
       Aux_Message( stderr, "WARNING : currently OPT__OUTPUT_POT does NOT include the external potential !!\n" );
 
+#  if ( COORDINATE == CARTESIAN )
+   if ( OPT__BC_POT == BC_POT_ISOLATED )
+   {
+      for (int f=0; f<6; f++)
+         if ( OPT__BC_FLU[f] == BC_FLU_PERIODIC )
+            Aux_Message( stderr, "WARNING : adopting periodic fluid along %d with isolated gravity ??\n", f );
+   }
+
+   else
+   {
+      for (int f=0; f<6; f++)
+         if ( OPT__BC_FLU[f] != BC_FLU_PERIODIC )
+            Aux_Message( stderr, "WARNING : adopting non-periodic fluid along %d with periodic gravity ??\n", f );
+   }
+#  endif
+
    } // if ( MPI_Rank == 0 )
 
 
