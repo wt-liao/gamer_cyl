@@ -63,6 +63,7 @@ struct KeyInfo_t
    int    Par_NPassive;             // PAR_NPASSIVE
 #  endif
 
+   double BoxSize [3];
    double BoxEdgeL[3];
    double BoxEdgeR[3];
    double Time       [NLEVEL];

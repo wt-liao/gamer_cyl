@@ -163,20 +163,20 @@ void Init_ByRestart_HDF5( const char *FileName )
    LoadField( "Par_NPassive",   &KeyInfo.Par_NPassive,   H5_SetID_KeyInfo, H5_TypeID_KeyInfo, NonFatal, &Par_NPassive,  1,    Fatal );
 #  endif
 
-   if ( KeyInfo.FormatVersion < 2300 ) {
-   double BoxSize[3];
-   LoadField( "BoxSize",                 BoxSize,        H5_SetID_KeyInfo, H5_TypeID_KeyInfo,    Fatal,  amr->BoxSize,  3,    Fatal );
+   LoadField( "BoxSize",         KeyInfo.BoxSize,        H5_SetID_KeyInfo, H5_TypeID_KeyInfo,    Fatal,  amr->BoxSize,  3,    Fatal );
 
-   for (int d=0; d<3; d++)
+   if ( KeyInfo.FormatVersion < 2300 )
    {
-      if ( amr->BoxEdgeL[d] != 0.0 )
-         Aux_Error( ERROR_INFO, "BOX_EDGE_LEFT[%d] = %21.14e != 0.0 when restarting from format < 2300 !!\n",
-                    d, amr->BoxEdgeL[d] );
+      for (int d=0; d<3; d++)
+      {
+         if ( amr->BoxEdgeL[d] != 0.0 )
+            Aux_Error( ERROR_INFO, "BOX_EDGE_LEFT[%d] = %21.14e != 0.0 when restarting from format < 2300 !!\n",
+                       d, amr->BoxEdgeL[d] );
 
-      if ( amr->BoxEdgeR[d] != amr->BoxSize[d] )
-         Aux_Error( ERROR_INFO, "BOX_EDGE_RIGHT[%d] (%21.14e) != BoxSize (%21.14e) when restarting from format < 2300 !!\n",
-                    d, amr->BoxEdgeR[d], amr->BoxSize[d] );
-   }
+         if ( amr->BoxEdgeR[d] != amr->BoxSize[d] )
+            Aux_Error( ERROR_INFO, "BOX_EDGE_RIGHT[%d] (%21.14e) != BoxSize (%21.14e) when restarting from format < 2300 !!\n",
+                       d, amr->BoxEdgeR[d], amr->BoxSize[d] );
+      }
    } // if ( KeyInfo.FormatVersion < 2300 )
 
    else {

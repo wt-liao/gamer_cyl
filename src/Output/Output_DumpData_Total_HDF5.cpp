@@ -69,7 +69,7 @@ Procedure for outputting new variables:
 
 
 //-------------------------------------------------------------------------------------------------------
-// Function    :  Output_DumpData_Total_HDF5 (FormatVersion = 2300)
+// Function    :  Output_DumpData_Total_HDF5 (FormatVersion = 2301)
 // Description :  Output all simulation data in the HDF5 format, which can be used as a restart file
 //                or loaded by YT
 //
@@ -152,6 +152,7 @@ Procedure for outputting new variables:
 //                2264 : 2018/02/28 --> add RANDOM_NUMBER
 //                2265 : 2018/04/02 --> add OPT__NO_FLAG_NEAR_BOUNDARY
 //                2300 : 2018/04/30 --> add COORDINATE and DT_GPU_NPGROUP, replace BoxSize by BoxEdgeL/R[3] and dh by dh[3]
+//                2301 : 2018/04/30 --> add BoxSize[3] back (for yt)
 //-------------------------------------------------------------------------------------------------------
 void Output_DumpData_Total_HDF5( const char *FileName )
 {
@@ -1260,7 +1261,7 @@ void FillIn_KeyInfo( KeyInfo_t &KeyInfo )
 
    const time_t CalTime  = time( NULL );   // calendar time
 
-   KeyInfo.FormatVersion = 2300;
+   KeyInfo.FormatVersion = 2301;
    KeyInfo.Model         = MODEL;
    KeyInfo.Coordinate    = COORDINATE;
    KeyInfo.NLevel        = NLEVEL;
@@ -1294,6 +1295,7 @@ void FillIn_KeyInfo( KeyInfo_t &KeyInfo )
    {
       KeyInfo.NX0     [d] = NX0_TOT      [d];
       KeyInfo.BoxScale[d] = amr->BoxScale[d];
+      KeyInfo.BoxSize [d] = amr->BoxSize [d];
       KeyInfo.BoxEdgeL[d] = amr->BoxEdgeL[d];
       KeyInfo.BoxEdgeR[d] = amr->BoxEdgeR[d];
    }
@@ -2131,6 +2133,7 @@ void GetCompound_KeyInfo( hid_t &H5_TypeID )
    H5Tinsert( H5_TypeID, "Par_NPassive",       HOFFSET(KeyInfo_t,Par_NPassive),       H5T_NATIVE_INT           );
 #  endif
 
+   H5Tinsert( H5_TypeID, "BoxSize",            HOFFSET(KeyInfo_t,BoxSize        ),    H5_TypeID_Arr_3Double    );
    H5Tinsert( H5_TypeID, "BoxEdgeL",           HOFFSET(KeyInfo_t,BoxEdgeL       ),    H5_TypeID_Arr_3Double    );
    H5Tinsert( H5_TypeID, "BoxEdgeR",           HOFFSET(KeyInfo_t,BoxEdgeR       ),    H5_TypeID_Arr_3Double    );
    H5Tinsert( H5_TypeID, "Time",               HOFFSET(KeyInfo_t,Time           ),    H5_TypeID_Arr_NLvDouble  );
