@@ -32,25 +32,29 @@ typedef unsigned long int  ulong;
 // test problem IDs
 typedef int TestProbID_t;
 const TestProbID_t
-   TESTPROB_NONE                          =    0,
+   TESTPROB_NONE                               =    0,
 
-   TESTPROB_HYDRO_BLAST_WAVE              =    1,
-   TESTPROB_HYDRO_ACOUSTIC_WAVE           =    2,
-   TESTPROB_HYDRO_BONDI                   =    3,
-   TESTPROB_HYDRO_CLUSTER_MERGER_VS_FLASH =    4,
-   TESTPROB_HYDRO_AGORA_ISOLATED_GALAXY   =    5,
-   TESTPROB_HYDRO_CAUSTIC                 =    6,
-   TESTPROB_HYDRO_SPHERICAL_COLLAPSE      =    7,
+   TESTPROB_HYDRO_BLAST_WAVE                   =    1,
+   TESTPROB_HYDRO_ACOUSTIC_WAVE                =    2,
+   TESTPROB_HYDRO_BONDI                        =    3,
+   TESTPROB_HYDRO_CLUSTER_MERGER_VS_FLASH      =    4,
+   TESTPROB_HYDRO_AGORA_ISOLATED_GALAXY        =    5,
+   TESTPROB_HYDRO_CAUSTIC                      =    6,
+   TESTPROB_HYDRO_SPHERICAL_COLLAPSE           =    7,
+   TESTPROB_HYDRO_KELVIN_HELMHOLTZ_INSTABILITY =    8,
+   TESTPROB_HYDRO_RIEMANN                      =    9,
+   TESTPROB_HYDRO_COLLIDING_JETS               =   10,
+   TESTPROB_HYDRO_PLUMMER                      =   11,
 
-   TESTPROB_ELBDM_EXTPOT                  = 1000;
+   TESTPROB_ELBDM_EXTPOT                       = 1000;
 
 
 // program initialization options
 typedef int OptInit_t;
 const OptInit_t
-   INIT_STARTOVER = 1,
-   INIT_RESTART   = 2,
-   INIT_UM        = 3;
+   INIT_BY_FUNCTION = 1,
+   INIT_BY_RESTART  = 2,
+   INIT_BY_FILE     = 3;
 
 
 // program restart options

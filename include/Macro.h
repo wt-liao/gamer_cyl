@@ -23,6 +23,7 @@
 #define KEPLER       2
 #define MAXWELL      3
 #define PASCAL       4
+#define VOLTA        5
 
 
 // models
@@ -79,6 +80,11 @@
 #define HILBERT      1
 
 
+// random number implementation
+#define RNG_GNU_EXT  1
+#define RNG_CPP11    2
+
+
 // NCOMP_FLUID : number of active components in each cell (i.e., the "fluid" array)
 //               --> do not include passive components here, which is set by NCOMP_PASSIVE
 // NFLUX_FLUID : number of active components in the "flux" array
@@ -107,11 +113,15 @@
 
 
 // number of passively advected components in each cell
+// --> define NCOMP_PASSIVE_USER if not set in the Makefile
+#ifndef NCOMP_PASSIVE_USER
+#  define NCOMP_PASSIVE_USER  0
+#endif
 // --> including entropy (or internal energy) when the dual energy formalism is adopted
 #if (  ( MODEL == HYDRO || MODEL == MHD )  &&  defined DUAL_ENERGY  )
-#  define NCOMP_PASSIVE       ( NCOMP_PASSIVE_MAKEFILE + 1 )
+#  define NCOMP_PASSIVE       ( NCOMP_PASSIVE_USER + 1 )
 #else
-#  define NCOMP_PASSIVE       ( NCOMP_PASSIVE_MAKEFILE )
+#  define NCOMP_PASSIVE       ( NCOMP_PASSIVE_USER )
 #endif
 
 // assuming all passive scalars have the corresponding fluxes
@@ -315,11 +325,15 @@
 #  define  PAR_ACCZ          10
 
 // number of passive particle attributes
+// --> define PAR_NPASSIVE_USER if not set in the Makefile
+#ifndef PAR_NPASSIVE_USER
+#  define PAR_NPASSIVE_USER   0
+#endif
 // --> including PAR_CREATION_TIME when STAR_FORMATION is adopted
 #ifdef STAR_FORMATION
-#  define PAR_NPASSIVE        ( PAR_NPASSIVE_MAKEFILE + 1 )
+#  define PAR_NPASSIVE        ( PAR_NPASSIVE_USER + 1 )
 #else
-#  define PAR_NPASSIVE        ( PAR_NPASSIVE_MAKEFILE     )
+#  define PAR_NPASSIVE        ( PAR_NPASSIVE_USER     )
 #endif
 
 // passive variable indices in the array "Passive" [0 ... PAR_NPASSIVE-1]
@@ -475,7 +489,7 @@
 #  endif // #ifdef UNSPLIT_GRAVITY
 
 
-// number of density ghost zones for storing the temporary particle mass density (in the array rho_ext)
+// number of density ghost zones for storing the temporary particle mass density in rho_ext[]
 #  ifdef PARTICLE
 #     define RHOEXT_GHOST_SIZE   2
 #  endif

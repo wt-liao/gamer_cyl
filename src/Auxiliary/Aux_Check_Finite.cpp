@@ -44,7 +44,7 @@ void Aux_Check_Finite( const int lv, const char *comment )
 
                for (int v=0; v<NVar; v++)
                {
-                  if ( ! isfinite(Data[v]) )
+                  if ( ! Aux_IsFinite(Data[v]) )
                   {
                      double xyz[3];
                      Aux_Coord_CellIdx2CartesianCoord( lv, PID, i, j, k, xyz );
@@ -58,8 +58,9 @@ void Aux_Check_Finite( const int lv, const char *comment )
                         Pass = false;
                      }
 
-                     Aux_Message( stderr, "%4d   %7d   (%13.7e,%13.7e,%13.7e)   %8d\n", MPI_Rank, PID, xyz[0], xyz[1], xyz[2], v );
-                  } // if ( ! isfinite(Data[v]) )
+                     Aux_Message( stderr, "%4d   %7d   (%13.7e,%13.7e,%13.7e)   %8d\n",
+                                  MPI_Rank, PID, xyz[0], xyz[1], xyz[2], v );
+                  } // if ( ! Aux_IsFinite(Data[v]) )
                } // for (int v=0; v<NVar; v++)
             } // i,j,k
          } // for (int PID=0; PID<amr->NPatchComma[lv][1]; PID++)

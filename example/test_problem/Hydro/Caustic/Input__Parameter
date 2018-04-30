@@ -92,6 +92,7 @@ OPT__FLAG_LOHNER_TEMP         0           # flag: Lohner for temperature    (Inp
 OPT__FLAG_LOHNER_FORM         2           # form of Lohner: (1=FLASH-1, 2=FLASH-2, 3=form-invariant-1, 4=form-invariant-2) [2]
 OPT__FLAG_USER                0           # flag: user-defined (Input__Flag_User) -> edit "Flag_User.cpp" [0]
 OPT__FLAG_REGION              0           # flag: specify the regions **allowed** to be refined -> edit "Flag_Region.cpp" [0]
+OPT__NO_FLAG_NEAR_BOUNDARY    0           # flag: disallow refinement near the boundaries [0]
 OPT__PATCH_COUNT              1           # record the # of patches   at each level: (0=off, 1=every step, 2=every sub-step) [1]
 OPT__REUSE_MEMORY             2           # reuse patch memory to reduce memory fragmentation: (0=off, 1=on, 2=aggressive) [2]
 OPT__MEMORY_POOL              0           # preallocate patches for OPT__REUSE_MEMORY=1/2 (Input__MemoryPool) [0]
@@ -100,6 +101,8 @@ OPT__MEMORY_POOL              0           # preallocate patches for OPT__REUSE_M
 # load balance (LOAD_BALANCE only)
 LB_INPUT__WLI_MAX             0.1         # weighted-load-imbalance (WLI) threshold for redistributing all patches [0.1]
 OPT__RECORD_LOAD_BALANCE      1           # record the load-balance info [1]
+OPT__MINIMIZE_MPI_BARRIER     0           # minimize MPI barriers to improve load balance, especially with particles [1]
+                                          # (STORE_POT_GHOST, PAR_IMPROVE_ACC=1, OPT__TIMING_BARRIER=0 only; recommend AUTO_REDUCE_DT=0)
 
 
 # fluid solver in HYDRO (MODEL==HYDRO only)
@@ -132,16 +135,10 @@ MIN_PRES                      1.0e-15     # minimum pressure     (must >= 0.0) [
 
 
 # initialization
-OPT__INIT                     1           # initialization option: (1=StartOver, 2=RESTART, 3=UM_START)
+OPT__INIT                     1           # initialization option: (1=FUNCTION, 2=RESTART, 3=FILE->"UM_IC")
 RESTART_LOAD_NRANK            1           # number of parallel I/O (i.e., number of MPI ranks) for restart [1]
-OPT__RESTART_HEADER           1           # RESTART header: (0=skip, 1=check the header info) [1]
-OPT__UM_START_LEVEL           0           # AMR level corresponding to the input uniform-mesh array (must >= 0) [0]
-OPT__UM_START_NVAR            1           # number of variables per cell stored in the uniform-mesh array (1~NCOMP_TOTAL) [1]
-OPT__UM_START_DOWNGRADE       1           # downgrade the uniform-mesh data from level OPT__UM_START_LEVEL to 0 [1]
-OPT__UM_START_REFINE          1           # refine the uniform-mesh data from level OPT__UM_START_LEVEL to MAX_LEVEL [1]
-OPT__UM_FACTOR_5OVER3         0           # multiply the input mass density by 5/3 to correct the growing-mode amplitude [0]
 OPT__INIT_RESTRICT            1           # restrict all data during the initialization [1]
-OPT__GPUID_SELECT            -2           # GPU ID selection mode: (-3=Laohu, -2=CUDA, -1=MPI rank, >=0=input) [-2]
+OPT__GPUID_SELECT            -1           # GPU ID selection mode: (-3=Laohu, -2=CUDA, -1=MPI rank, >=0=input) [-1]
 INIT_SUBSAMPLING_NCELL        0           # perform sub-sampling during initialization: (0=off, >0=# of sub-sampling cells) [0]
 
 

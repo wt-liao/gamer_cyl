@@ -147,14 +147,14 @@ void Aux_Check_Parameter()
    if ( NX0_TOT[0]%PS2 != 0  ||  NX0_TOT[1]%PS2 != 0  ||  NX0_TOT[2]%PS2 != 0 )
       Aux_Error( ERROR_INFO, "number of base-level patches in each direction must be \"a multiple of TWO\" !!\n" );
 
-   if ( END_STEP < 0  &&  OPT__INIT != INIT_RESTART )
+   if ( END_STEP < 0  &&  OPT__INIT != INIT_BY_RESTART )
       Aux_Error( ERROR_INFO, "incorrect parameter \"%s = %d\" [>=0] !!\n", "END_STEP", END_STEP );
 
-   if ( END_T < 0.0  &&  OPT__INIT != INIT_RESTART )
+   if ( END_T < 0.0  &&  OPT__INIT != INIT_BY_RESTART )
       Aux_Error( ERROR_INFO, "incorrect parameter \"%s = %14.7e\" [>=0] !!\n", "END_T", END_T );
 
 #  ifdef LOAD_BALANCE
-   if ( OPT__INIT != INIT_RESTART )
+   if ( OPT__INIT != INIT_BY_RESTART )
 #  endif
    if ( NX0_TOT[0]%(PS2*MPI_NRank_X[0]) != 0  ||  NX0_TOT[1]%(PS2*MPI_NRank_X[1]) != 0  ||
         NX0_TOT[2]%(PS2*MPI_NRank_X[2]) != 0 )
@@ -162,7 +162,7 @@ void Aux_Check_Parameter()
                  "a multiple of TWO" );
 
 #  ifdef LOAD_BALANCE
-   if ( OPT__INIT != INIT_RESTART )
+   if ( OPT__INIT != INIT_BY_RESTART )
 #  endif
    if ( MPI_NRank_X[0]*MPI_NRank_X[1]*MPI_NRank_X[2] != MPI_NRank )
       Aux_Error( ERROR_INFO, "MPI_NRank_X[0]*MPI_NRank_X[1]*MPI_NRank_X[2] (%d) != MPI_NRank (%d) !!\n",
@@ -197,9 +197,6 @@ void Aux_Check_Parameter()
 
    if (  OPT__OUTPUT_BASEPS  &&  ( NX0_TOT[0] != NX0_TOT[1] || NX0_TOT[0] != NX0_TOT[2] )  )
       Aux_Error( ERROR_INFO, "\"%s\" only works with CUBIC domain !!\n", "OPT__OUTPUT_BASEPS" );
-
-   if ( OPT__INIT == INIT_UM  &&  OPT__UM_START_NVAR != 1  &&  OPT__UM_FACTOR_5OVER3 )
-      Aux_Error( ERROR_INFO, "OPT__UM_FACTOR_5OVER3 only works when OPT__UM_START_NVAR == 1 !!\n" );
 
    if ( OPT__CK_REFINE  &&  !OPT__FLAG_RHO )
       Aux_Error( ERROR_INFO, "currently the check \"%s\" must work with \"%s\" !!\n",
@@ -257,15 +254,15 @@ void Aux_Check_Parameter()
 
 #  if ( MODEL != HYDRO )
    for (int f=0; f<6; f++)
-   if ( OPT__BC_FLU[f] == BC_FLU_OUTFLOW  ||  OPT__BC_FLU[f] == BC_FLU_REFLECTING )
-      Aux_Error( ERROR_INFO, "outflow and reflecting boundary conditions (OPT__BC_FLU=2/3) only work with HYDRO !!\n" );
+      if ( OPT__BC_FLU[f] == BC_FLU_REFLECTING )
+         Aux_Error( ERROR_INFO, "reflecting boundary condition (OPT__BC_FLU=3) only works with HYDRO !!\n" );
 #  endif
 
-   if (  ( OPT__BC_FLU[0] == BC_FLU_PERIODIC || OPT__BC_FLU[1] == BC_FLU_PERIODIC || OPT__BC_FLU[2] == BC_FLU_PERIODIC ||
-           OPT__BC_FLU[3] == BC_FLU_PERIODIC || OPT__BC_FLU[4] == BC_FLU_PERIODIC || OPT__BC_FLU[5] == BC_FLU_PERIODIC   ) &&
-         ( OPT__BC_FLU[0] != BC_FLU_PERIODIC || OPT__BC_FLU[1] != BC_FLU_PERIODIC || OPT__BC_FLU[2] != BC_FLU_PERIODIC ||
-           OPT__BC_FLU[3] != BC_FLU_PERIODIC || OPT__BC_FLU[4] != BC_FLU_PERIODIC || OPT__BC_FLU[5] != BC_FLU_PERIODIC   )   )
-      Aux_Error( ERROR_INFO, "currently the periodic BC cannot be mixed with non-periodic BC. !!\n" );
+   for (int f=0; f<6; f+=2)
+      if (  ( OPT__BC_FLU[f] == BC_FLU_PERIODIC  &&  OPT__BC_FLU[f+1] != BC_FLU_PERIODIC )  ||
+            ( OPT__BC_FLU[f] != BC_FLU_PERIODIC  &&  OPT__BC_FLU[f+1] == BC_FLU_PERIODIC )   )
+         Aux_Error( ERROR_INFO, "periodic and non-periodic boundary conditions cannot be mixed along the same dimension"
+                                "--> please modify OPT__BC_FLU[%d/%d] !!\n", f, f+1 );
 
 #  ifndef TIMING
    if ( OPT__TIMING_MPI )  Aux_Error( ERROR_INFO, "OPT__TIMING_MPI must work with TIMING !!\n" );
@@ -292,7 +289,7 @@ void Aux_Check_Parameter()
          Aux_Error( ERROR_INFO, "OPT__MINIMIZE_MPI_BARRIER must work with PAR_IMPROVE_ACC when PARTICLE is on !!\n" );
 
 #     ifdef LOAD_BALANCE
-      if ( LB_INPUT__PAR_WEIGHT == 0.0 )
+      if ( LB_INPUT__PAR_WEIGHT == 0.0  &&  MPI_Rank == 0 )
          Aux_Message( stderr, "WARNING : consider fine tuning \"LB_INPUT__PAR_WEIGHT\" to optimize the performance of OPT__MINIMIZE_MPI_BARRIER !!\n" );
 #     endif
 #     endif
@@ -307,6 +304,11 @@ void Aux_Check_Parameter()
    if ( DT_GPU_NPGROUP % GPU_NSTREAM != 0 )
       Aux_Error( ERROR_INFO, "DT_GPU_NPGROUP (%d) %%GPU_NSTREAM (%d) != 0 !!\n",
                  DT_GPU_NPGROUP, GPU_NSTREAM );
+
+#  ifdef BITWISE_REPRODUCIBILITY
+   if ( OPT__CORR_AFTER_ALL_SYNC != CORR_AFTER_SYNC_BEFORE_DUMP  &&  OPT__CORR_AFTER_ALL_SYNC != CORR_AFTER_SYNC_EVERY_STEP )
+      Aux_Error( ERROR_INFO, "please set OPT__CORR_AFTER_ALL_SYNC to 1/2 when BITWISE_REPRODUCIBILITY is enabled !!\n" );
+#  endif
 
 
 // general warnings
@@ -335,6 +337,10 @@ void Aux_Check_Parameter()
 
    if ( MPI_Rank == 0 ) {
 
+#  if ( defined GAMER_DEBUG  &&  !defined BITWISE_REPRODUCIBILITY )
+      Aux_Message( stderr, "WARNING : you might want to turn on BITWISE_REPRODUCIBILITY for GAMER_DEBUG !!\n" );
+#  endif
+
    if ( !OPT__OUTPUT_TOTAL  &&  !OPT__OUTPUT_PART  &&  !OPT__OUTPUT_USER  &&  !OPT__OUTPUT_BASEPS )
 #  ifdef PARTICLE
    if ( !OPT__OUTPUT_PAR_TEXT )
@@ -352,12 +358,6 @@ void Aux_Check_Parameter()
    Aux_Message( stderr, "WARNING : \"TIMING_SOLVER\" will disable the concurrent execution\n" );
    Aux_Message( stderr, "          between GPU and CPU and hence will decrease the overall performance !!\n" );
 #  endif
-
-   if ( OPT__RESTART_HEADER == RESTART_HEADER_SKIP )
-   {
-      Aux_Message( stderr, "WARNING : to skip the header check during restart, you must make sure that \n" );
-      Aux_Message( stderr, "          everything is set correctly in both Input__Parameter and Makefile !!\n" );
-   }
 
    if ( OPT__CK_REFINE )
       Aux_Message( stderr, "WARNING : currently the check \"%s\" only works with \"%s\" !!\n",
@@ -382,10 +382,11 @@ void Aux_Check_Parameter()
 #  endif
 
    if ( !Flag )
-   {
-      Aux_Message( stderr, "WARNING : all flag criteria are turned off --> no refinement will be " );
-      Aux_Message( stderr, "performed !!\n" );
-   }
+      Aux_Message( stderr, "WARNING : all flag criteria are turned off --> no refinement will be performed !!" );
+
+   if ( OPT__NO_FLAG_NEAR_BOUNDARY  )
+      Aux_Message( stderr, "WARNING : OPT__NO_FLAG_NEAR_BOUNDARY is on --> patches adjacent to the "
+                           "simulation boundaries are NOT allowed for refinement !!\n" );
 
    if ( OPT__OVERLAP_MPI )
    {
@@ -404,12 +405,6 @@ void Aux_Check_Parameter()
       Aux_Message( stderr, "WARNING : OpenMP is NOT turned on for \"%s\" !!\n", "OPT__OVERLAP_MPI" );
 #     endif
    } // if ( OPT__OVERLAP_MPI )
-
-   if (  ( OPT__BC_FLU[0] == BC_FLU_USER || OPT__BC_FLU[1] == BC_FLU_USER || OPT__BC_FLU[2] == BC_FLU_USER ||
-           OPT__BC_FLU[3] == BC_FLU_USER || OPT__BC_FLU[4] == BC_FLU_USER || OPT__BC_FLU[5] == BC_FLU_USER   ) &&
-         ( OPT__BC_FLU[0] != BC_FLU_USER || OPT__BC_FLU[1] != BC_FLU_USER || OPT__BC_FLU[2] != BC_FLU_USER ||
-           OPT__BC_FLU[3] != BC_FLU_USER || OPT__BC_FLU[4] != BC_FLU_USER || OPT__BC_FLU[5] != BC_FLU_USER   )   )
-      Aux_Message( stderr, "WARNING : corner cells may not be well defined when mixing user-defined BC with others !!\n" );
 
    if ( OPT__TIMING_BARRIER )
       Aux_Message( stderr, "WARNING : \"%s\" may deteriorate performance (especially if %s is on) ...\n",
@@ -444,19 +439,6 @@ void Aux_Check_Parameter()
       Aux_Message( stderr, "               (so as Gra_AdvanceDt when PARTICLE is on)\n" );
    }
 #  endif
-
-   if (  OPT__INIT == INIT_UM  &&  OPT__UM_FACTOR_5OVER3  )
-   {
-#     if ( MODEL != HYDRO  &&  MODEL != MHD  &&  MODEL != ELBDM )
-      Aux_Message( stderr, "WARNING : OPT__UM_FACTOR_5OVER3 has no effect in the current model !!\n" );
-#     endif
-
-#     ifndef COMOVING
-      Aux_Message( stderr, "WARNING : COMOVING is NOT defined for OPT__UM_FACTOR_5OVER3 !!\n" );
-#     endif
-
-      Aux_Message( stderr, "REMINDER : please make sure that \"background density ~ 1.0\" for OPT__UM_FACTOR_5OVER3\n" );
-   }
 
 #  if ( defined GRAVITY  &&  GRA_GHOST_SIZE == 0  &&  defined STORE_POT_GHOST )
    Aux_Message( stderr, "WARNING : STORE_POT_GHOST is useless when GRA_GHOST_SIZE == 0 !!\n" );
@@ -496,7 +478,7 @@ void Aux_Check_Parameter()
 
 // for sending fluid data fixed by coarse-fine fluxes correctly
    if ( OPT__FIXUP_FLUX  &&  Flu_ParaBuf >= PATCH_SIZE )
-      Aux_Error( ERROR_INFO, "we must have \"%s\" for \"%s\" in LOAD_BALANCE !!\n",
+      Aux_Error( ERROR_INFO, "\"%s\" is required for \"%s\" in LOAD_BALANCE --> check LB_RecordExchangeFixUpDataPatchID() !!\n",
                  "Flu_ParaBuf < PATCH_SIZE", "OPT__FIXUP_FLUX" );
 
 // ensure that the variable "PaddedCr1D" will not overflow
@@ -615,7 +597,7 @@ void Aux_Check_Parameter()
       Aux_Message( stderr, "WARNING : DT__FLUID_INIT (%14.7e) is not within the normal range [0...1] !!\n",
                    DT__FLUID_INIT );
 
-   if ( OPT__RESET_FLUID  &&   OPT__INIT == INIT_UM )
+   if ( OPT__RESET_FLUID  &&   OPT__INIT == INIT_BY_FILE )
       Aux_Message( stderr, "WARNING : \"%s\" will NOT be applied to the input uniform data !!\n", "OPT__RESET_FLUID" );
 
    } // if ( MPI_Rank == 0 )
@@ -724,8 +706,15 @@ void Aux_Check_Parameter()
    if ( OPT__CK_FLUX_ALLOCATE  &&  !OPT__FIXUP_FLUX )
       Aux_Message( stderr, "WARNING : %s is useless since %s is off !!\n", "OPT__CK_FLUX_ALLOCATE", "OPT__FIXUP_FLUX" );
 
-   if ( OPT__INIT == INIT_UM )
-      Aux_Message( stderr, "WARNING : currently we don't check MIN_DENS/PRES for the initial data loaded from UM_START !!\n" );
+   if ( OPT__INIT == INIT_BY_FILE )
+   {
+      Aux_Message( stderr, "WARNING : currently we don't check MIN_DENS/PRES for the initial data loaded from UM_IC !!\n" );
+
+#     ifdef DUAL_ENERGY
+      Aux_Message( stderr, "REMINDER : when adopting DUAL_ENERGY and OPT__INIT=3, store the gas entropy\n"
+                           "           as the last variable in the file \"UM_IC\"\n" );
+#     endif
+   }
 
    if ( OPT__1ST_FLUX_CORR != FIRST_FLUX_CORR_NONE )
       Aux_Message( stderr, "REMINDER : OPT__1ST_FLUX_CORR may break the strict conservation of fluid variables\n" );
@@ -920,10 +909,6 @@ void Aux_Check_Parameter()
       Aux_Error( ERROR_INFO, "unsupported interpolation scheme \"%s = %d\" when OPT__INT_PHASE is on !!\n",
                  "OPT__FLU_INT_SCHEME", OPT__FLU_INT_SCHEME );
 
-   for (int f=0; f<6; f++)
-   if ( OPT__BC_FLU[f] == BC_FLU_REFLECTING  ||  OPT__BC_FLU[f] == BC_FLU_OUTFLOW )
-      Aux_Error( ERROR_INFO, "unsupported option \"OPT__BC_FLU[%d] = %d\" [1/4] !!\n", f, OPT__BC_FLU[f] );
-
    if ( MIN_DENS == 0.0  &&  MPI_Rank == 0 )
       Aux_Message( stderr, "WARNING : MIN_DENS == 0.0 could be dangerous and is mainly for debugging only !!\n" );
    else if ( MPI_Rank == 0 )
@@ -995,8 +980,8 @@ void Aux_Check_Parameter()
       Aux_Message( stderr, "WARNING : %s is useless in ELBDM when CONSERVE_MASS is off !!\n", "OPT__FIXUP_FLUX" );
 #  endif
 
-   if ( OPT__INIT == INIT_UM )
-      Aux_Message( stderr, "WARNING : currently we don't check MIN_DENS for the initial data loaded from UM_START !!\n" );
+   if ( OPT__INIT == INIT_BY_FILE )
+      Aux_Message( stderr, "WARNING : currently we don't check MIN_DENS for the initial data loaded from UM_IC !!\n" );
 
    } // if ( MPI_Rank == 0 )
 
@@ -1050,16 +1035,16 @@ void Aux_Check_Parameter()
       Aux_Error( ERROR_INFO, "Rho_ParaBuf (%d) > PATCH_SIZE (%d) !!\n", Rho_ParaBuf, PATCH_SIZE );
 
 #  if ( POT_SCHEME == SOR )
-   if ( SOR_OMEGA <= 0.0 )    Aux_Error( ERROR_INFO, "SOR_OMEGA (%14.7e) <= 0.0 !!\n", SOR_OMEGA );
+   if ( SOR_OMEGA < 0.0 )     Aux_Error( ERROR_INFO, "SOR_OMEGA (%14.7e) < 0.0 !!\n", SOR_OMEGA );
    if ( SOR_MAX_ITER < 0 )    Aux_Error( ERROR_INFO, "SOR_MAX_ITER (%d) < 0 !!\n", SOR_MAX_ITER );
    if ( SOR_MIN_ITER < 3 )    Aux_Error( ERROR_INFO, "SOR_MIN_ITER (%d) < 3 !!\n", SOR_MIN_ITER );
 #  endif
 
 #  if ( POT_SCHEME == MG )
    if ( MG_MAX_ITER < 0 )              Aux_Error( ERROR_INFO, "MG_MAX_ITER (%d) < 0 !!\n", MG_MAX_ITER );
-   if ( MG_NPRE_SMOOTH <= 0 )          Aux_Error( ERROR_INFO, "MG_NPRE_SMOOTH (%d) <= 0 !!\n", MG_NPRE_SMOOTH );
-   if ( MG_NPOST_SMOOTH <= 0 )         Aux_Error( ERROR_INFO, "MG_NPOST_SMOOTH (%d) <= 0 !!\n", MG_NPOST_SMOOTH );
-   if ( MG_TOLERATED_ERROR <= 0.0 )    Aux_Error( ERROR_INFO, "MG_TOLERATED_ERROR (%14.7e) <= 0.0 !!\n", MG_TOLERATED_ERROR );
+   if ( MG_NPRE_SMOOTH < 0 )           Aux_Error( ERROR_INFO, "MG_NPRE_SMOOTH (%d) < 0 !!\n", MG_NPRE_SMOOTH );
+   if ( MG_NPOST_SMOOTH < 0 )          Aux_Error( ERROR_INFO, "MG_NPOST_SMOOTH (%d) < 0 !!\n", MG_NPOST_SMOOTH );
+   if ( MG_TOLERATED_ERROR < 0.0 )     Aux_Error( ERROR_INFO, "MG_TOLERATED_ERROR (%14.7e) < 0.0 !!\n", MG_TOLERATED_ERROR );
 #  endif
 
    if ( POT_GPU_NPGROUP % GPU_NSTREAM != 0 )
@@ -1073,11 +1058,6 @@ void Aux_Check_Parameter()
       Aux_Error( ERROR_INFO, "Pot_ParaBuf (%d) < NGhost_RefPot (%d) --> refinement will fail !!\n",
                  Pot_ParaBuf, NGhost_RefPot );
 #  endif
-
-   if ( OPT__GRAVITY_TYPE == GRAVITY_SELF  ||  OPT__GRAVITY_TYPE == GRAVITY_BOTH )
-   if (  ( OPT__BC_FLU[0] == BC_FLU_PERIODIC && OPT__BC_POT != BC_POT_PERIODIC )  ||
-         ( OPT__BC_FLU[0] != BC_FLU_PERIODIC && OPT__BC_POT == BC_POT_PERIODIC )    )
-      Aux_Error( ERROR_INFO, "periodic BC must be applied to both fluid and self-gravity solvers at the same time !!\n" );
 
    if ( OPT__BC_POT != BC_POT_PERIODIC  &&  OPT__BC_POT != BC_POT_ISOLATED )
       Aux_Error( ERROR_INFO, "unsupported option \"OPT__BC_POT = %d\" [1/2] !!\n", OPT__BC_POT );
@@ -1114,12 +1094,6 @@ void Aux_Check_Parameter()
    if ( DT__GRAVITY < 0.0  ||  DT__GRAVITY > 1.0 )
       Aux_Message( stderr, "WARNING : DT__GRAVITY (%14.7e) is not within the normal range [0...1] !!\n",
                    DT__GRAVITY );
-
-   if (  ( OPT__GRAVITY_TYPE == GRAVITY_SELF || OPT__GRAVITY_TYPE == GRAVITY_BOTH )  &&  OPT__BC_POT == BC_POT_ISOLATED  )
-   {
-      Aux_Message( stderr, "WARNING : currently the patches adjacent to the simulation boundary are NOT allowed to be\n" );
-      Aux_Message( stderr, "          refined if the self-gravity with the isolated BC is adopted !!\n" );
-   }
 
    if ( OPT__EXTERNAL_POT  &&  OPT__OUTPUT_POT )
       Aux_Message( stderr, "WARNING : currently OPT__OUTPUT_POT does NOT include the external potential !!\n" );
@@ -1225,7 +1199,7 @@ void Aux_Check_Parameter()
 #     error : ERROR : PARTICLE must work with either SERIAL or LOAD_BALANCE !!
 #  endif
 
-   if ( OPT__INIT != INIT_RESTART )
+   if ( OPT__INIT != INIT_BY_RESTART )
    {
       if ( amr->Par->Init == PAR_INIT_BY_RESTART )    Aux_Error( ERROR_INFO, "PAR_INIT == RESTART but OPT__INIT != RESTART !!\n" );
 
@@ -1251,10 +1225,10 @@ void Aux_Check_Parameter()
       Aux_Error( ERROR_INFO, "DT__PARACC (%14.7e) is NOT supported when STORE_PAR_ACC is off !!\n", DT__PARACC );
 #  endif
 
-   if ( OPT__BC_FLU[0] == BC_FLU_PERIODIC )
    for (int d=0; d<3; d++)
    {
-      if ( NX0_TOT[d]/PS2 == 1 )
+//    we have assumed that OPT__BC_FLU[2*d] == OPT__BC_FLU[2*d+1] when adopting the periodic BC
+      if ( OPT__BC_FLU[2*d] == BC_FLU_PERIODIC  &&  NX0_TOT[d]/PS2 == 1 )
          Aux_Error( ERROR_INFO, "\"%s\" does NOT work for NX0_TOT[%d] = 2*PATCH_SIZE when periodic BC is adopted !!\n",
                     "Par_MassAssignment()", d );
    }
@@ -1299,9 +1273,11 @@ void Aux_Check_Parameter()
 
 // errors
 // ------------------------------
+   /*
    if ( CHE_GPU_NPGROUP % GPU_NSTREAM != 0 )
       Aux_Error( ERROR_INFO, "CHE_GPU_NPGROUP (%d) %% GPU_NSTREAM (%d) != 0 !!\n",
                  CHE_GPU_NPGROUP, GPU_NSTREAM );
+                 */
 
 // warning
 // ------------------------------
@@ -1340,7 +1316,7 @@ void Aux_Check_Parameter()
 
    if ( SF_CREATE_STAR_SCHEME == SF_CREATE_STAR_SCHEME_AGORA  &&  !SF_CREATE_STAR_DET_RANDOM )
    {
-      Aux_Message( stderr, "WARNING : SF_CREATE_STAR_SCHEME == 1 will break the bitwise reproducibility due to the \n" );
+      Aux_Message( stderr, "WARNING : SF_CREATE_STAR_SCHEME == 1 will break bitwise reproducibility due to the \n" );
       Aux_Message( stderr, "          random values used for the stochastic star formation !!\n" );
       Aux_Message( stderr, "          --> Enable \"SF_CREATE_STAR_DET_RANDOM\" if reproducibility is of great concern\n" );
    }

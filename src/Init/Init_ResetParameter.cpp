@@ -326,11 +326,22 @@ void Init_ResetParameter()
 
 // particle options
 #  ifdef PARTICLE
-   if ( OPT__BC_POT == BC_POT_ISOLATED  &&  amr->Par->RemoveCell < 0.0 )
+// check if the periodic BC is applied to all directions
+   bool PeriodicAllDir = true;
+   for (int t=0; t<6; t++)
+   {
+      if ( OPT__BC_FLU[t] != BC_FLU_PERIODIC )
+      {
+         PeriodicAllDir = false;
+         break;
+      }
+   }
+
+// set RemoveCell to the distance where potential extrapolation is required when adopting non-periodic BC
+   if ( !PeriodicAllDir  &&  amr->Par->RemoveCell < 0.0 )
    {
       switch ( amr->Par->Interp )
       {
-//       set amr->Par->RemoveCell to the distance where potential extrapolation is required
          case ( PAR_INTERP_NGP ):   amr->Par->RemoveCell = 1.0;   break;
          case ( PAR_INTERP_CIC ):   amr->Par->RemoveCell = 1.5;   break;
          case ( PAR_INTERP_TSC ):   amr->Par->RemoveCell = 2.0;   break;
@@ -339,6 +350,15 @@ void Init_ResetParameter()
 
       const double PAR_REMOVE_CELL = amr->Par->RemoveCell;
       PRINT_WARNING( PAR_REMOVE_CELL, FORMAT_FLT, "for the adopted PAR_INTERP scheme" );
+   }
+
+// RemoveCell is useless for the periodic B.C.
+   else if ( PeriodicAllDir  &&  amr->Par->RemoveCell >= 0.0 )
+   {
+      amr->Par->RemoveCell = -1.0;
+
+      const double PAR_REMOVE_CELL = amr->Par->RemoveCell;
+      PRINT_WARNING( PAR_REMOVE_CELL, FORMAT_FLT, "since the periodic BC is adopted along all directions" );
    }
 
 // number of ghost zones for the particle interpolation scheme
@@ -664,7 +684,7 @@ void Init_ResetParameter()
 
 // MPI_NRank_X is useless during restart if LOAD_BALANCE is on
 #  ifdef LOAD_BALANCE
-   if ( OPT__INIT == INIT_RESTART )
+   if ( OPT__INIT == INIT_BY_RESTART )
    {
       for (int d=0; d<3; d++)    MPI_NRank_X[d] = -1;
 
@@ -718,26 +738,13 @@ void Init_ResetParameter()
 #  endif
 
 
-// OPT__UM_START_DOWNGRADE must be turned on for the isolated Poisson solver
-#  ifdef GRAVITY
-   if ( !OPT__UM_START_DOWNGRADE  &&  OPT__BC_POT == BC_POT_ISOLATED  &&  OPT__UM_START_LEVEL > 0 )
+// OPT__UM_IC_NVAR
+   if ( OPT__INIT == INIT_BY_FILE  &&  OPT__UM_IC_NVAR <= 0 )
    {
-      OPT__UM_START_DOWNGRADE = true;
+      OPT__UM_IC_NVAR = NCOMP_TOTAL;
 
-      PRINT_WARNING( OPT__UM_START_DOWNGRADE, FORMAT_INT, "for the isolated gravity" );
+      PRINT_WARNING( OPT__UM_IC_NVAR, FORMAT_INT, "" );
    }
-#  endif
-
-
-// HDF5 is not supported if "SUPPORT_HDF5" is disabled
-#  ifndef SUPPORT_HDF5
-   if ( OPT__OUTPUT_TOTAL == OUTPUT_FORMAT_HDF5 )
-   {
-      OPT__OUTPUT_TOTAL = OUTPUT_FORMAT_CBINARY;
-
-      PRINT_WARNING( OPT__OUTPUT_TOTAL, FORMAT_INT, "since SUPPORT_HDF5 is disabled" );
-   }
-#  endif
 
 
 // always turn on "OPT__CK_PARTICLE" when debugging particles
@@ -751,21 +758,9 @@ void Init_ResetParameter()
 #  endif
 
 
-// RemoveCell is useless for the periodic B.C.
-#  ifdef PARTICLE
-   if ( OPT__BC_POT == BC_POT_PERIODIC  &&  amr->Par->RemoveCell >= 0.0 )
-   {
-      amr->Par->RemoveCell = -1.0;
-
-      const double PAR_REMOVE_CELL = amr->Par->RemoveCell;
-      PRINT_WARNING( PAR_REMOVE_CELL, FORMAT_FLT, "since the periodic BC is adopted" );
-   }
-#  endif
-
-
 // set particle initialization to PAR_INIT_BY_RESTART for restart
 #  ifdef PARTICLE
-   if ( OPT__INIT == INIT_RESTART  &&  amr->Par->Init != PAR_INIT_BY_RESTART )
+   if ( OPT__INIT == INIT_BY_RESTART  &&  amr->Par->Init != PAR_INIT_BY_RESTART )
    {
       amr->Par->Init = PAR_INIT_BY_RESTART;
 
@@ -855,7 +850,7 @@ void Init_ResetParameter()
    }
 
 
-// SF_CREATE_STAR_MIN_LEVEL
+// star-formation options
 #  ifdef STAR_FORMATION
    if ( SF_CREATE_STAR_MIN_LEVEL < 0 )
    {
@@ -863,7 +858,19 @@ void Init_ResetParameter()
 
       PRINT_WARNING( SF_CREATE_STAR_MIN_LEVEL, FORMAT_INT, "" );
    }
-#  endif
+
+   if ( SF_CREATE_STAR_DET_RANDOM < 0 )
+   {
+#     ifdef BITWISE_REPRODUCIBILITY
+         SF_CREATE_STAR_DET_RANDOM = 1;
+         PRINT_WARNING( SF_CREATE_STAR_DET_RANDOM, FORMAT_INT, "since BITWISE_REPRODUCIBILITY is enabled" );
+#     else
+         SF_CREATE_STAR_DET_RANDOM = 0;
+         PRINT_WARNING( SF_CREATE_STAR_DET_RANDOM, FORMAT_INT, "since BITWISE_REPRODUCIBILITY is disabled" );
+#     endif
+
+   }
+#  endif // #ifdef STAR_FORMATION
 
 
 // convert to code units
@@ -878,17 +885,6 @@ void Init_ResetParameter()
    SF_CREATE_STAR_MIN_STAR_MASS *= Const_Msun / UNIT_M;
 
    PRINT_WARNING( SF_CREATE_STAR_MIN_STAR_MASS, FORMAT_FLT, "to be consistent with the code units" );
-
-
-// enable SF_CREATE_STAR_DET_RANDOM in the debug mode
-#  ifdef GAMER_DEBUG
-   if ( !SF_CREATE_STAR_DET_RANDOM )
-   {
-      SF_CREATE_STAR_DET_RANDOM = true;
-
-      PRINT_WARNING( SF_CREATE_STAR_DET_RANDOM, FORMAT_INT, "since GAMER_DEBUG is enabled" );
-   }
-#  endif
 #  endif // #ifdef STAR_FORMATION
 
 
@@ -899,6 +895,17 @@ void Init_ResetParameter()
       OPT__MINIMIZE_MPI_BARRIER = false;
 
       PRINT_WARNING( OPT__MINIMIZE_MPI_BARRIER, FORMAT_INT, "since SERIAL is enabled" );
+   }
+#  endif
+
+
+// disable OPT__INIT_GRID_WITH_OMP if OPENMP is disabled
+#  ifndef OPENMP
+   if ( OPT__INIT_GRID_WITH_OMP )
+   {
+      OPT__INIT_GRID_WITH_OMP = false;
+
+      PRINT_WARNING( OPT__INIT_GRID_WITH_OMP, FORMAT_INT, "since OPENMP is disabled" );
    }
 #  endif
 

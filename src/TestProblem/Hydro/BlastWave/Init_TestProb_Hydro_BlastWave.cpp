@@ -56,6 +56,9 @@ void Validate()
       Aux_Error( ERROR_INFO, "only work with the Cartesian coordinates !!\n" );
 #  endif
 
+   if ( !OPT__INIT_RESTRICT )
+      Aux_Error( ERROR_INFO, "OPT__INIT_RESTRICT must be enabled !!\n" );
+
 
    if ( MPI_Rank == 0 )    Aux_Message( stdout, "   Validating test problem %d ... done\n", TESTPROB_ID );
 
@@ -89,9 +92,9 @@ void SetParameter()
    const char FileName[] = "Input__TestProb";
    ReadPara_t *ReadPara  = new ReadPara_t;
 
-// add parameters in the following format (some handy constants are defined in TestProb.h):
+// add parameters in the following format:
 // --> note that VARIABLE, DEFAULT, MIN, and MAX must have the same data type
-// --> some handy constants (e.g., NoMin_int, Eps_float, ...) are defined in "ReadPara.h"
+// --> some handy constants (e.g., NoMin_int, Eps_float, ...) are defined in "include/ReadPara.h"
 // ********************************************************************************************************************************
 // ReadPara->Add( "KEY_IN_THE_FILE",   &VARIABLE_ADDRESS,      DEFAULT,       MIN,              MAX               );
 // ********************************************************************************************************************************
@@ -117,7 +120,7 @@ void SetParameter()
 
 // (3) reset other general-purpose parameters
 //     --> a helper macro PRINT_WARNING is defined in TestProb.h
-   const double End_T_Default    = 3.0e-2;
+   const double End_T_Default    = 5.0e-3;
    const long   End_Step_Default = __INT_MAX__;
 
    if ( END_STEP < 0 ) {
@@ -128,11 +131,6 @@ void SetParameter()
    if ( END_T < 0.0 ) {
       END_T = End_T_Default;
       PRINT_WARNING( "END_T", END_T, FORMAT_REAL );
-   }
-
-   if ( !OPT__INIT_RESTRICT ) {
-      OPT__INIT_RESTRICT = true;
-      PRINT_WARNING( "OPT__INIT_RESTRICT", OPT__INIT_RESTRICT, FORMAT_BOOL );
    }
 
 

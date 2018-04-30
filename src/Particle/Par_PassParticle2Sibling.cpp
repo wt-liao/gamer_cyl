@@ -19,16 +19,16 @@ extern Timer_t *Timer_Par_MPI[NLEVEL][6];
 //                   --> But note that for C->F we only send particles to the sibling patches and do NOT
 //                       send them to the sibling-son patches in this function. These particles are stored in
 //                       the sibling patches temporarily for the velocity correction in KDK (because we don't
-//                       have potential at lv+1 level at this point), and are sent to lv+1 level after that.
+//                       have potential at lv+1 level at this point) and will be sent to lv+1 level after that.
 //                2. After calculating the target sibling patch, the particle position will be re-mapped
 //                   into the simulation domain if periodic B.C. is assumed
 //                3. Particles transferred to buffer patches (at either lv or lv-1) will be resent to their
-//                   corresponding real patches by calling "Par_LB_SendParticle2RealPatch"
+//                   corresponding real patches by calling Par_LB_ExchangeParticleBetweenPatch()
 //
-// Parameter   :  lv             : Target refinement level
-//                TimingSendPar  : Measure the elapsed time of the routine "Par_LB_SendParticleData",
-//                                 which is called by "Par_LB_ExchangeParticleBetweenPatch"
-//                                 --> LOAD_BALANCE only
+// Parameter   :  lv            : Target refinement level
+//                TimingSendPar : Measure the elapsed time of Par_LB_SendParticleData(), which is called by
+//                                Par_LB_ExchangeParticleBetweenPatch()
+//                                --> LOAD_BALANCE only
 //-------------------------------------------------------------------------------------------------------
 void Par_PassParticle2Sibling( const int lv, const bool TimingSendPar )
 {
@@ -58,6 +58,17 @@ void Par_PassParticle2Sibling( const int lv, const bool TimingSendPar )
    long    ParID;
    int    *RemoveParList;
    double *EdgeL, *EdgeR;
+
+// check if the periodic BC is applied to all directions
+   bool PeriodicAllDir = true;
+   for (int t=0; t<6; t++)
+   {
+      if ( OPT__BC_FLU[t] != BC_FLU_PERIODIC )
+      {
+         PeriodicAllDir = false;
+         break;
+      }
+   }
 
 #  pragma omp parallel private( NPar, NGuess, NPar_Remove, ArraySize, ijk, TSib, ParID, RemoveParList, EdgeL, EdgeR )
    {
@@ -100,7 +111,9 @@ void Par_PassParticle2Sibling( const int lv, const bool TimingSendPar )
             ijk[d] = ( ParPos[d][ParID] < EdgeL[d] ) ? 0 : (ParPos[d][ParID] < EdgeR[d]) ? 1 : 2;
 
 //          2-2. reset particle position for periodic B.C.
-            if ( OPT__BC_POT == BC_POT_PERIODIC  &&  ijk[d] != 1 )
+//               --> note that EdgeL/R in amr->patch always assumes periodicity
+//               --> OK when calling patch->AddParticle() in the debug mode
+            if ( OPT__BC_FLU[2*d] == BC_FLU_PERIODIC  &&  ijk[d] != 1 )
             {
                if ( ParPos[d][ParID] < BoxEdgeL[d] )
                {
@@ -138,15 +151,14 @@ void Par_PassParticle2Sibling( const int lv, const bool TimingSendPar )
                                 d, ParID, ParPos[d][ParID], BoxEdgeL[d], BoxEdgeR[d] );
 #                 endif
                }
-            } // if ( OPT__BC_POT == BC_POT_PERIODIC  &&  ijk[d] != 1 )
+            } // if ( OPT__BC_FLU[2*d] == BC_FLU_PERIODIC  &&  ijk[d] != 1 )
          } // for (int d=0; d<3; d++)
 
          TSib = SibID[ ijk[2] ][ ijk[1] ][ ijk[0] ];
 
 
 //       2-3. remove particles lying outside the active region for non-periodic B.C. (by setting mass as PAR_INACTIVE_OUTSIDE)
-         if (  OPT__BC_POT != BC_POT_PERIODIC  &&
-               !Par_WithinActiveRegion( ParPos[0][ParID], ParPos[1][ParID], ParPos[2][ParID] )  )
+         if (  !PeriodicAllDir  &&  !Par_WithinActiveRegion( ParPos[0][ParID], ParPos[1][ParID], ParPos[2][ParID] )  )
          {
             RemoveParList[ NPar_Remove ++ ] = p;
             NPar_Remove_Tot ++;
@@ -321,7 +333,7 @@ void Par_PassParticle2Sibling( const int lv, const bool TimingSendPar )
 // 7. send particles from buffer patches to the corresponding real patches
 //    --> note that after calling the following rourtines, some particles may reside in **non-leaf** real patches
 //    --> they will be sent again to leaf real patches after the velocity correction operation
-//        (by the function Par_PassParticle2Son_AllPatch)
+//        --> by Par_PassParticle2Son_AllPatch()
 #  ifdef LOAD_BALANCE
 
    Timer_t *Timer[2] = { NULL, NULL };
@@ -392,24 +404,26 @@ void Par_PassParticle2Sibling( const int lv, const bool TimingSendPar )
 // Description :  Check whether the input coordinates are within the active region
 //
 // Note        :  1. Active region is defined as [BoxEdgeL+RemoveCell ... BoxEdgeR-RemoveCell]
-//                2. Useful only for non-periodic particles
-//                   --> For removing particles lying too close to the simulation boundaries, where
-//                       the potential extrapolation can lead to large errors
+//                2. Useful only for non-periodic boundaries
+//                   --> For removing particles lying too close to the simulation boundaries where
+//                       the potential extrapolation may lead to large errors
 //
 // Parameter   :  X/Y/Z : Input coordinates in the adopted coordinate system
 //
-// Return      :  true/false  : inside/outside the active region
+// Return      :  true/false : inside/outside the active region
 //-------------------------------------------------------------------------------------------------------
 bool Par_WithinActiveRegion( const real X, const real Y, const real Z )
 {
 
+// RemoveCell has the unit of root-level cell
    const double RemoveZone[3] = { amr->Par->RemoveCell*amr->dh[0][0],
                                   amr->Par->RemoveCell*amr->dh[0][1],
                                   amr->Par->RemoveCell*amr->dh[0][2] };
 
-   if ( X < amr->BoxEdgeL[0]+RemoveZone[0]  ||  X > amr->BoxEdgeR[0]-RemoveZone[0] )   return false;
-   if ( Y < amr->BoxEdgeL[1]+RemoveZone[1]  ||  Y > amr->BoxEdgeR[1]-RemoveZone[1] )   return false;
-   if ( Z < amr->BoxEdgeL[2]+RemoveZone[2]  ||  Z > amr->BoxEdgeR[2]-RemoveZone[2] )   return false;
+// assuming OPT__BC_FLU[2*d] == OPT__BC_FLU[2*d+1] for d=0-2 when adoping periodic BC
+   if (  OPT__BC_FLU[0] != BC_FLU_PERIODIC  &&  ( X < amr->BoxEdgeL[0]+RemoveZone[0] || X > amr->BoxEdgeR[0]-RemoveZone[0] )  )  return false;
+   if (  OPT__BC_FLU[2] != BC_FLU_PERIODIC  &&  ( Y < amr->BoxEdgeL[1]+RemoveZone[1] || Y > amr->BoxEdgeR[1]-RemoveZone[1] )  )  return false;
+   if (  OPT__BC_FLU[4] != BC_FLU_PERIODIC  &&  ( Z < amr->BoxEdgeL[2]+RemoveZone[2] || Z > amr->BoxEdgeR[2]-RemoveZone[2] )  )  return false;
 
    return true;
 

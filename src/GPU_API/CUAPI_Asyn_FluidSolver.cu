@@ -1,4 +1,4 @@
-#include "GAMER.h"
+#include "CUAPI.h"
 #include "CUFLU.h"
 
 #ifdef GPU
@@ -89,6 +89,8 @@ __global__ void CUFLU_ELBDMSolver( real g_Fluid_In [][FLU_NIN ][ FLU_NXT*FLU_NXT
 #else
 #error : ERROR : unsupported MODEL !!
 #endif // MODEL
+
+template <typename T> bool  Mis_CompareRealValue( const T Input1, const T Input2, const char *comment, const bool Verbose );
 
 
 // device pointers

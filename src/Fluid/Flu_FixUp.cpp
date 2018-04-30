@@ -105,8 +105,8 @@ void Flu_FixUp( const int lv )
 #     endif
       for (int PID=0; PID<amr->NPatchComma[lv][1]; PID++)
       {
-//       a1. sum up the coarse-grid and fine-grid fluxes for the debug mode
-#        ifdef GAMER_DEBUG
+//       a1. sum up the coarse-grid and fine-grid fluxes for bitwise reproducibility
+#        ifdef BITWISE_REPRODUCIBILITY
          for (int s=0; s<6; s++)
          {
             FluxPtr = amr->patch[0][lv][PID]->flux[s];
@@ -116,7 +116,7 @@ void Flu_FixUp( const int lv )
                for (int v=0; v<NFLUX_TOTAL; v++)
                for (int m=0; m<PS1; m++)
                for (int n=0; n<PS1; n++)
-                  FluxPtr[v][m][n] += amr->patch[0][lv][PID]->flux_debug[s][v][m][n];
+                  FluxPtr[v][m][n] += amr->patch[0][lv][PID]->flux_bitrep[s][v][m][n];
             }
          }
 #        endif
@@ -211,7 +211,7 @@ void Flu_FixUp( const int lv )
 
 //                do not apply the flux correction if there are any unphysical results
 #                 if   ( MODEL == HYDRO  ||  MODEL == MHD )
-                  if ( CorrVal[DENS] <= MIN_DENS  ||  Pres <= MIN_PRES  ||  !isfinite(Pres)
+                  if ( CorrVal[DENS] <= MIN_DENS  ||  Pres <= MIN_PRES  ||  !Aux_IsFinite(Pres)
 #                      if   ( DUAL_ENERGY == DE_ENPY )
                        ||  ( (*DE_StatusPtr1D == DE_UPDATED_BY_DUAL || *DE_StatusPtr1D == DE_UPDATED_BY_MIN_PRES)
                               && CorrVal[ENPY] <= (real)2.0*TINY_NUMBER )
@@ -295,8 +295,8 @@ void Flu_FixUp( const int lv )
       } // for (int PID=0; PID<amr->NPatchComma[lv][1]; PID++)
 
 
-//    a3. reset all flux arrays (in both real and buffer patches) to zero for the debug mode
-#     ifdef GAMER_DEBUG
+//    a3. reset all flux arrays (in both real and buffer patches) to zero for bitwise reproducibility
+#     ifdef BITWISE_REPRODUCIBILITY
 #     pragma omp parallel for private( FluxPtr ) schedule( runtime )
       for (int PID=0; PID<amr->NPatchComma[lv][27]; PID++)
       {
@@ -311,7 +311,7 @@ void Flu_FixUp( const int lv )
                   FluxPtr[v][m][n] = 0.0;
             }
 
-            FluxPtr = amr->patch[0][lv][PID]->flux_debug[s];
+            FluxPtr = amr->patch[0][lv][PID]->flux_bitrep[s];
             if ( FluxPtr != NULL )
             {
                for (int v=0; v<NFLUX_TOTAL; v++)

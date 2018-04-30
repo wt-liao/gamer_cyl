@@ -39,7 +39,7 @@ void Output_DumpData_Part( const OptOutputPart_t Part, const bool BaseOnly, cons
       Aux_Error( ERROR_INFO, "unsupported option \"Part = %d\" [0 ~ 6] !!\n", Part );
 
    if (  ( Part == OUTPUT_YZ  ||  Part == OUTPUT_Y  ||  Part == OUTPUT_Z )  &&
-         ( X < amr->BoxEdgeL[0] ||  X >= amr->BoxEdgeR[0] )  )
+         ( X < amr->BoxEdgeL[0]  ||  X >= amr->BoxEdgeR[0] )  )
       Aux_Error( ERROR_INFO, "incorrect X (out of range [%lf<=X<%lf]) !!\n", amr->BoxEdgeL[0], amr->BoxEdgeR[0] );
 
    if (  ( Part == OUTPUT_XZ  ||  Part == OUTPUT_X  ||  Part == OUTPUT_Z )  &&

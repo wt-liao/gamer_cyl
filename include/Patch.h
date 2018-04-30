@@ -6,7 +6,7 @@
 #include "Macro.h"
 
 #ifdef PARTICLE
-#  include <cmath>
+#  include <math.h>
 #  include "Particle.h"
 #endif
 
@@ -50,7 +50,7 @@ long  LB_Corner2Index( const int lv, const int Corner[], const Check_t Check );
 //                flux[6]         : Fluid flux (for the flux-correction operation)
 //                                  --> Including passively advected flux (for the flux-correction operation)
 //                flux_tmp[6]     : Temporary fluid flux for the option "AUTO_REDUCE_DT"
-//                flux_debug[6]   : Fluid flux for the debug mode (ensuring that the round-off errors are
+//                flux_bitrep[6]  : Fluid flux for achieving bitwise reproducibility (i.e., ensuring that the round-off errors are
 //                                  exactly the same in different parallelization parameters/strategies)
 //                corner[3]       : Grid indices of the cell at patch corner
 //                                  --> Note that for an external patch its recorded "corner" will lie outside
@@ -85,21 +85,22 @@ long  LB_Corner2Index( const int lv, const int Corner[], const Check_t Check );
 //                                      inactive:  patch has been allocated but deactivated (excluded from num[lv])
 //                                  --> Note that active/inactive have nothing to do with the allocation of field arrays (e.g., fluid)
 //                                      --> For both active and inactive patches, field arrays may be allocated or == NULL
-//                                  --> However, currently the flux arrays (i.e., flux, flux_tmp, and flux_debug) are guaranteed
+//                                  --> However, currently the flux arrays (i.e., flux, flux_tmp, and flux_bitrep) are guaranteed
 //                                      to be NULL for inactive patches
 //                EdgeL/R         : Left and right edge of the patch
 //                                  --> Note that we always apply periodicity to EdgeL/R. So for an external patch its
 //                                      recorded "EdgeL/R" will still lie inside the simulation domain and will be
 //                                      exactly the same as the EdgeL/R of the corresponding real patches.
 //                                  --> For example, the external patches just outside the simulation left edge will have
-//                                      EdgeL = BoxSize-PatchSize*dh[lv] and EdgeR = BoxSize, and for those just outside
-//                                      the simulation right edge will have EdgeL = 0 and EdgeR = PatchSize*dh[lv]
+//                                      EdgeL = BoxEdgeR-PatchSize*dh[lv] and EdgeR = BoxEdgeR, and for those just outside
+//                                      the simulation right edge will have EdgeL = BoxEdgeL and EdgeR = BoxEdgeL+PatchSize*dh[lv]
 //                                  --> Different from corner[3], which do NOT assume periodicity
 //                PaddedCr1D      : 1D corner coordiniate padded with two base-level patches on each side
 //                                  in each direction, normalized to the finest-level patch scale (PATCH_SIZE)
 //                                  --> Each PaddedCr1D defines a unique 3D position
 //                                  --> Patches at different levels with the same PaddedCr1D have the same
 //                                      3D corner coordinates
+//                                  --> this number is independent of periodicity (because of the padded patches)
 //                LB_Idx          : Space-filling-curve index for load balance
 //                NPar            : Number of particles belonging to this leaf patch
 //                ParListSize     : Size of the array ParList (ParListSize can be >= NPar)
@@ -176,10 +177,10 @@ struct patch_t
    real (*rho_ext)[RHOEXT_NXT][RHOEXT_NXT];
 #  endif
 
-   real (*flux      [6])[PATCH_SIZE][PATCH_SIZE];
-   real (*flux_tmp  [6])[PATCH_SIZE][PATCH_SIZE];
-#  ifdef GAMER_DEBUG
-   real (*flux_debug[6])[PATCH_SIZE][PATCH_SIZE];
+   real (*flux       [6])[PATCH_SIZE][PATCH_SIZE];
+   real (*flux_tmp   [6])[PATCH_SIZE][PATCH_SIZE];
+#  ifdef BITWISE_REPRODUCIBILITY
+   real (*flux_bitrep[6])[PATCH_SIZE][PATCH_SIZE];
 #  endif
 
    int    corner[3];
@@ -268,7 +269,7 @@ struct patch_t
    //                                 --> But note that we must initialize these pointers as NULL when allocating (not activating)
    //                                     patches and before calling hnew and gnew
    //                                     --> otherwise these pointers become ill-defined, which will make hdelete and gdelete crash
-   //                                 --> Does NOT apply to flux arrays (i.e., flux, flux_tmp, and flux_debug) which are always
+   //                                 --> Does NOT apply to flux arrays (i.e., flux, flux_tmp, and flux_bitrep) which are always
    //                                     initialized as NULL here
    //                                 --> Does not apply to any particle variable (except rho_ext)
    //===================================================================================
@@ -303,17 +304,18 @@ struct patch_t
       }
 #     endif
 
-      PaddedCr1D = Mis_Idx3D2Idx1D( BoxNScale_Padded, Cr_Padded );
-      LB_Idx     = LB_Corner2Index( lv, corner, CHECK_OFF );   // this number always assumes periodicity
+      PaddedCr1D = Mis_Idx3D2Idx1D( BoxNScale_Padded, Cr_Padded );   // independent of periodicity
+      LB_Idx     = LB_Corner2Index( lv, corner, CHECK_OFF );         // always assumes periodicity
 
 //    set the patch edge
       const int PScale = PS1*( 1<<(TOP_LEVEL-lv) );
       for (int d=0; d<3; d++)
       {
 //       to ensure that buffer patches and their corresponding real patches have the same EdgeL/R, do not write EdgeR[d] as
-//       EdgeR[d] = (double)(  ( corner[d] + BoxScale[d] + PScale ) % BoxScale[d] )*dh_min;
+//       EdgeR[d] = BoxEdgeL[d] + (double)(  ( corner[d] + BoxScale[d] + PScale ) % BoxScale[d] )*dh_min;
 //       --> otherwise the buffer patches just outside the simulation left edge (and the real patches just inside the simulation
-//           right edge) will have EdgeR==0 instead of EdgeR==BoxSize
+//           right edge) will have EdgeR=BoxEdgeL instead of EdgeR=BoxEdgeR
+//       --> assuming periodicity
          EdgeL[d] = BoxEdgeL[d] + (double)(  ( corner[d] + BoxScale[d] ) % BoxScale[d]           )*dh_min[d];
          EdgeR[d] = BoxEdgeL[d] + (double)(  ( corner[d] + BoxScale[d] ) % BoxScale[d] + PScale  )*dh_min[d];
 
@@ -348,10 +350,10 @@ struct patch_t
 
       for (int s=0; s<6; s++)
       {
-         flux      [s] = NULL;
-         flux_tmp  [s] = NULL;
-#        ifdef GAMER_DEBUG
-         flux_debug[s] = NULL;
+         flux       [s] = NULL;
+         flux_tmp   [s] = NULL;
+#        ifdef BITWISE_REPRODUCIBILITY
+         flux_bitrep[s] = NULL;
 #        endif
       }
 
@@ -453,29 +455,31 @@ struct patch_t
       if ( AllocTmp  &&  flux_tmp[SibID] != NULL )
          Aux_Error( ERROR_INFO, "allocate an existing flux_tmp array (sibling = %d) !!\n", SibID );
 
-      if ( flux_debug[SibID] != NULL )
-         Aux_Error( ERROR_INFO, "allocate an existing flux_debug array (sibling = %d) !!\n", SibID );
+#     ifdef BITWISE_REPRODUCIBILITY
+      if ( flux_bitrep[SibID] != NULL )
+         Aux_Error( ERROR_INFO, "allocate an existing flux_bitrep array (sibling = %d) !!\n", SibID );
+#     endif
 #     endif
 
-      flux      [SibID] = new real [NFLUX_TOTAL][PATCH_SIZE][PATCH_SIZE];
+      flux      [SibID]  = new real [NFLUX_TOTAL][PATCH_SIZE][PATCH_SIZE];
       if ( AllocTmp )
-      flux_tmp  [SibID] = new real [NFLUX_TOTAL][PATCH_SIZE][PATCH_SIZE];
-#     ifdef GAMER_DEBUG
-      flux_debug[SibID] = new real [NFLUX_TOTAL][PATCH_SIZE][PATCH_SIZE];
+      flux_tmp  [SibID]  = new real [NFLUX_TOTAL][PATCH_SIZE][PATCH_SIZE];
+#     ifdef BITWISE_REPRODUCIBILITY
+      flux_bitrep[SibID] = new real [NFLUX_TOTAL][PATCH_SIZE][PATCH_SIZE];
 #     endif
 
       for(int v=0; v<NFLUX_TOTAL; v++)
       for(int m=0; m<PATCH_SIZE; m++)
       for(int n=0; n<PATCH_SIZE; n++)
       {
-         flux      [SibID][v][m][n] = 0.0;
+         flux       [SibID][v][m][n] = 0.0;
          /*
 //       no need to initialize flux_tmp
          if ( AllocTmp )
-         flux_tmp  [SibID][v][m][n] = 0.0;
+         flux_tmp   [SibID][v][m][n] = 0.0;
          */
-#        ifdef GAMER_DEBUG
-         flux_debug[SibID][v][m][n] = 0.0;
+#        ifdef BITWISE_REPRODUCIBILITY
+         flux_bitrep[SibID][v][m][n] = 0.0;
 #        endif
       }
 
@@ -501,9 +505,9 @@ struct patch_t
             delete [] flux_tmp[s];
             flux_tmp[s] = NULL; }
 
-#           ifdef GAMER_DEBUG
-            delete [] flux_debug[s];
-            flux_debug[s] = NULL;
+#           ifdef BITWISE_REPRODUCIBILITY
+            delete [] flux_bitrep[s];
+            flux_bitrep[s] = NULL;
 #           endif
          }
       }
@@ -570,8 +574,8 @@ struct patch_t
 #     ifdef STORE_POT_GHOST
       if ( pot_ext == NULL )  pot_ext = new real [GRA_NXT][GRA_NXT][GRA_NXT];
 
-//    always initialize pot_ext (even if pot_ext != NULL when calling this this function) to indicate that this array
-//    has NOT been properly set --> used by Poi_StorePotWithGhostZone
+//    always initialize pot_ext (even if pot_ext != NULL when calling this function) to indicate that this array
+//    has NOT been properly set --> used by Poi_StorePotWithGhostZone()
       pot_ext[0][0][0] = POT_EXT_NEED_INIT;
 #     endif
 

@@ -1,4 +1,4 @@
-#include "GAMER.h"
+#include "CUAPI.h"
 #include "CUFLU.h"
 #ifdef GRAVITY
 #include "CUPOT.h"
@@ -28,6 +28,8 @@ __global__ void CUPOT_dtSolver_HydroGravity( real g_dt_Array[],
 #else
 #error : ERROR : unsupported MODEL !!
 #endif // MODEL
+
+template <typename T> bool  Mis_CompareRealValue( const T Input1, const T Input2, const char *comment, const bool Verbose );
 
 
 // device pointers

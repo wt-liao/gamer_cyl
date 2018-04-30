@@ -63,7 +63,8 @@ struct KeyInfo_t
    int    Par_NPassive;             // PAR_NPASSIVE
 #  endif
 
-   double BoxSize[3];
+   double BoxEdgeL[3];
+   double BoxEdgeR[3];
    double Time       [NLEVEL];
    double CellWidth  [NLEVEL][3];   // amr->dh[lv]
    double dTime_AllLv[NLEVEL];
@@ -97,9 +98,9 @@ struct Makefile_t
 
    int UseGPU;
    int GAMER_Debug;
+   int BitwiseReproducibility;
    int Timing;
    int TimingSolver;
-   int Intel;
    int Float8;
    int Serial;
    int LoadBalance;
@@ -110,6 +111,7 @@ struct Makefile_t
    int SupportHDF5;
    int SupportGSL;
    int SupportGrackle;
+   int RandomNumber;
 
 #  ifdef GRAVITY
    int PotScheme;
@@ -386,6 +388,7 @@ struct InputPara_t
    int    Opt__Flag_NParCell;
    int    Opt__Flag_ParMassCell;
 #  endif
+   int    Opt__NoFlagNearBoundary;
    int    Opt__PatchCount;
 #  ifdef PARTICLE
    int    Opt__ParticleCount;
@@ -500,14 +503,13 @@ struct InputPara_t
 // initialization
    int    Opt__Init;
    int    RestartLoadNRank;
-   int    Opt__RestartHeader;
    int    Opt__RestartReset;
-   int    Opt__UM_Start_Level;
-   int    Opt__UM_Start_NVar;
-   int    Opt__UM_Start_Downgrade;
-   int    Opt__UM_Start_Refine;
-   int    Opt__UM_Factor_5over3;
+   int    Opt__UM_IC_Level;
+   int    Opt__UM_IC_NVar;
+   int    Opt__UM_IC_Downgrade;
+   int    Opt__UM_IC_Refine;
    int    Opt__InitRestrict;
+   int    Opt__InitGridWithOMP;
    int    Opt__GPUID_Select;
    int    Init_Subsampling_NCell;
 

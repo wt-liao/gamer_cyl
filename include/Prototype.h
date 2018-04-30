@@ -50,6 +50,8 @@ template <typename T> void Aux_DeallocateArray2D( T** &Array );
 template <typename T> void Aux_DeallocateArray3D( T*** &Array );
 template <typename T> int  Aux_LoadTable( T *&Data, const char *FileName, const int NCol_Target, const int TCol[],
                                           const bool RowMajor, const bool AllocMem );
+int Aux_IsFinite( const float x );
+int Aux_IsFinite( const double x );
 
 
 // Buffer
@@ -120,6 +122,9 @@ void Flu_BoundaryCondition_User( real *Array, const int NVar_Flu, const int Arra
                                  const int ArraySizeZ, const int Idx_Start[], const int Idx_End[],
                                  const int TFluVarIdxList[], const double Time, const double dh[], const double *Corner,
                                  const int TVar, const int lv );
+void Flu_BoundaryCondition_Outflow( real *Array, const int BC_Face, const int NVar, const int GhostSize,
+                                    const int ArraySizeX, const int ArraySizeY, const int ArraySizeZ,
+                                    const int Idx_Start[], const int Idx_End[] );
 void Flu_CorrAfterAllSync();
 #ifndef SERIAL
 void Flu_AllocateFluxArray_Buffer( const int lv );
@@ -158,16 +163,16 @@ void Init_MemAllocate_dt( const int dt_NPatchGroup );
 void Init_Parallelization();
 void Init_RecordBasePatch();
 void Init_Refine( const int lv );
-void Init_Restart();
+void Init_ByRestart();
 void Init_Unit();
 void Init_PassiveVariable();
 #ifdef SUPPORT_HDF5
-void Init_Restart_HDF5( const char *FileName );
+void Init_ByRestart_HDF5( const char *FileName );
 #endif
 void Init_Reload_OldFormat();
-void Init_StartOver();
+void Init_ByFunction();
 void Init_TestProb();
-void Init_UM();
+void Init_ByFile();
 #ifdef OPENMP
 void Init_OpenMP();
 #endif
@@ -351,8 +356,7 @@ int TABLE_07( const int SibID, const int Count );
 // LoadBalance
 long LB_Corner2Index( const int lv, const int Corner[], const Check_t Check );
 #ifdef LOAD_BALANCE
-void LB_AllocateBufferPatch_Father( const int SonLv,
-                                    const bool SearchAllSon, const int NInput, int* TargetSonPID0,
+void LB_AllocateBufferPatch_Father( const int SonLv, const bool SearchAllSon, const int NInput, int* TargetSonPID0,
                                     const bool RecordFaPID, int* NNewFaBuf0, int** NewFaBufPID0 );
 void LB_AllocateBufferPatch_Sibling_Base();
 void LB_AllocateBufferPatch_Sibling( const int lv );
@@ -387,11 +391,8 @@ int  LB_Index2Rank( const int lv, const long LB_Idx, const Check_t Check );
 void Hydro_Aux_Check_Negative( const int lv, const int Mode, const char *comment );
 void Hydro_GetTimeStep_Gravity( double &dt, double &dTime, int &MinDtLv, real &MinDtVar, const double dt_dTime );
 void Hydro_GetMaxAcc( real MaxAcc[] );
-void Hydro_Init_StartOver_AssignData( const int lv );
-void Hydro_Init_UM_AssignData( const int lv, real *UM_Data, const int NVar );
-void Hydro_BoundaryCondition_Outflow( real *Array, const int BC_Face, const int NVar, const int GhostSize,
-                                      const int ArraySizeX, const int ArraySizeY, const int ArraySizeZ,
-                                      const int Idx_Start[], const int Idx_End[] );
+void Hydro_Init_ByFunction_AssignData( const int lv );
+void Hydro_Init_ByFile_AssignData( const int lv, real *UM_Data, const int NVar );
 void Hydro_BoundaryCondition_Reflecting( real *Array, const int BC_Face, const int NVar_Flu, const int GhostSize,
                                          const int ArraySizeX, const int ArraySizeY, const int ArraySizeZ,
                                          const int Idx_Start[], const int Idx_End[], const int TFluVarIdxList[],
@@ -406,8 +407,8 @@ bool Hydro_Flag_Vorticity( const int i, const int j, const int k, const int lv, 
 
 // ELBDM model
 #elif ( MODEL == ELBDM )
-void   ELBDM_Init_StartOver_AssignData( const int lv );
-void   ELBDM_Init_UM_AssignData( const int lv, real *UM_Data, const int NVar );
+void   ELBDM_Init_ByFunction_AssignData( const int lv );
+void   ELBDM_Init_ByFile_AssignData( const int lv, real *UM_Data, const int NVar );
 double ELBDM_GetTimeStep_Fluid( const int lv );
 double ELBDM_GetTimeStep_Gravity( const int lv );
 double ELBDM_GetTimeStep_Phase( const int lv );
@@ -490,7 +491,7 @@ void Par_PassParticle2Father( const int FaLv, const int FaPID );
 void Par_Aux_Check_Particle( const char *comment );
 void Par_MassAssignment( const long *ParList, const long NPar, const ParInterp_t IntScheme, real *Rho,
                          const int RhoSize, const double *EdgeL, const double dh3[], const bool PredictPos,
-                         const double TargetTime, const bool InitZero, const bool Periodic, const int PeriodicSize[3],
+                         const double TargetTime, const bool InitZero, const bool Periodic[], const int PeriodicSize[3],
                          const bool UnitDens, const bool CheckFarAway, const bool UseInputMassPos, real **InputMassPos );
 void Par_UpdateParticle( const int lv, const double TimeNew, const double TimeOld, const ParUpStep_t UpdateStep,
                          const bool StoreAcc, const bool UseStoredAcc );
@@ -567,7 +568,7 @@ void CPU_GrackleSolver_Original( grackle_field_data *Che_FieldData, code_units C
 #ifdef STAR_FORMATION
 void SF_CreateStar( const int lv, const real TimeNew, const real dt );
 void SF_FreeRNG();
-void SF_CreateStar_AGORA( const int lv, const real TimeNew, const real dt, struct drand48_data *drand_buf,
+void SF_CreateStar_AGORA( const int lv, const real TimeNew, const real dt, RandomNumber_t *RNG,
                           const real GasDensThres, const real Efficiency, const real MinStarMass, const real MaxStarMFrac,
                           const bool DetRandom, const bool UseMetal );
 #endif

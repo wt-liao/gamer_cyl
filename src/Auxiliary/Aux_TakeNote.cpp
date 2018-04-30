@@ -10,7 +10,7 @@
 
 //-------------------------------------------------------------------------------------------------------
 // Function    :  Aux_TakeNote
-// Description :  Record simulation parameters and the content in the file "Input__NoteScript" to the
+// Description :  Record simulation parameters and the content in the file "Input__Note" to the
 //                note file "Record__Note"
 //-------------------------------------------------------------------------------------------------------
 void Aux_TakeNote()
@@ -27,13 +27,13 @@ void Aux_TakeNote()
       if ( Aux_CheckFileExist(FileName) )
          Aux_Message( stderr, "WARNING : file \"%s\" already exists !!\n", FileName );
 
-//    copy the content in the file "Input__NoteScript"
+//    copy the content in the file "Input__Note"
       Note = fopen( FileName, "a" );
-      fprintf( Note, "\n\n\nSimulation Note\n" );
+      fprintf( Note, "\n\n\nSimulation Notes\n" );
       fprintf( Note, "***********************************************************************************\n" );
       fclose( Note );
 
-      system( "cat ./Input__NoteScript >> Record__Note" );
+      system( "cat ./Input__Note >> Record__Note" );
 
       Note = fopen( FileName, "a" );
       fprintf( Note, "***********************************************************************************\n" );
@@ -232,6 +232,12 @@ void Aux_TakeNote()
       fprintf( Note, "GAMER_DEBUG                     OFF\n" );
 #     endif
 
+#     ifdef BITWISE_REPRODUCIBILITY
+      fprintf( Note, "BITWISE_REPRODUCIBILITY         ON\n" );
+#     else
+      fprintf( Note, "BITWISE_REPRODUCIBILITY         OFF\n" );
+#     endif
+
 #     ifdef TIMING
       fprintf( Note, "TIMING                          ON\n" );
 #     else
@@ -242,12 +248,6 @@ void Aux_TakeNote()
       fprintf( Note, "TIMING_SOLVER                   ON\n" );
 #     else
       fprintf( Note, "TIMING_SOLVER                   OFF\n" );
-#     endif
-
-#     ifdef INTEL
-      fprintf( Note, "Compiler                        Intel\n" );
-#     else
-      fprintf( Note, "Compiler                        GNU\n" );
 #     endif
 
 #     ifdef FLOAT8
@@ -293,6 +293,8 @@ void Aux_TakeNote()
       fprintf( Note, "GPU_ARCH                        MAXWELL\n" );
 #     elif ( GPU_ARCH == PASCAL )
       fprintf( Note, "GPU_ARCH                        PASCAL\n" );
+#     elif ( GPU_ARCH == VOLTA )
+      fprintf( Note, "GPU_ARCH                        VOLTA\n" );
 #     else
       fprintf( Note, "GPU_ARCH                        UNKNOWN\n" );
 #     endif
@@ -314,6 +316,14 @@ void Aux_TakeNote()
       fprintf( Note, "SUPPORT_GSL                     ON\n" );
 #     else
       fprintf( Note, "SUPPORT_GSL                     OFF\n" );
+#     endif
+
+#     if   ( RANDOM_NUMBER == RNG_GNU_EXT )
+      fprintf( Note, "RANDOM_NUMBER                   RNG_GNU_EXT\n" );
+#     elif ( RANDOM_NUMBER == RNG_CPP11 )
+      fprintf( Note, "RANDOM_NUMBER                   RNG_CPP11\n" );
+#     else
+      fprintf( Note, "RANDOM_NUMBER                   UNKNOWN\n" );
 #     endif
 
       fprintf( Note, "***********************************************************************************\n" );
@@ -712,6 +722,7 @@ void Aux_TakeNote()
       fprintf( Note, "OPT__FLAG_NPAR_CELL             %d\n",      OPT__FLAG_NPAR_CELL       );
       fprintf( Note, "OPT__FLAG_PAR_MASS_CELL         %d\n",      OPT__FLAG_PAR_MASS_CELL   );
 #     endif
+      fprintf( Note, "OPT__NO_FLAG_NEAR_BOUNDARY      %d\n",      OPT__NO_FLAG_NEAR_BOUNDARY);
       fprintf( Note, "OPT__PATCH_COUNT                %d\n",      OPT__PATCH_COUNT          );
 #     ifdef PARTICLE
       fprintf( Note, "OPT__PARTICLE_COUNT             %d\n",      OPT__PARTICLE_COUNT       );
@@ -936,14 +947,13 @@ void Aux_TakeNote()
       fprintf( Note, "***********************************************************************************\n" );
       fprintf( Note, "OPT__INIT                       %d\n",      OPT__INIT               );
       fprintf( Note, "RESTART_LOAD_NRANK              %d\n",      RESTART_LOAD_NRANK      );
-      fprintf( Note, "OPT__RESTART_HEADER             %d\n",      OPT__RESTART_HEADER     );
       fprintf( Note, "OPT__RESTART_RESET              %d\n",      OPT__RESTART_RESET      );
-      fprintf( Note, "OPT__UM_START_LEVEL             %d\n",      OPT__UM_START_LEVEL     );
-      fprintf( Note, "OPT__UM_START_NVAR              %d\n",      OPT__UM_START_NVAR      );
-      fprintf( Note, "OPT__UM_START_DOWNGRADE         %d\n",      OPT__UM_START_DOWNGRADE );
-      fprintf( Note, "OPT__UM_START_REFINE            %d\n",      OPT__UM_START_REFINE    );
-      fprintf( Note, "OPT__UM_FACTOR_5OVER3           %d\n",      OPT__UM_FACTOR_5OVER3   );
+      fprintf( Note, "OPT__UM_IC_LEVEL                %d\n",      OPT__UM_IC_LEVEL        );
+      fprintf( Note, "OPT__UM_IC_NVAR                 %d\n",      OPT__UM_IC_NVAR         );
+      fprintf( Note, "OPT__UM_IC_DOWNGRADE            %d\n",      OPT__UM_IC_DOWNGRADE    );
+      fprintf( Note, "OPT__UM_IC_REFINE               %d\n",      OPT__UM_IC_REFINE       );
       fprintf( Note, "OPT__INIT_RESTRICT              %d\n",      OPT__INIT_RESTRICT      );
+      fprintf( Note, "OPT__INIT_GRID_WITH_OMP         %d\n",      OPT__INIT_GRID_WITH_OMP );
       fprintf( Note, "OPT__GPUID_SELECT               %d\n",      OPT__GPUID_SELECT       );
       fprintf( Note, "INIT_SUBSAMPLING_NCELL          %d\n",      INIT_SUBSAMPLING_NCELL  );
       fprintf( Note, "***********************************************************************************\n" );
@@ -1261,13 +1271,13 @@ void Aux_TakeNote()
       if ( MPI_Rank == YourTurn )
       {
          Note = fopen( FileName, "a" );
+         if ( MPI_Rank != 0 )    fprintf( Note, "\n" );
          fprintf( Note, "MPI_Rank = %3d, hostname = %10s, PID = %5d\n", MPI_Rank, Host, PID );
          fprintf( Note, "CPU Info :\n" );
          fflush( Note );
 
          Aux_GetCPUInfo( FileName );
 
-         fprintf( Note, "\n" );
          fclose( Note );
       }
 
@@ -1278,6 +1288,7 @@ void Aux_TakeNote()
    {
       Note = fopen( FileName, "a" );
       fprintf( Note, "***********************************************************************************\n" );
+      fprintf( Note, "\n\n");
       fclose( Note );
    }
 #  endif // #ifndef GPU
@@ -1308,7 +1319,7 @@ void Aux_TakeNote()
       fprintf( Note, "OMP__NESTED                     %s\n",      ( omp_nested ) ? "ON" : "OFF" );
       fprintf( Note, "\n" );
       fprintf( Note, "CPU core IDs of all OpenMP threads (tid == thread ID):\n" );
-      fprintf( Note, "----------------------------------------------------------------------------------------------------------\n" );
+      fprintf( Note, "------------------------------------------------------------------------\n" );
       fprintf( Note, "%5s  %10s  %7s", "Rank", "Host", "NThread" );
       for (int t=0; t<omp_nthread; t++)
       fprintf( Note, "  tid-%02d", t );
@@ -1345,7 +1356,6 @@ void Aux_TakeNote()
    if ( MPI_Rank == 0 )
    {
       Note = fopen( FileName, "a" );
-      fprintf( Note, "----------------------------------------------------------------------------------------------------------\n" );
       fprintf( Note, "***********************************************************************************\n" );
       fprintf( Note, "\n\n");
       fclose( Note );

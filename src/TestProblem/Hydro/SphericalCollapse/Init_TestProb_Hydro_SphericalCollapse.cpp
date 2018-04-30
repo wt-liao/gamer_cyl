@@ -64,11 +64,17 @@ void Validate()
 #     endif
 
 #     ifndef DUAL_ENERGY
-      Aux_Message( stderr, "WARNING : it's recommended to enable DUAL_ENERGY for this test\n" );
+         Aux_Message( stderr, "WARNING : it's recommended to enable DUAL_ENERGY for this test\n" );
 #     endif
 
-      if ( OPT__BC_FLU[0] != BC_FLU_PERIODIC )
-         Aux_Message( stderr, "WARNING : non-periodic BC ??\n" );
+      for (int f=0; f<6; f++)
+      if ( OPT__BC_FLU[f] != BC_FLU_PERIODIC )
+         Aux_Message( stderr, "WARNING : non-periodic BC for fluid ??\n" );
+
+#     ifdef GRAVITY
+      if ( OPT__BC_POT != BC_POT_PERIODIC )
+         Aux_Message( stderr, "WARNING : non-periodic BC for gravity ??\n" );
+#     endif
 
       if ( amr->BoxSize[0] != amr->BoxSize[1]  ||  amr->BoxSize[0] != amr->BoxSize[2] )
          Aux_Message( stderr, "WARNING : simulation domain is not cubic ??\n" );
@@ -107,9 +113,9 @@ void SetParameter()
    const char FileName[] = "Input__TestProb";
    ReadPara_t *ReadPara  = new ReadPara_t;
 
-// add parameters in the following format (some handy constants are defined in TestProb.h):
+// add parameters in the following format:
 // --> note that VARIABLE, DEFAULT, MIN, and MAX must have the same data type
-// --> some handy constants (e.g., NoMin_int, Eps_float, ...) are defined in "ReadPara.h"
+// --> some handy constants (e.g., NoMin_int, Eps_float, ...) are defined in "include/ReadPara.h"
 // ********************************************************************************************************************************
 // ReadPara->Add( "KEY_IN_THE_FILE",   &VARIABLE,              DEFAULT,       MIN,              MAX               );
 // ********************************************************************************************************************************

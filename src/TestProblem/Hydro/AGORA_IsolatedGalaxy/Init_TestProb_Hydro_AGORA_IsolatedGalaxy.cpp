@@ -20,7 +20,7 @@ static double  AGORA_HaloGasTemp;               // halo gas temperature
        bool    AGORA_UseMetal = false;          // add and advect a metal density field
                                                 // --> to enable this option, one must
                                                 //     (1) set AGORA_(Disk/Halo)MetalMassFrac properly
-                                                //     (2) set NCOMP_PASSIVE_MAKEFILE>=1 and PAR_NPASSIVE_MAKEFILE>=1 in the Makefile
+                                                //     (2) set NCOMP_PASSIVE_USER>=1 and PAR_NPASSIVE_USER>=1 in the Makefile
                                                 //     (3) define METAL and PAR_METAL_FRAC in Macro.h (hard coding, ugh!)
                                                 // --> necessary if one wants to enable metal_cooling in Grackle
 static double  AGORA_DiskMetalMassFrac;         // disk metal mass fraction (disk_metal_mass / disk_gas_mass)
@@ -38,7 +38,12 @@ static int     AGORA_VcProf_NBin;               // number of radial bin in AGORA
 // problem-specific function prototypes
 double GaussianQuadratureIntegrate( const double dx, const double dy, const double dz, const double ds );
 bool Flag_AGORA( const int i, const int j, const int k, const int lv, const int PID, const double Threshold );
-void Par_Init_ByFunction_AGORA();
+#ifdef PARTICLE
+void Par_Init_ByFunction_AGORA( const long NPar_ThisRank, const long NPar_AllRank,
+                                real *ParMass, real *ParPosX, real *ParPosY, real *ParPosZ,
+                                real *ParVelX, real *ParVelY, real *ParVelZ, real *ParTime,
+                                real *ParPassive[PAR_NPASSIVE] );
+#endif
 
 
 
@@ -78,13 +83,17 @@ void Validate()
    if ( !OPT__UNIT )
       Aux_Error( ERROR_INFO, "OPT__UNIT must be enabled !!\n" );
 
+   for (int f=0; f<6; f++)
+   if ( OPT__BC_FLU[f] == BC_FLU_PERIODIC )
+      Aux_Error( ERROR_INFO, "do not use periodic BC (OPT__BC_FLU* = 1) for this test !!\n" );
+
 #  ifdef GRAVITY
-   if ( OPT__BC_FLU[0] == BC_FLU_PERIODIC  ||  OPT__BC_POT == BC_POT_PERIODIC )
-      Aux_Error( ERROR_INFO, "do not use periodic BC for this test !!\n" );
+   if ( OPT__BC_POT == BC_POT_PERIODIC )
+      Aux_Error( ERROR_INFO, "do not use periodic BC (OPT__BC_POT = 1) for this test !!\n" );
 #  endif
 
 #  ifdef PARTICLE
-   if ( OPT__INIT == INIT_STARTOVER  &&  amr->Par->Init != PAR_INIT_BY_FUNCTION )
+   if ( OPT__INIT == INIT_BY_FUNCTION  &&  amr->Par->Init != PAR_INIT_BY_FUNCTION )
       Aux_Error( ERROR_INFO, "please set PAR_INIT = 1 (by FUNCTION) !!\n" );
 #  endif
 
@@ -100,8 +109,8 @@ void Validate()
 
    if ( MPI_Rank == 0 )
    {
-#     if ( FLU_SCHEME != MHM  &&  FLU_SCHEME != CTU )
-         Aux_Message( stderr, "WARNING : it's recommended to adopt either MHM or CTU schemes for this test !!\n" );
+#     if ( FLU_SCHEME != MHM )
+         Aux_Message( stderr, "WARNING : it's recommended to adopt the MHM scheme for this test !!\n" );
 #     endif
 
 #     ifndef DUAL_ENERGY
@@ -163,9 +172,9 @@ void SetParameter()
    const char FileName[] = "Input__TestProb";
    ReadPara_t *ReadPara  = new ReadPara_t;
 
-// add parameters in the following format (some handy constants are defined in TestProb.h):
+// add parameters in the following format:
 // --> note that VARIABLE, DEFAULT, MIN, and MAX must have the same data type
-// --> some handy constants (e.g., NoMin_int, Eps_float, ...) are defined in "ReadPara.h"
+// --> some handy constants (e.g., NoMin_int, Eps_float, ...) are defined in "include/ReadPara.h"
 // ********************************************************************************************************************************
 // ReadPara->Add( "KEY_IN_THE_FILE",         &VARIABLE,                 DEFAULT,       MIN,              MAX               );
 // ********************************************************************************************************************************
@@ -192,7 +201,7 @@ void SetParameter()
    if ( AGORA_UseMetal )
    {
 #     if (  ( defined DUAL_ENERGY && NCOMP_PASSIVE < 2 )  ||  ( !defined DUAL_ENERGY && NCOMP_PASSIVE < 1 )  )
-         Aux_Error( ERROR_INFO, "please set NCOMP_PASSIVE_MAKEFILE >= 1 in the Makefile for \"AGORA_UseMetal\" !!\n" );
+         Aux_Error( ERROR_INFO, "please set NCOMP_PASSIVE_USER >= 1 in the Makefile for \"AGORA_UseMetal\" !!\n" );
 #     endif
 
 #     ifndef METAL
@@ -200,7 +209,7 @@ void SetParameter()
 #     endif
 
 #     if (  ( defined STAR_FORMATION && PAR_NPASSIVE < 2 )  ||  ( !defined STAR_FORMATION && PAR_NPASSIVE < 1 )  )
-         Aux_Error( ERROR_INFO, "please set PAR_NPASSIVE_MAKEFILE >= 1 in the Makefile for \"AGORA_UseMetal\" !!\n" );
+         Aux_Error( ERROR_INFO, "please set PAR_NPASSIVE_USER >= 1 in the Makefile for \"AGORA_UseMetal\" !!\n" );
 #     endif
 
 #     ifndef PAR_METAL_FRAC
@@ -225,7 +234,7 @@ void SetParameter()
    AGORA_HaloGasTemp     *= Const_kB   / UNIT_E;
 
 // load the circular velocity radial profile
-   if ( OPT__INIT != INIT_RESTART )
+   if ( OPT__INIT != INIT_BY_RESTART )
    {
       const bool RowMajor_No = false;     // load data into the column-major order
       const bool AllocMem_Yes = true;     // allocate memory for AGORA_VcProf

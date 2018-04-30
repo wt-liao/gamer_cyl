@@ -1,4 +1,4 @@
-#include "GAMER.h"
+#include "CUAPI.h"
 #include "CUPOT.h"
 
 #if ( defined GPU  &&  defined GRAVITY )
@@ -54,6 +54,8 @@ __global__ void CUPOT_ELBDMGravitySolver(       real g_Flu_Array[][GRA_NIN][ PS1
 #else
 #error : ERROR : unsupported MODEL !!
 #endif // MODEL
+
+template <typename T> bool  Mis_CompareRealValue( const T Input1, const T Input2, const char *comment, const bool Verbose );
 
 
 // declare all device pointers

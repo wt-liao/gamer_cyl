@@ -61,15 +61,15 @@ Procedure for outputting new variables:
 1. Add the new variable into one of the data structures (XXX) defined in "HDF5_Typedef.h"
 2. Edit "GetCompound_XXX" to insert the new variables into the compound datatype
 3. Edit "FillIn_XXX" to fill in the new variables
-4. Edit "Check_XXX" in "Init_Restart_HDF5.cpp" to load and compare the new variables
-5. Modify FormatVersion and CodeVersion
+4. Edit "Check_XXX" in "Init_ByRestart_HDF5.cpp" to load and compare the new variables
+5. Update FormatVersion
 ======================================================================================================*/
 
 
 
 
 //-------------------------------------------------------------------------------------------------------
-// Function    :  Output_DumpData_Total_HDF5 (FormatVersion = 2301)
+// Function    :  Output_DumpData_Total_HDF5 (FormatVersion = 2300)
 // Description :  Output all simulation data in the HDF5 format, which can be used as a restart file
 //                or loaded by YT
 //
@@ -145,9 +145,13 @@ Procedure for outputting new variables:
 //                2256 : 2017/09/10 --> output FLAG_BUFFER_SIZE_MAXM2_LV
 //                2257 : 2017/09/17 --> output OPT__OPTIMIZE_AGGRESSIVE
 //                2258 : 2017/09/21 --> output OPT__MINIMIZE_MPI_BARRIER
-//                2259 : 2017/09/23 --> output COORDINATE
-//                2300 : 2017/09/26 --> output BoxEdgeL/R[3] instead of BoxSize, dh[3] instead of dh
-//                2301 : 2017/11.01 --> output DT_GPU_NPGROUP
+//                2259 : 2017/10/10 --> output OPT__INIT_GRID_WITH_OMP
+//                2261 : 2017/12/05 --> no longer define INTEL
+//                2262 : 2017/12/27 --> rename all UM variables
+//                2263 : 2017/12/27 --> remove OPT__RESTART_HEADER
+//                2264 : 2018/02/28 --> add RANDOM_NUMBER
+//                2265 : 2018/04/02 --> add OPT__NO_FLAG_NEAR_BOUNDARY
+//                2300 : 2018/04/30 --> add COORDINATE and DT_GPU_NPGROUP, replace BoxSize by BoxEdgeL/R[3] and dh by dh[3]
 //-------------------------------------------------------------------------------------------------------
 void Output_DumpData_Total_HDF5( const char *FileName )
 {
@@ -1256,7 +1260,7 @@ void FillIn_KeyInfo( KeyInfo_t &KeyInfo )
 
    const time_t CalTime  = time( NULL );   // calendar time
 
-   KeyInfo.FormatVersion = 2301;
+   KeyInfo.FormatVersion = 2300;
    KeyInfo.Model         = MODEL;
    KeyInfo.Coordinate    = COORDINATE;
    KeyInfo.NLevel        = NLEVEL;
@@ -1290,7 +1294,8 @@ void FillIn_KeyInfo( KeyInfo_t &KeyInfo )
    {
       KeyInfo.NX0     [d] = NX0_TOT      [d];
       KeyInfo.BoxScale[d] = amr->BoxScale[d];
-      KeyInfo.BoxSize [d] = amr->BoxSize [d];
+      KeyInfo.BoxEdgeL[d] = amr->BoxEdgeL[d];
+      KeyInfo.BoxEdgeR[d] = amr->BoxEdgeR[d];
    }
 
    for (int lv=0; lv<NLEVEL; lv++)
@@ -1326,150 +1331,152 @@ void FillIn_Makefile( Makefile_t &Makefile )
 {
 
 // model-independent options
-   Makefile.Model              = MODEL;
-   Makefile.Coordinate         = COORDINATE;
+   Makefile.Model                  = MODEL;
+   Makefile.Coordinate             = COORDINATE;
 
 #  ifdef GRAVITY
-   Makefile.Gravity            = 1;
+   Makefile.Gravity                = 1;
 #  else
-   Makefile.Gravity            = 0;
+   Makefile.Gravity                = 0;
 #  endif
 
 #  ifdef COMOVING
-   Makefile.Comoving           = 1;
+   Makefile.Comoving               = 1;
 #  else
-   Makefile.Comoving           = 0;
+   Makefile.Comoving               = 0;
 #  endif
 
 #  ifdef PARTICLE
-   Makefile.Particle           = 1;
+   Makefile.Particle               = 1;
 #  else
-   Makefile.Particle           = 0;
+   Makefile.Particle               = 0;
 #  endif
 
 
 #  ifdef GPU
-   Makefile.UseGPU             = 1;
+   Makefile.UseGPU                 = 1;
 #  else
-   Makefile.UseGPU             = 0;
+   Makefile.UseGPU                 = 0;
 #  endif
 
 #  ifdef GAMER_DEBUG
-   Makefile.GAMER_Debug        = 1;
+   Makefile.GAMER_Debug            = 1;
 #  else
-   Makefile.GAMER_Debug        = 0;
+   Makefile.GAMER_Debug            = 0;
+#  endif
+
+#  ifdef BITWISE_REPRODUCIBILITY
+   Makefile.BitwiseReproducibility = 1;
+#  else
+   Makefile.BitwiseReproducibility = 0;
 #  endif
 
 #  ifdef TIMING
-   Makefile.Timing             = 1;
+   Makefile.Timing                 = 1;
 #  else
-   Makefile.Timing             = 0;
+   Makefile.Timing                 = 0;
 #  endif
 
 #  ifdef TIMING_SOLVER
-   Makefile.TimingSolver       = 1;
+   Makefile.TimingSolver           = 1;
 #  else
-   Makefile.TimingSolver       = 0;
-#  endif
-
-#  ifdef INTEL
-   Makefile.Intel              = 1;
-#  else
-   Makefile.Intel              = 0;
+   Makefile.TimingSolver           = 0;
 #  endif
 
 #  ifdef FLOAT8
-   Makefile.Float8             = 1;
+   Makefile.Float8                 = 1;
 #  else
-   Makefile.Float8             = 0;
+   Makefile.Float8                 = 0;
 #  endif
 
 #  ifdef SERIAL
-   Makefile.Serial             = 1;
+   Makefile.Serial                 = 1;
 #  else
-   Makefile.Serial             = 0;
+   Makefile.Serial                 = 0;
 #  endif
 
 #  ifdef LOAD_BALANCE
-   Makefile.LoadBalance        = LOAD_BALANCE;
+   Makefile.LoadBalance            = LOAD_BALANCE;
 #  else
-   Makefile.LoadBalance        = 0;
+   Makefile.LoadBalance            = 0;
 #  endif
 
 #  ifdef OVERLAP_MPI
-   Makefile.OverlapMPI         = 1;
+   Makefile.OverlapMPI             = 1;
 #  else
-   Makefile.OverlapMPI         = 0;
+   Makefile.OverlapMPI             = 0;
 #  endif
 
 #  ifdef OPENMP
-   Makefile.OpenMP             = 1;
+   Makefile.OpenMP                 = 1;
 #  else
-   Makefile.OpenMP             = 0;
+   Makefile.OpenMP                 = 0;
 #  endif
 
 #  ifdef GPU
-   Makefile.GPU_Arch           = GPU_ARCH;
+   Makefile.GPU_Arch               = GPU_ARCH;
 #  else
-   Makefile.GPU_Arch           = NULL_INT;
+   Makefile.GPU_Arch               = NULL_INT;
 #  endif
 
 #  ifdef LAOHU
-   Makefile.Laohu              = 1;
+   Makefile.Laohu                  = 1;
 #  else
-   Makefile.Laohu              = 0;
+   Makefile.Laohu                  = 0;
 #  endif
 
 #  ifdef SUPPORT_HDF5
-   Makefile.SupportHDF5        = 1;
+   Makefile.SupportHDF5            = 1;
 #  else
-   Makefile.SupportHDF5        = 0;
+   Makefile.SupportHDF5            = 0;
 #  endif
 
 #  ifdef SUPPORT_GSL
-   Makefile.SupportGSL         = 1;
+   Makefile.SupportGSL             = 1;
 #  else
-   Makefile.SupportGSL         = 0;
+   Makefile.SupportGSL             = 0;
 #  endif
 
 #  ifdef SUPPORT_GRACKLE
-   Makefile.SupportGrackle     = 1;
+   Makefile.SupportGrackle         = 1;
 #  else
-   Makefile.SupportGrackle     = 0;
+   Makefile.SupportGrackle         = 0;
 #  endif
 
-   Makefile.NLevel             = NLEVEL;
-   Makefile.MaxPatch           = MAX_PATCH;
+   Makefile.RandomNumber           = RANDOM_NUMBER;
+
+   Makefile.NLevel                 = NLEVEL;
+   Makefile.MaxPatch               = MAX_PATCH;
 
 
 // model-dependent options
 #  ifdef GRAVITY
-   Makefile.PotScheme          = POT_SCHEME;
+   Makefile.PotScheme              = POT_SCHEME;
 #  ifdef STORE_POT_GHOST
-   Makefile.StorePotGhost      = 1;
+   Makefile.StorePotGhost          = 1;
 #  else
-   Makefile.StorePotGhost      = 0;
+   Makefile.StorePotGhost          = 0;
 #  endif
 #  ifdef UNSPLIT_GRAVITY
-   Makefile.UnsplitGravity     = 1;
+   Makefile.UnsplitGravity         = 1;
 #  else
-   Makefile.UnsplitGravity     = 0;
+   Makefile.UnsplitGravity         = 0;
 #  endif
 #  endif
 
 #  if   ( MODEL == HYDRO )
-   Makefile.FluScheme          = FLU_SCHEME;
+   Makefile.FluScheme              = FLU_SCHEME;
 #  ifdef LR_SCHEME
-   Makefile.LRScheme           = LR_SCHEME;
+   Makefile.LRScheme               = LR_SCHEME;
 #  endif
 #  ifdef RSOLVER
-   Makefile.RSolver            = RSOLVER;
+   Makefile.RSolver                = RSOLVER;
 #  endif
 
 #  ifdef DUAL_ENERGY
-   Makefile.DualEnergy         = DUAL_ENERGY;
+   Makefile.DualEnergy             = DUAL_ENERGY;
 #  else
-   Makefile.DualEnergy         = 0;
+   Makefile.DualEnergy             = 0;
 #  endif
 
 #  elif ( MODEL == MHD )
@@ -1477,21 +1484,21 @@ void FillIn_Makefile( Makefile_t &Makefile )
 
 #  elif ( MODEL == ELBDM )
 #  ifdef CONSERVE_MASS
-   Makefile.ConserveMass       = 1;
+   Makefile.ConserveMass           = 1;
 #  else
-   Makefile.ConserveMass       = 0;
+   Makefile.ConserveMass           = 0;
 #  endif
 
 #  ifdef LAPLACIAN_4TH
-   Makefile.Laplacian4th       = 1;
+   Makefile.Laplacian4th           = 1;
 #  else
-   Makefile.Laplacian4th       = 0;
+   Makefile.Laplacian4th           = 0;
 #  endif
 
 #  ifdef QUARTIC_SELF_INTERACTION
-   Makefile.SelfInteraction4   = 1;
+   Makefile.SelfInteraction4       = 1;
 #  else
-   Makefile.SelfInteraction4   = 0;
+   Makefile.SelfInteraction4       = 0;
 #  endif
 
 #  else
@@ -1500,18 +1507,18 @@ void FillIn_Makefile( Makefile_t &Makefile )
 
 #  ifdef PARTICLE
 #  ifdef STORE_PAR_ACC
-   Makefile.StoreParAcc        = 1;
+   Makefile.StoreParAcc            = 1;
 #  else
-   Makefile.StoreParAcc        = 0;
+   Makefile.StoreParAcc            = 0;
 #  endif
 
 #  ifdef STAR_FORMATION
-   Makefile.StarFormation      = 1;
+   Makefile.StarFormation          = 1;
 #  else
-   Makefile.StarFormation      = 0;
+   Makefile.StarFormation          = 0;
 #  endif
 
-   Makefile.Par_NPassive       = PAR_NPASSIVE;
+   Makefile.Par_NPassive           = PAR_NPASSIVE;
 #  endif
 
 } // FUNCTION : FillIn_Makefile
@@ -1828,6 +1835,7 @@ void FillIn_InputPara( InputPara_t &InputPara )
    InputPara.Opt__Flag_NParCell      = OPT__FLAG_NPAR_CELL;
    InputPara.Opt__Flag_ParMassCell   = OPT__FLAG_PAR_MASS_CELL;
 #  endif
+   InputPara.Opt__NoFlagNearBoundary = OPT__NO_FLAG_NEAR_BOUNDARY;
    InputPara.Opt__PatchCount         = OPT__PATCH_COUNT;
 #  ifdef PARTICLE
    InputPara.Opt__ParticleCount      = OPT__PARTICLE_COUNT;
@@ -1948,14 +1956,13 @@ void FillIn_InputPara( InputPara_t &InputPara )
 // initialization
    InputPara.Opt__Init               = OPT__INIT;
    InputPara.RestartLoadNRank        = RESTART_LOAD_NRANK;
-   InputPara.Opt__RestartHeader      = OPT__RESTART_HEADER;
    InputPara.Opt__RestartReset       = OPT__RESTART_RESET;
-   InputPara.Opt__UM_Start_Level     = OPT__UM_START_LEVEL;
-   InputPara.Opt__UM_Start_NVar      = OPT__UM_START_NVAR;
-   InputPara.Opt__UM_Start_Downgrade = OPT__UM_START_DOWNGRADE;
-   InputPara.Opt__UM_Start_Refine    = OPT__UM_START_REFINE;
-   InputPara.Opt__UM_Factor_5over3   = OPT__UM_FACTOR_5OVER3;
+   InputPara.Opt__UM_IC_Level        = OPT__UM_IC_LEVEL;
+   InputPara.Opt__UM_IC_NVar         = OPT__UM_IC_NVAR;
+   InputPara.Opt__UM_IC_Downgrade    = OPT__UM_IC_DOWNGRADE;
+   InputPara.Opt__UM_IC_Refine       = OPT__UM_IC_REFINE;
    InputPara.Opt__InitRestrict       = OPT__INIT_RESTRICT;
+   InputPara.Opt__InitGridWithOMP    = OPT__INIT_GRID_WITH_OMP;
    InputPara.Opt__GPUID_Select       = OPT__GPUID_SELECT;
    InputPara.Init_Subsampling_NCell  = INIT_SUBSAMPLING_NCELL;
 
@@ -2124,7 +2131,8 @@ void GetCompound_KeyInfo( hid_t &H5_TypeID )
    H5Tinsert( H5_TypeID, "Par_NPassive",       HOFFSET(KeyInfo_t,Par_NPassive),       H5T_NATIVE_INT           );
 #  endif
 
-   H5Tinsert( H5_TypeID, "BoxSize",            HOFFSET(KeyInfo_t,BoxSize        ),    H5_TypeID_Arr_3Double    );
+   H5Tinsert( H5_TypeID, "BoxEdgeL",           HOFFSET(KeyInfo_t,BoxEdgeL       ),    H5_TypeID_Arr_3Double    );
+   H5Tinsert( H5_TypeID, "BoxEdgeR",           HOFFSET(KeyInfo_t,BoxEdgeR       ),    H5_TypeID_Arr_3Double    );
    H5Tinsert( H5_TypeID, "Time",               HOFFSET(KeyInfo_t,Time           ),    H5_TypeID_Arr_NLvDouble  );
    H5Tinsert( H5_TypeID, "CellWidth",          HOFFSET(KeyInfo_t,CellWidth      ),    H5_TypeID_Arr_NLv3Double );
    H5Tinsert( H5_TypeID, "dTime_AllLv",        HOFFSET(KeyInfo_t,dTime_AllLv    ),    H5_TypeID_Arr_NLvDouble  );
@@ -2163,63 +2171,64 @@ void GetCompound_Makefile( hid_t &H5_TypeID )
 
    H5_TypeID = H5Tcreate( H5T_COMPOUND, sizeof(Makefile_t) );
 
-   H5Tinsert( H5_TypeID, "Model",              HOFFSET(Makefile_t,Model             ), H5T_NATIVE_INT );
-   H5Tinsert( H5_TypeID, "Coordinate",         HOFFSET(Makefile_t,Coordinate        ), H5T_NATIVE_INT );
-   H5Tinsert( H5_TypeID, "Gravity",            HOFFSET(Makefile_t,Gravity           ), H5T_NATIVE_INT );
-   H5Tinsert( H5_TypeID, "Comoving",           HOFFSET(Makefile_t,Comoving          ), H5T_NATIVE_INT );
-   H5Tinsert( H5_TypeID, "Particle",           HOFFSET(Makefile_t,Particle          ), H5T_NATIVE_INT );
+   H5Tinsert( H5_TypeID, "Model",                  HOFFSET(Makefile_t,Model                  ), H5T_NATIVE_INT );
+   H5Tinsert( H5_TypeID, "Coordinate",             HOFFSET(Makefile_t,Coordinate             ), H5T_NATIVE_INT );
+   H5Tinsert( H5_TypeID, "Gravity",                HOFFSET(Makefile_t,Gravity                ), H5T_NATIVE_INT );
+   H5Tinsert( H5_TypeID, "Comoving",               HOFFSET(Makefile_t,Comoving               ), H5T_NATIVE_INT );
+   H5Tinsert( H5_TypeID, "Particle",               HOFFSET(Makefile_t,Particle               ), H5T_NATIVE_INT );
 
-   H5Tinsert( H5_TypeID, "UseGPU",             HOFFSET(Makefile_t,UseGPU            ), H5T_NATIVE_INT );
-   H5Tinsert( H5_TypeID, "GAMER_Debug",        HOFFSET(Makefile_t,GAMER_Debug       ), H5T_NATIVE_INT );
-   H5Tinsert( H5_TypeID, "Timing",             HOFFSET(Makefile_t,Timing            ), H5T_NATIVE_INT );
-   H5Tinsert( H5_TypeID, "TimingSolver",       HOFFSET(Makefile_t,TimingSolver      ), H5T_NATIVE_INT );
-   H5Tinsert( H5_TypeID, "Intel",              HOFFSET(Makefile_t,Intel             ), H5T_NATIVE_INT );
-   H5Tinsert( H5_TypeID, "Float8",             HOFFSET(Makefile_t,Float8            ), H5T_NATIVE_INT );
-   H5Tinsert( H5_TypeID, "Serial",             HOFFSET(Makefile_t,Serial            ), H5T_NATIVE_INT );
-   H5Tinsert( H5_TypeID, "LoadBalance",        HOFFSET(Makefile_t,LoadBalance       ), H5T_NATIVE_INT );
-   H5Tinsert( H5_TypeID, "OverlapMPI",         HOFFSET(Makefile_t,OverlapMPI        ), H5T_NATIVE_INT );
-   H5Tinsert( H5_TypeID, "OpenMP",             HOFFSET(Makefile_t,OpenMP            ), H5T_NATIVE_INT );
-   H5Tinsert( H5_TypeID, "GPU_Arch",           HOFFSET(Makefile_t,GPU_Arch          ), H5T_NATIVE_INT );
-   H5Tinsert( H5_TypeID, "Laohu",              HOFFSET(Makefile_t,Laohu             ), H5T_NATIVE_INT );
-   H5Tinsert( H5_TypeID, "SupportHDF5",        HOFFSET(Makefile_t,SupportHDF5       ), H5T_NATIVE_INT );
-   H5Tinsert( H5_TypeID, "SupportGSL",         HOFFSET(Makefile_t,SupportGSL        ), H5T_NATIVE_INT );
-   H5Tinsert( H5_TypeID, "SupportGrackle",     HOFFSET(Makefile_t,SupportGrackle    ), H5T_NATIVE_INT );
+   H5Tinsert( H5_TypeID, "UseGPU",                 HOFFSET(Makefile_t,UseGPU                 ), H5T_NATIVE_INT );
+   H5Tinsert( H5_TypeID, "GAMER_Debug",            HOFFSET(Makefile_t,GAMER_Debug            ), H5T_NATIVE_INT );
+   H5Tinsert( H5_TypeID, "BitwiseReproducibility", HOFFSET(Makefile_t,BitwiseReproducibility ), H5T_NATIVE_INT );
+   H5Tinsert( H5_TypeID, "Timing",                 HOFFSET(Makefile_t,Timing                 ), H5T_NATIVE_INT );
+   H5Tinsert( H5_TypeID, "TimingSolver",           HOFFSET(Makefile_t,TimingSolver           ), H5T_NATIVE_INT );
+   H5Tinsert( H5_TypeID, "Float8",                 HOFFSET(Makefile_t,Float8                 ), H5T_NATIVE_INT );
+   H5Tinsert( H5_TypeID, "Serial",                 HOFFSET(Makefile_t,Serial                 ), H5T_NATIVE_INT );
+   H5Tinsert( H5_TypeID, "LoadBalance",            HOFFSET(Makefile_t,LoadBalance            ), H5T_NATIVE_INT );
+   H5Tinsert( H5_TypeID, "OverlapMPI",             HOFFSET(Makefile_t,OverlapMPI             ), H5T_NATIVE_INT );
+   H5Tinsert( H5_TypeID, "OpenMP",                 HOFFSET(Makefile_t,OpenMP                 ), H5T_NATIVE_INT );
+   H5Tinsert( H5_TypeID, "GPU_Arch",               HOFFSET(Makefile_t,GPU_Arch               ), H5T_NATIVE_INT );
+   H5Tinsert( H5_TypeID, "Laohu",                  HOFFSET(Makefile_t,Laohu                  ), H5T_NATIVE_INT );
+   H5Tinsert( H5_TypeID, "SupportHDF5",            HOFFSET(Makefile_t,SupportHDF5            ), H5T_NATIVE_INT );
+   H5Tinsert( H5_TypeID, "SupportGSL",             HOFFSET(Makefile_t,SupportGSL             ), H5T_NATIVE_INT );
+   H5Tinsert( H5_TypeID, "SupportGrackle",         HOFFSET(Makefile_t,SupportGrackle         ), H5T_NATIVE_INT );
+   H5Tinsert( H5_TypeID, "RandomNumber",           HOFFSET(Makefile_t,RandomNumber           ), H5T_NATIVE_INT );
 
-   H5Tinsert( H5_TypeID, "NLevel",             HOFFSET(Makefile_t,NLevel            ), H5T_NATIVE_INT );
-   H5Tinsert( H5_TypeID, "MaxPatch",           HOFFSET(Makefile_t,MaxPatch          ), H5T_NATIVE_INT );
+   H5Tinsert( H5_TypeID, "NLevel",                 HOFFSET(Makefile_t,NLevel                 ), H5T_NATIVE_INT );
+   H5Tinsert( H5_TypeID, "MaxPatch",               HOFFSET(Makefile_t,MaxPatch               ), H5T_NATIVE_INT );
 
 #  ifdef GRAVITY
-   H5Tinsert( H5_TypeID, "PotScheme",          HOFFSET(Makefile_t,PotScheme         ), H5T_NATIVE_INT );
-   H5Tinsert( H5_TypeID, "StorePotGhost",      HOFFSET(Makefile_t,StorePotGhost     ), H5T_NATIVE_INT );
-   H5Tinsert( H5_TypeID, "UnsplitGravity",     HOFFSET(Makefile_t,UnsplitGravity    ), H5T_NATIVE_INT );
+   H5Tinsert( H5_TypeID, "PotScheme",              HOFFSET(Makefile_t,PotScheme              ), H5T_NATIVE_INT );
+   H5Tinsert( H5_TypeID, "StorePotGhost",          HOFFSET(Makefile_t,StorePotGhost          ), H5T_NATIVE_INT );
+   H5Tinsert( H5_TypeID, "UnsplitGravity",         HOFFSET(Makefile_t,UnsplitGravity         ), H5T_NATIVE_INT );
 #  endif
 
 #  if   ( MODEL == HYDRO )
-   H5Tinsert( H5_TypeID, "FluScheme",          HOFFSET(Makefile_t,FluScheme         ), H5T_NATIVE_INT );
+   H5Tinsert( H5_TypeID, "FluScheme",              HOFFSET(Makefile_t,FluScheme              ), H5T_NATIVE_INT );
 #  ifdef LR_SCHEME
-   H5Tinsert( H5_TypeID, "LRScheme",           HOFFSET(Makefile_t,LRScheme          ), H5T_NATIVE_INT );
+   H5Tinsert( H5_TypeID, "LRScheme",               HOFFSET(Makefile_t,LRScheme               ), H5T_NATIVE_INT );
 #  endif
 #  ifdef RSOLVER
-   H5Tinsert( H5_TypeID, "RSolver",            HOFFSET(Makefile_t,RSolver           ), H5T_NATIVE_INT );
+   H5Tinsert( H5_TypeID, "RSolver",                HOFFSET(Makefile_t,RSolver                ), H5T_NATIVE_INT );
 #  endif
-   H5Tinsert( H5_TypeID, "DualEnergy",         HOFFSET(Makefile_t,DualEnergy        ), H5T_NATIVE_INT );
+   H5Tinsert( H5_TypeID, "DualEnergy",             HOFFSET(Makefile_t,DualEnergy             ), H5T_NATIVE_INT );
 
 #  elif ( MODEL == MHD )
 #  warning : WAIT MHD !!!
 
 #  elif ( MODEL == ELBDM )
-   H5Tinsert( H5_TypeID, "ConserveMass",       HOFFSET(Makefile_t,ConserveMass      ), H5T_NATIVE_INT );
-   H5Tinsert( H5_TypeID, "Laplacian4th",       HOFFSET(Makefile_t,Laplacian4th      ), H5T_NATIVE_INT );
-   H5Tinsert( H5_TypeID, "SelfInteraction4",   HOFFSET(Makefile_t,SelfInteraction4  ), H5T_NATIVE_INT );
+   H5Tinsert( H5_TypeID, "ConserveMass",           HOFFSET(Makefile_t,ConserveMass           ), H5T_NATIVE_INT );
+   H5Tinsert( H5_TypeID, "Laplacian4th",           HOFFSET(Makefile_t,Laplacian4th           ), H5T_NATIVE_INT );
+   H5Tinsert( H5_TypeID, "SelfInteraction4",       HOFFSET(Makefile_t,SelfInteraction4       ), H5T_NATIVE_INT );
 
 #  else
 #  error : unsupported MODEL !!
 #  endif // MODEL
 
 #  ifdef PARTICLE
-   H5Tinsert( H5_TypeID, "StoreParAcc",        HOFFSET(Makefile_t,StoreParAcc       ), H5T_NATIVE_INT );
-   H5Tinsert( H5_TypeID, "StarFormation",      HOFFSET(Makefile_t,StarFormation     ), H5T_NATIVE_INT );
-   H5Tinsert( H5_TypeID, "Par_NPassive",       HOFFSET(Makefile_t,Par_NPassive      ), H5T_NATIVE_INT );
+   H5Tinsert( H5_TypeID, "StoreParAcc",            HOFFSET(Makefile_t,StoreParAcc            ), H5T_NATIVE_INT );
+   H5Tinsert( H5_TypeID, "StarFormation",          HOFFSET(Makefile_t,StarFormation          ), H5T_NATIVE_INT );
+   H5Tinsert( H5_TypeID, "Par_NPassive",           HOFFSET(Makefile_t,Par_NPassive           ), H5T_NATIVE_INT );
 #  endif
 
 } // FUNCTION : GetCompound_Makefile
@@ -2510,6 +2519,7 @@ void GetCompound_InputPara( hid_t &H5_TypeID )
    H5Tinsert( H5_TypeID, "Opt__Flag_NParCell",      HOFFSET(InputPara_t,Opt__Flag_NParCell     ), H5T_NATIVE_INT     );
    H5Tinsert( H5_TypeID, "Opt__Flag_ParMassCell",   HOFFSET(InputPara_t,Opt__Flag_ParMassCell  ), H5T_NATIVE_INT     );
 #  endif
+   H5Tinsert( H5_TypeID, "Opt__NoFlagNearBoundary", HOFFSET(InputPara_t,Opt__NoFlagNearBoundary), H5T_NATIVE_INT     );
    H5Tinsert( H5_TypeID, "Opt__PatchCount",         HOFFSET(InputPara_t,Opt__PatchCount        ), H5T_NATIVE_INT     );
 #  ifdef PARTICLE
    H5Tinsert( H5_TypeID, "Opt__ParticleCount",      HOFFSET(InputPara_t,Opt__ParticleCount     ), H5T_NATIVE_INT     );
@@ -2635,14 +2645,13 @@ void GetCompound_InputPara( hid_t &H5_TypeID )
 // initialization
    H5Tinsert( H5_TypeID, "Opt__Init",               HOFFSET(InputPara_t,Opt__Init              ), H5T_NATIVE_INT     );
    H5Tinsert( H5_TypeID, "RestartLoadNRank",        HOFFSET(InputPara_t,RestartLoadNRank       ), H5T_NATIVE_INT     );
-   H5Tinsert( H5_TypeID, "Opt__RestartHeader",      HOFFSET(InputPara_t,Opt__RestartHeader     ), H5T_NATIVE_INT     );
    H5Tinsert( H5_TypeID, "Opt__RestartReset",       HOFFSET(InputPara_t,Opt__RestartReset      ), H5T_NATIVE_INT     );
-   H5Tinsert( H5_TypeID, "Opt__UM_Start_Level",     HOFFSET(InputPara_t,Opt__UM_Start_Level    ), H5T_NATIVE_INT     );
-   H5Tinsert( H5_TypeID, "Opt__UM_Start_NVar",      HOFFSET(InputPara_t,Opt__UM_Start_NVar     ), H5T_NATIVE_INT     );
-   H5Tinsert( H5_TypeID, "Opt__UM_Start_Downgrade", HOFFSET(InputPara_t,Opt__UM_Start_Downgrade), H5T_NATIVE_INT     );
-   H5Tinsert( H5_TypeID, "Opt__UM_Start_Refine",    HOFFSET(InputPara_t,Opt__UM_Start_Refine   ), H5T_NATIVE_INT     );
-   H5Tinsert( H5_TypeID, "Opt__UM_Factor_5over3",   HOFFSET(InputPara_t,Opt__UM_Factor_5over3  ), H5T_NATIVE_INT     );
+   H5Tinsert( H5_TypeID, "Opt__UM_IC_Level",        HOFFSET(InputPara_t,Opt__UM_IC_Level       ), H5T_NATIVE_INT     );
+   H5Tinsert( H5_TypeID, "Opt__UM_IC_NVar",         HOFFSET(InputPara_t,Opt__UM_IC_NVar        ), H5T_NATIVE_INT     );
+   H5Tinsert( H5_TypeID, "Opt__UM_IC_Downgrade",    HOFFSET(InputPara_t,Opt__UM_IC_Downgrade   ), H5T_NATIVE_INT     );
+   H5Tinsert( H5_TypeID, "Opt__UM_IC_Refine",       HOFFSET(InputPara_t,Opt__UM_IC_Refine      ), H5T_NATIVE_INT     );
    H5Tinsert( H5_TypeID, "Opt__InitRestrict",       HOFFSET(InputPara_t,Opt__InitRestrict      ), H5T_NATIVE_INT     );
+   H5Tinsert( H5_TypeID, "Opt__InitGridWithOMP",    HOFFSET(InputPara_t,Opt__InitGridWithOMP   ), H5T_NATIVE_INT     );
    H5Tinsert( H5_TypeID, "Opt__GPUID_Select",       HOFFSET(InputPara_t,Opt__GPUID_Select      ), H5T_NATIVE_INT     );
    H5Tinsert( H5_TypeID, "Init_Subsampling_NCell",  HOFFSET(InputPara_t,Init_Subsampling_NCell ), H5T_NATIVE_INT     );
 

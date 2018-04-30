@@ -9,14 +9,14 @@
 /*======================================================================================================
 Procedure for outputting new variables:
 1. Add the new variables into one of the header sections
-2. Add the corresponding (i) fread (ii) CompareVar in "Init_Restart_v2/Load_Parameter_After_2000"
+2. Add the corresponding (i) fread (ii) CompareVar in "Init_ByRestart_v2/Load_Parameter_After_2000"
 ======================================================================================================*/
 
 
 
 
 //-------------------------------------------------------------------------------------------------------
-// Function    :  Output_DumpData_Total (FormatVersion = 2130)
+// Function    :  Output_DumpData_Total (FormatVersion = 2131)
 // Description :  Output all simulation data in the binary form, which can be used as a restart file
 //
 // Note        :  1. This output format is deprecated and is mainly used for debugging only
@@ -26,7 +26,8 @@ Procedure for outputting new variables:
 //
 // Revision    :  2110 : 2016/10/03 --> output HUBBLE0, OPT__UNIT, UNIT_L/M/T/V/D/E, MOLECULAR_WEIGHT
 //                2120 : 2017/02/14 --> output passive grid and particle variables
-//                2130 : 2018/08/09 --> output dTime_AllLv
+//                2130 : 2017/08/09 --> output dTime_AllLv
+//                2131 : 2017/12/05 --> no longer define INTEL
 //-------------------------------------------------------------------------------------------------------
 void Output_DumpData_Total( const char *FileName )
 {
@@ -166,7 +167,7 @@ void Output_DumpData_Total( const char *FileName )
 
 //    a. output the information of data format
 //    =================================================================================================
-      const long FormatVersion = 2130;
+      const long FormatVersion = 2131;
       const long CheckCode     = 123456789;
 
       fseek( File, HeaderOffset_Format, SEEK_SET );
@@ -264,11 +265,8 @@ void Output_DumpData_Total( const char *FileName )
       const bool timing_solver       = false;
 #     endif
 
-#     ifdef INTEL
-      const bool intel               = true;
-#     else
+//    compilation option "INTEL" has been removed
       const bool intel               = false;
-#     endif
 
 #     ifdef FLOAT8
       const bool float8              = true;
