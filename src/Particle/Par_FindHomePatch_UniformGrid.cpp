@@ -366,29 +366,31 @@ long ParPos2LBIdx( const int lv, const real ParPos[] )
 
 
 // calculate the home patch corner
-   const double dh_min        = amr->dh[TOP_LEVEL];
-   const double _PatchPhySize = 1.0/( PS1*amr->dh[lv] );
-   const int    PatchScale    = PS1*amr->scale[lv];
+   const double *dh_min          = amr->dh[TOP_LEVEL];
+   const double _PatchPhySize[3] = { 1.0/( PS1*amr->dh[lv][0] ),
+                                     1.0/( PS1*amr->dh[lv][1] ),
+                                     1.0/( PS1*amr->dh[lv][2] ) };
+   const int    PatchScale       = PS1*amr->scale[lv];
 
    double PatchEdgeL, PatchEdgeR;
    int    Cr[3];
 
    for (int d=0; d<3; d++)
    {
-      Cr[d] = (int)floor(  ( (double)ParPos[d] - amr->BoxEdgeL[d] )*_PatchPhySize  )*PatchScale;
+      Cr[d] = (int)floor(  ( (double)ParPos[d] - amr->BoxEdgeL[d] )*_PatchPhySize[d]  )*PatchScale;
 
 //    check the home patch corner carefully to prevent from any issue resulting from round-off errors
 //    --> make sure to adopt the same procedure of calculating the patch left/right edges as Patch.h
-      PatchEdgeL = (double)( Cr[d]              )*dh_min;
-      PatchEdgeR = (double)( Cr[d] + PatchScale )*dh_min;
+      PatchEdgeL = amr->BoxEdgeL[d] + (double)( Cr[d]              )*dh_min[d];
+      PatchEdgeR = amr->BoxEdgeL[d] + (double)( Cr[d] + PatchScale )*dh_min[d];
 
       if      ( ParPos[d] <  PatchEdgeL )    Cr[d] -= PatchScale;
       else if ( ParPos[d] >= PatchEdgeR )    Cr[d] += PatchScale;
 
 //    check if the target home patch does enclose the given particle position
 #     ifdef DEBUG_PARTICLE
-      PatchEdgeL = (double)( Cr[d]              )*dh_min;
-      PatchEdgeR = (double)( Cr[d] + PatchScale )*dh_min;
+      PatchEdgeL = amr->BoxEdgeL[d] + (double)( Cr[d]              )*dh_min[d];
+      PatchEdgeR = amr->BoxEdgeL[d] + (double)( Cr[d] + PatchScale )*dh_min[d];
 
       if ( ParPos[d] < PatchEdgeL  ||  ParPos[d] >= PatchEdgeR )
          Aux_Error( ERROR_INFO, "incorrect home patch (dim %d, ParPos %14.7e, PatchEdgeL/R %14.7e/%14.7e) !!\n",

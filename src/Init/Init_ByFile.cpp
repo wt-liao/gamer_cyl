@@ -285,7 +285,7 @@ void Init_ByFile_AssignData( const char UM_Filename[], const int UM_lv, const in
                                  NX0_TOT[1]*(1<<UM_lv),
                                  NX0_TOT[2]*(1<<UM_lv) };
    const int    scale        = amr->scale[UM_lv];
-   const double dh           = amr->dh[UM_lv];
+   const double *dh          = amr->dh[UM_lv];
 
    long   Offset3D_File0[3], Offset_File0, Offset_File, Offset_PG;
    real   fluid[NCOMP_TOTAL];
@@ -340,9 +340,9 @@ void Init_ByFile_AssignData( const char UM_Filename[], const int UM_lv, const in
                const int Disp_j = TABLE_02( LocalID, 'y', 0, PS1 );
                const int Disp_k = TABLE_02( LocalID, 'z', 0, PS1 );
 
-               for (int k=0; k<PS1; k++)  {  z = amr->patch[0][UM_lv][PID]->EdgeL[2] + (k+0.5)*dh;
-               for (int j=0; j<PS1; j++)  {  y = amr->patch[0][UM_lv][PID]->EdgeL[1] + (j+0.5)*dh;
-               for (int i=0; i<PS1; i++)  {  x = amr->patch[0][UM_lv][PID]->EdgeL[0] + (i+0.5)*dh;
+               for (int k=0; k<PS1; k++)  {  z = amr->patch[0][UM_lv][PID]->EdgeL[2] + (k+0.5)*dh[2];
+               for (int j=0; j<PS1; j++)  {  y = amr->patch[0][UM_lv][PID]->EdgeL[1] + (j+0.5)*dh[1];
+               for (int i=0; i<PS1; i++)  {  x = amr->patch[0][UM_lv][PID]->EdgeL[0] + (i+0.5)*dh[0];
 
                   Offset_PG = (long)UM_NVar*IDX321( i+Disp_i, j+Disp_j, k+Disp_k, PS2, PS2 );
 
