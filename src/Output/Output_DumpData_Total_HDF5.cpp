@@ -151,6 +151,7 @@ Procedure for outputting new variables:
 //                2263 : 2017/12/27 --> remove OPT__RESTART_HEADER
 //                2264 : 2018/02/28 --> add RANDOM_NUMBER
 //                2265 : 2018/04/02 --> add OPT__NO_FLAG_NEAR_BOUNDARY
+//                2266 : 2018/05/11 --> add OPT__UM_IC_LOAD_NRANK
 //                2300 : 2018/04/30 --> add COORDINATE and DT_GPU_NPGROUP, replace BoxSize by BoxEdgeL/R[3] and dh by dh[3]
 //                2301 : 2018/04/30 --> add BoxSize[3] back (for yt)
 //-------------------------------------------------------------------------------------------------------
@@ -1963,6 +1964,7 @@ void FillIn_InputPara( InputPara_t &InputPara )
    InputPara.Opt__UM_IC_NVar         = OPT__UM_IC_NVAR;
    InputPara.Opt__UM_IC_Downgrade    = OPT__UM_IC_DOWNGRADE;
    InputPara.Opt__UM_IC_Refine       = OPT__UM_IC_REFINE;
+   InputPara.Opt__UM_IC_LoadNRank    = OPT__UM_IC_LOAD_NRANK;
    InputPara.Opt__InitRestrict       = OPT__INIT_RESTRICT;
    InputPara.Opt__InitGridWithOMP    = OPT__INIT_GRID_WITH_OMP;
    InputPara.Opt__GPUID_Select       = OPT__GPUID_SELECT;
@@ -2653,6 +2655,7 @@ void GetCompound_InputPara( hid_t &H5_TypeID )
    H5Tinsert( H5_TypeID, "Opt__UM_IC_NVar",         HOFFSET(InputPara_t,Opt__UM_IC_NVar        ), H5T_NATIVE_INT     );
    H5Tinsert( H5_TypeID, "Opt__UM_IC_Downgrade",    HOFFSET(InputPara_t,Opt__UM_IC_Downgrade   ), H5T_NATIVE_INT     );
    H5Tinsert( H5_TypeID, "Opt__UM_IC_Refine",       HOFFSET(InputPara_t,Opt__UM_IC_Refine      ), H5T_NATIVE_INT     );
+   H5Tinsert( H5_TypeID, "Opt__UM_IC_LoadNRank",    HOFFSET(InputPara_t,Opt__UM_IC_LoadNRank   ), H5T_NATIVE_INT     );
    H5Tinsert( H5_TypeID, "Opt__InitRestrict",       HOFFSET(InputPara_t,Opt__InitRestrict      ), H5T_NATIVE_INT     );
    H5Tinsert( H5_TypeID, "Opt__InitGridWithOMP",    HOFFSET(InputPara_t,Opt__InitGridWithOMP   ), H5T_NATIVE_INT     );
    H5Tinsert( H5_TypeID, "Opt__GPUID_Select",       HOFFSET(InputPara_t,Opt__GPUID_Select      ), H5T_NATIVE_INT     );
