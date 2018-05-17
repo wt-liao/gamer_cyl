@@ -189,11 +189,21 @@ bool Flag_Check( const int lv, const int PID, const int i, const int j, const in
 // ===========================================================================================
    if ( Lohner_NVar > 0 )
    {
+#     if ( COORDINATE == CARTESIAN )
+      const double X = NULL_REAL;
+      const double Y = NULL_REAL;
+      const double Z = NULL_REAL;
+#     else
+      const double X = Aux_Coord_CellIdx2AdoptedCoord( lv, PID, 0, i );
+      const double Y = Aux_Coord_CellIdx2AdoptedCoord( lv, PID, 1, j );
+      const double Z = Aux_Coord_CellIdx2AdoptedCoord( lv, PID, 2, k );
+#     endif
+
 //    check Lohner only if density is greater than the minimum threshold
 #     ifdef DENS
       if ( Fluid[DENS][k][j][i] >= FlagTable_Lohner[lv][3] )
 #     endif
-      Flag |= Flag_Lohner( i, j, k, OPT__FLAG_LOHNER_FORM, Lohner_Var, Lohner_Ave, Lohner_Slope, Lohner_NVar,
+      Flag |= Flag_Lohner( i, j, k, X, Y, Z, OPT__FLAG_LOHNER_FORM, Lohner_Var, Lohner_Ave, Lohner_Slope, Lohner_NVar,
                            FlagTable_Lohner[lv][0], FlagTable_Lohner[lv][1], FlagTable_Lohner[lv][2] );
       if ( Flag )    return Flag;
    }

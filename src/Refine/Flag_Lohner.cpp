@@ -13,21 +13,23 @@
 //                3. The Ave1D and Slope1D arrays must be prepared in advance by invoking the function "Prepare_for_Lohner"
 //                4. The sizes of the arrays Ave1D and  Slope1D must be NVar*3*(PS1+2)^3
 //
-// Parameter   :  i,j,k       : Target cell indices in the target patch
-//                Form        : Form of the Lohner's error estimator (FLASH4/form-invariant + Stencil = 1/2)
-//                Var1D       : Array storing the input variables for the Lohner error estimator (used only for stencil == 1)
-//                Ave1D       : Array storing the input averages for the Lohner error estimator
-//                Slope1D     : Array storing the input slopes for the Lohner error estimator
-//                NVar        : Number of variables stored in Ave and Slope arrays (must be 2 in ELBDM)
-//                Threshold   : Refinement threshold
-//                Filter      : Filter parameter for preventing refinement of small ripples
-//                Soften      : Minimum number in the denominator --> error = sqrt( N/max(D,Soften) ), where
-//                              N and D are numerator and denominator in the Lohner's formula, respectively
+// Parameter   :  i,j,k     : Target cell indices in the target patch
+//                X/Y/Z     : Target physical coordinates in the adopted coordinate system
+//                Form      : Form of the Lohner's error estimator (FLASH4/form-invariant + Stencil = 1/2)
+//                Var1D     : Array storing the input variables for the Lohner error estimator (used only for stencil == 1)
+//                Ave1D     : Array storing the input averages for the Lohner error estimator
+//                Slope1D   : Array storing the input slopes for the Lohner error estimator
+//                NVar      : Number of variables stored in Ave and Slope arrays (must be 2 in ELBDM)
+//                Threshold : Refinement threshold
+//                Filter    : Filter parameter for preventing refinement of small ripples
+//                Soften    : Minimum number in the denominator --> error = sqrt( N/max(D,Soften) ), where
+//                            N and D are numerator and denominator in the Lohner's formula, respectively
 //
 // Return      :  "true"  if the estimated error is larger           than the given threshold
 //                "false" if the estimated error is equal or smaller than the given threshold
 //-------------------------------------------------------------------------------------------------------
-bool Flag_Lohner( const int i, const int j, const int k, const OptLohnerForm_t Form, const real *Var1D, const real *Ave1D,
+bool Flag_Lohner( const int i, const int j, const int k, const double X, const double Y, const double Z,
+                  const OptLohnerForm_t Form, const real *Var1D, const real *Ave1D,
                   const real *Slope1D, const int NVar, const double Threshold, const double Filter, const double Soften )
 {
 
