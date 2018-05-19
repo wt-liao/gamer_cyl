@@ -46,9 +46,6 @@ void Aux_Error( const char *File, const int Line, const char *Func, const char *
 //                                    total # of patches (=num[lv]), same as [3], ...]
 //                               --> In all cases, [ 1] gives the total number of "real" patches
 //                                                 [26] gives the total number of "real+buffer" patches
-//                BoxEdgeL    : Simulation box left  edge in the adopted coordinate system
-//                BoxEdgeR    : Simulation box right edge in the adopted coordinate system
-//                BoxCenter   : Simulation box center     in the adopted coordinate system
 //                dh          : Grid size at each level
 //                BoxEdgeL    : Simulation box left  edge in the adopted coordinate system
 //                BoxEdgeR    : Simulation box right edge in the adopted coordinate system
