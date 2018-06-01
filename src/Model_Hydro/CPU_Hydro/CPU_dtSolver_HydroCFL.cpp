@@ -29,24 +29,34 @@
 // Return      :  dt_Array
 //-----------------------------------------------------------------------------------------
 void CPU_dtSolver_HydroCFL( real dt_Array[], const real Flu_Array[][NCOMP_FLUID][ CUBE(PS1) ], const double Corner_Array[][3],
-                            const int NPG, const real dh, const real Safety, const real Gamma, const real MinPres )
+                            const int NPG, const real dh[], const real Safety, const real Gamma, const real MinPres )
 {
 
    const bool CheckMinPres_Yes = true;
    const int  NPatch           = 8*NPG;
    const real Gamma_m1         = Gamma - (real)1.0;
 
-   real fluid[NCOMP_FLUID], _Rho, Vx, Vy, Vz, Pres, Cs, MaxV, MaxCFL;
+   real fluid[NCOMP_FLUID], _Rho, Vx, Vy, Vz, Pres, Cs, CurrCFL, MaxCFL;
 
 // loop over all patches
-#  pragma omp parallel for private( fluid, _Rho, Vx, Vy, Vz, Pres, Cs, MaxV, MaxCFL ) schedule( runtime )
+#  pragma omp parallel for private( fluid, _Rho, Vx, Vy, Vz, Pres, Cs, CurrCFL, MaxCFL ) schedule( runtime )
    for (int p=0; p<NPatch; p++)
    {
       MaxCFL = (real)0.0;
+      real _dh[3] = { (real)1.0/dh[0], (real)1.0/dh[1], (real)1.0/dh[2] };
+      int ID; 
 
-      for (int t=0; t<CUBE(PS1); t++)
+      for (int k=0; k<PS1; k++)
+      for (int j=0; j<PS1; j++)
+      for (int i=0; i<PS1; i++) 
       {
+         ID = (k*PS1 +j)*PS1 +i;
          for (int v=0; v<NCOMP_FLUID; v++)   fluid[v] = Flu_Array[p][v][t];
+         
+#        if ( COORDINATE == CYLINDRICAL )
+         const real radius = Corner_Array[p][0] + i*dh[0] ;
+         _dh[1] = (real)1.0/ ( dh[1]*radius ) ;
+#        endif
 
         _Rho  = (real)1.0 / fluid[DENS];
          Vx   = FABS( fluid[MOMX] )*_Rho;
@@ -57,17 +67,17 @@ void CPU_dtSolver_HydroCFL( real dt_Array[], const real Flu_Array[][NCOMP_FLUID]
          Cs   = SQRT( Gamma*Pres*_Rho );
 
 #        if   ( FLU_SCHEME == RTVD  ||  FLU_SCHEME == CTU  ||  FLU_SCHEME == WAF )
-         MaxV   = FMAX( Vx, Vy );
-         MaxV   = FMAX( Vz, MaxV );
-         MaxCFL = FMAX( MaxV+Cs, MaxCFL );
+         CurrCFL = FMAX( (Vx+Cs)*_dh[0], (Vy+Cs)*_dh[1] );
+         CurrCFL = FMAX( (Vz+Cs)*_dh[2], CurrCFL );
+         MaxCFL  = FMAX( CurrCFL, MaxCFL );
 
 #        elif ( FLU_SCHEME == MHM  ||  FLU_SCHEME == MHM_RP )
-         MaxV   = Vx + Vy + Vz;
-         MaxCFL = FMAX( MaxV+(real)3.0*Cs, MaxCFL );
+         CurrCFL = (Vx+Cs)*_dh[0] + (Vy+Cs)*_dh[1] + (Vz+Cs)*_dh[2];
+         MaxCFL  = FMAX( CurrCFL, MaxCFL );
 #        endif
       } // for (int t=0; t<CUBE(PS1); t++)
 
-      dt_Array[p] = Safety*dh/MaxCFL;
+      dt_Array[p] = Safety/MaxCFL;
 
    } // for (int p=0; p<NPatch; p++)
 
