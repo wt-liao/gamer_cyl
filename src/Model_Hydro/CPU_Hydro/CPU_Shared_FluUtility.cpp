@@ -445,5 +445,69 @@ void CPU_NormalizePassive( const real GasDens, real Passive[], const int NNorm, 
 } // FUNCTION : CPU_NormalizePassive
 
 
+#if (COORDINATE == CYLINDRICAL || COORDINATE == SPHERICAL )
+
+//-------------------------------------------------------------------------------------------------------
+// Function    :  GetCoord
+// Description :  get the cell-centered position (x1, x2, x3) from (i, j, k)
+//
+// Parameter   :  Corner       : cell centered position at the corner cell of that patch, expect Corner_Array[3]
+//                dh           : Grid size
+//                loop_size    : the size of the loop 
+//                               0.5*(loop_size-PS2) = ghost zone size on one side for the current patch 
+//                x_pos        : output cell-centered position
+//                face_pos     : output face position
+//                i, j, k      : cell index - (0, 0, 0) is the corner index of the patch
+//
+// NOTE        :  could extend to all coordinate, but be careful of face_pos[][]
+//-------------------------------------------------------------------------------------------------------
+void GetCoord( const double Corner[], const real dh[], const int loop_size, real x_pos[], real face_pos[][2],
+               const int i, const int j, const int k ) {
+              
+   x_pos[0] = Corner[0] + ( i - 0.5*(loop_size-PS2) ) * dh[0];
+   x_pos[1] = Corner[1] + ( j - 0.5*(loop_size-PS2) ) * dh[1];
+   x_pos[2] = Corner[2] + ( k - 0.5*(loop_size-PS2) ) * dh[2];
+
+   // r-dir's inner and outer face position
+   face_pos[0][0] = x_pos[0] - (0.5 * dh[0]);
+   face_pos[0][1] = x_pos[0] + (0.5 * dh[0]);
+   
+#if ( COORDINATE == SPHERICAL )
+   // theta's inner and outer face position
+   face_pos[1][0] = x_pos[1] - (0.5 * dh[1]);
+   face_pos[1][1] = x_pos[1] + (0.5 * dh[1]);   
+#endif
+}
+
+
+//-------------------------------------------------------------------------------------------------------
+// Function    :  GeometrySourceTerm
+// Description :  get the geometrical source terms for FV update
+//
+// Parameter   :  PriVar       : primitive var at cell center -> expect to be PriVar[NCOMP_TOTAL]
+//                x_pos        : cell-centered position
+//                GeoSource    : output geometrical source terms
+//-------------------------------------------------------------------------------------------------------
+void GeometrySourceTerm( const real PriVar[], const real x_pos[], real GeoSource[] ) {
+   
+   // initiate all source terms to zero
+   for (int v=0; v<NCOMP_TOTAL; v++) GeoSource[v] = 0.0;
+
+// ** cylindrical coordinate ** //
+#if ( COORDINATE == CYLINDRICAL )
+   const real _rad = (real)1.0/x_pos[0];
+   GeoSource[MOMX] = ( PriVar[DENS]*SQR(PriVar[MOMY]) + PriVar[ENGY] ) * _rad ;
+   
+// ** spherical coordinate   ** //
+#elif ( COORDINATE == SPHERICAL )
+   const real _rad = (real)1.0/x_pos[0], theta = x_pos[1];
+   GeoSource[MOMX] = ( PriVar[DENS]*SQR(PriVar[MOMY]) + PriVar[DENS]*SQR(PriVar[MOMZ]) + 2.0*PriVar[ENGY] ) * _rad;
+   GeoSource[MOMY] = ( PriVar[DENS]*SQR(PriVar[MOMZ]) + PriVar[ENGY] ) * (COS(theta)/SIN(theta)) * _rad;
+   
+#endif // COORDINATE
+}                      
+
+#endif
+
 
 #endif // #if ( MODEL == HYDRO )
