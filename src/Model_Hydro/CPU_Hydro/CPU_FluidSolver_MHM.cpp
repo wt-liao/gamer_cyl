@@ -49,6 +49,14 @@ static void CPU_HancockPredict( real FC_Var[][6][NCOMP_TOTAL], const real dt, co
                                 const real C_Var[][ FLU_NXT*FLU_NXT*FLU_NXT ], const real MinDens, const real MinPres );
 #endif
 
+#if (COORDINATE == CYLINDRICAL)
+extern void HancockFluxGrad( const real* & Flux, real & dFlux, real* & GeoSource,
+                             const real* & x_pos, const real* & face_pos, const int v, 
+                             const real* & dt_dh2, const real dt_2 ) ;
+extern void GetCoord( const double Corner[], const real dh[], const int loop_size, real x_pos[], real face_pos[][2], 
+                      const int i, const int j, const int k );
+extern void GeometrySourceTerm( const real PriVar[], const real x_pos[], real GeoSource[] );
+#endif
 
 
 
@@ -420,17 +428,27 @@ void CPU_RiemannPredict( const real Flu_Array_In[][ FLU_NXT*FLU_NXT*FLU_NXT ], c
 //                               --> For checking negative density and pressure
 //                MinDens/Pres : Minimum allowed density and pressure
 //-------------------------------------------------------------------------------------------------------
-void CPU_HancockPredict( real FC_Var[][6][NCOMP_TOTAL], const real dt, const real dh, const real Gamma,
-                         const real C_Var[][ FLU_NXT*FLU_NXT*FLU_NXT ], const real MinDens, const real MinPres )
+void CPU_HancockPredict( real FC_Var[][6][NCOMP_TOTAL], const real dt, const real dh[], const real Gamma,
+                         const real C_Var[][ FLU_NXT*FLU_NXT*FLU_NXT ], const double Corner[], 
+                         const real MinDens, const real MinPres,
+                         const bool JeansMinPres, const real JeansMinPres_Coeff )
 {
 
    const real  Gamma_m1 = Gamma - (real)1.0;
    const real _Gamma_m1 = (real)1.0 / Gamma_m1;
-   const real dt_dh2    = (real)0.5*dt/dh;
+   const real dt_dh2[3] = { dt_2/dh[0], dt_2/dh[1], dt_2/dh[2] };
    const int  NGhost    = FLU_GHOST_SIZE - 1;
 
    real Flux[6][NCOMP_TOTAL], dFlux[NCOMP_TOTAL];
    int ID1, ID2;
+   
+#if (COORDINATE == CYLINDRICAL)
+   const bool NormPassice = false;
+   const int  NNorm       = 0 ;
+   const int* NormIdx     = NULL;
+   real x_pos[3], face_pos[1][2], GeoSource[NCOMP_TOTAL], PriVar[NCOMP_TOTAL], ConVar[NCOMP_TOTAL] ; 
+   real dF[3][NCOMP_TOTAL]; // ###
+#endif
 
 
    for (int k1=0, k2=NGhost;  k1<N_FC_VAR;  k1++, k2++)
@@ -439,12 +457,24 @@ void CPU_HancockPredict( real FC_Var[][6][NCOMP_TOTAL], const real dt, const rea
    {
       ID1 = (k1*N_FC_VAR + j1)*N_FC_VAR + i1;
       ID2 = (k2*FLU_NXT  + j2)*FLU_NXT  + i2;
+      
+#if   (COORDINATE == CYLINDRICAL)
+      GetCoord( Corner, dh, FLU_NXT, x_pos, face_pos, i2, j2, k2);
+      for ( int v=0; v<NCOMP_TOTAL; v++ ) ConVar[v] = C_Var[v][ID2] ;
+      CPU_Con2Pri( ConVar, PriVar, Gamma_m1, MinPres, NormPassive, NNorm, NormIdx, JeansMinPres, JeansMinPres_Coeff );
+      GeometrySourceTerm( PriVar, x_pos, GeoSource );
+#endif
 
       for (int f=0; f<6; f++)    CPU_Con2Flux( f/2, Flux[f], FC_Var[ID1][f], Gamma_m1, MinPres );
 
       for (int v=0; v<NCOMP_TOTAL; v++)
       {
-         dFlux[v] = dt_dh2 * ( Flux[1][v] - Flux[0][v] + Flux[3][v] - Flux[2][v] + Flux[5][v] - Flux[4][v] );
+#if      (COORDINATE == CARTESIAN)
+         Flux[v] = (Flux[1][v] - Flux[0][v])*dt_dh2[0] + (Flux[3][v] - Flux[2][v])*dt_dh2[1]
+                 + (Flux[5][v] - Flux[4][v])*dt_dh2[2] ;
+#elif    (COORDINATE == CYLINDRICAL)
+         HancockFluxGrad( Flux, &dFlux[v], GeoSource, x_pos, face_pos, v, dt_dh2, dt_2 );
+#endif // (COORDINATE...)
 
          for (int f=0; f<6; f++)    FC_Var[ID1][f][v] -= dFlux[v];
       }
@@ -479,6 +509,50 @@ void CPU_HancockPredict( real FC_Var[][6][NCOMP_TOTAL], const real dt, const rea
    } // i,j,k
 
 } // FUNCTION : CPU_HancockPredict
+
+
+#if (COORDINATE == CYLINDRICAL)
+//-------------------------------------------------------------------------------------------------------
+// Function    :  HancockFluxGrad
+// Description :  get transverse flux gradient and source term for one cell 
+//
+// Parameter   :  Flux         : 
+//                dF           : 
+//                GeoSource    :
+//                x_pos        : xyz position of the cell
+//                face_pos     : xyz position of cell faces
+//                v            : from 0 - (NCOMP_TOTAL-1)
+//
+// NOTE        :  could extend to all coordinate, but be careful of face_pos[][]
+//-------------------------------------------------------------------------------------------------------
+void HancockFluxGrad( const real* & Flux, real & dFlux, real* & GeoSource,
+                      const real* & x_pos, const real* & face_pos, const int v, 
+                      const real* & dt_dh2, const real dt_2 ) {
+   
+   const real _x1    = (real)1.0/ x_pos[0];
+   const real _x1_sq = SQR(_x1) ;
+   real dF[3][NCOMP_TOTAL];
+   
+   // 1. calculate flux
+   if ( v == MOMY ) {
+      dF[0][v] = (SQR(face_pos[0][1])*Flux[1][v] - SQR(face_pos[0][0])*Flux[0][v]) * _x1_sq ;
+      dF[1][v] = (Flux[3][v] - Flux[2][v]) * _x1 ;
+      dF[2][v] = Flux[5][v] - Flux[4][v] ;
+   }  
+   else {
+      dF[0][v] = (face_pos[0][1]*Flux[1][v] - face_pos[0][0]*Flux[0][v]) * _x1 ;
+      dF[1][v] = (Flux[3][v] - Flux[2][v]) * _x1 ;
+      dF[2][v] = Flux[5][v] - Flux[4][v] ;
+   }
+   
+   *dFlux = dF[0][v]*dt_dh2[0] + dF[1][v]*dt_dh2[1] + dF[2][v]*dt_dh2[2] ;
+   
+   // 2. add geosource term
+   *dFlux -= GeoSource[v] * dt_2;
+   
+}
+#endif // #id (COORDINATE == CYLINDRICAL)
+
 #endif // #if ( FLU_SCHEME == MHM )
 
 
