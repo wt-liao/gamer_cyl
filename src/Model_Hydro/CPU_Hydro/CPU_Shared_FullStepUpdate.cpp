@@ -4,7 +4,19 @@
 #if (  !defined GPU  &&  MODEL == HYDRO  &&  \
        ( FLU_SCHEME == MHM || FLU_SCHEME == MHM_RP || FLU_SCHEME == CTU )  )
 
-
+#if ( COORDINATE == CYLINDRICAL )
+extern void GetCoord( const double Corner[], const real dh[], const int loop_size, real x_pos[], real face_pos[][2], 
+                      const int i, const int j, const int k );
+extern void GeometrySourceTerm( const real PriVar[], const real x_pos[], real GeoSource[] );
+static void CurviFluxGrad( const real Flux_R, const real Flux_L, real dF[][NCOMP_TOTAL], 
+                           const real x_pos[], const real face_pos[][2], const int d, const int v );
+static void GetFullStepGeoSource(const real* & ConInput, real* & GeoSource, const real* & dF, const real* & x_pos, 
+                                 const real* & dt_dh2, const real dt_2, const real Gamma_m1, 
+                                 const real MinPres, const bool JeansMinPres, const real JeansMinPres_Coeff);
+extern void CPU_Con2Pri( const real In[], real Out[], const real Gamma_m1, const real MinPres,
+                         const bool NormPassive, const int NNorm, const int NormIdx[],
+                         const bool JeansMinPres, const real JeansMinPres_Coeff );
+#endif
 
 
 //-------------------------------------------------------------------------------------------------------
@@ -30,7 +42,7 @@
 //                                   --> Should be set to the global variable "PassiveNorm_VarIdx"
 //-------------------------------------------------------------------------------------------------------
 void CPU_FullStepUpdate( const real Input[][ FLU_NXT*FLU_NXT*FLU_NXT ], real Output[][ PS2*PS2*PS2 ], char DE_Status[],
-                         const real Flux[][3][NCOMP_TOTAL], const real dt, const real dh,
+                         const real Flux[][3][NCOMP_TOTAL], const real dt, const real dh[],
                          const real Gamma, const real MinDens, const real MinPres, const real DualEnergySwitch,
                          const bool NormPassive, const int NNorm, const int NormIdx[] )
 {
@@ -40,10 +52,16 @@ void CPU_FullStepUpdate( const real Input[][ FLU_NXT*FLU_NXT*FLU_NXT ], real Out
    const real _Gamma_m1 = (real)1.0 / Gamma_m1;
 #  endif
    const int  dID1[3]   = { 1, N_FL_FLUX, N_FL_FLUX*N_FL_FLUX };
-   const real dt_dh     = dt/dh;
+   const real dt_dh[3]  = { dt/dh[0], dt/dh[1], dt/dh[2] };
 
    int  ID1, ID2, ID3;
    real dF[3][NCOMP_TOTAL];
+   
+#  if ( COORDINATE == CYLINDRICAL )
+   const real dt_2      = (real)0.5 * dt ;
+   const real dt_dh2[3] = {dt_2/dh[0], dt_2/dh[1], dt_2/dh[2]};
+   real x_pos[3], face_pos[1][2], GeoSource[NCOMP_TOTAL] ;
+#  endif
 
 #  if ( NCOMP_PASSIVE > 0 )
    real Passive[NCOMP_PASSIVE];
@@ -61,9 +79,18 @@ void CPU_FullStepUpdate( const real Input[][ FLU_NXT*FLU_NXT*FLU_NXT ], real Out
 
       for (int d=0; d<3; d++)
       for (int v=0; v<NCOMP_TOTAL; v++)   dF[d][v] = Flux[ ID1+dID1[d] ][d][v] - Flux[ID1][d][v];
+      
+#     if (COORDINATE == CYLINDRICAL)
+      CurviFluxGrad(dF, x_pos) ;
+      GetFullStepGeoSource(ConInput, GeoSource, dF, x_pos, dt_dh2, dt_2, Gamma_m1, MinPres);
+#     endif // COORDINATE == CYLINDRICAL
 
-      for (int v=0; v<NCOMP_TOTAL; v++)
-         Output[v][ID2] = Input[v][ID3] - dt_dh*( dF[0][v] + dF[1][v] + dF[2][v] );
+      for (int v=0; v<NCOMP_TOTAL; v++) {
+         Output[v][ID2] = Input[v][ID3] - ( dF[0][v]*dt_dh[0] + dF[1][v]*dt_dh[1] + dF[2][v]*dt_dh[2] );
+#        if (COORDINATE == CYLINDRICAL)
+         Output[v][ID2] += GeoSource[v] * dt ;
+#        endif
+      }
 
 
 //    we no longer ensure positive density and pressure here
@@ -165,6 +192,84 @@ void CPU_StoreFlux( real Flux_Array[][NCOMP_TOTAL][ PS2*PS2 ], const real FC_Flu
 } // FUNCTION : CPU_StoreFlux
 
 
+#if ( COORDINATE == CYLINDRICAL )
+// //-------------------------------------------------------------------------------------------------------
+// Function    :  CurviFluxGrad
+// Description :  get transverse flux gradient in curvilinear coordinate, used in FullStepUpdate 
+//
+// Parameter   :  Flux         : cell centered position at the corner cell of that patch, expect Corner_Array[3]
+//                dF           : 
+//                x_pos        : xyz position of the cell
+//                face_pos     : xyz position of cell faces
+//                v            : from 0 - (NCOMP_TOTAL-1)
+//
+// NOTE        :  could extend to all coordinate, but be careful of face_pos[][]
+//-------------------------------------------------------------------------------------------------------
+void CurviFluxGrad( real dF[][NCOMP_TOTAL], const real x_pos[] ) {
+
+   // pre-calculate geo-factor
+   const real _x1    = (real)1.0/x_pos[0];
+   
+   for (int d=0; d<3; d++)
+   for (int v=0; v<NCOMP_TOTAL; v++) {
+      if (v==MOMY) dF[d][v] *= SQR(_x1) ;
+      else         dF[d][v] *= _x1      ;
+   }
+   
+#  ifdef GAMER_DEBUG
+   for (int d=0; d<3; d++)
+   for (int v=0; v<NCOMP_TOTAL; v++) {
+      if ( ! isfinite( dF[d][v] ) ) {
+         Aux_Message( stderr, "WARNING : dF NaN'ed at (d, v) = (%d, %d) at file <%s>, line <%d>, function <%s>\n",
+                      d, v, __FILE__, __LINE__, __FUNCTION__ );
+      } // if ( !isfinite() ) 
+   }
+#  endif
+
+}
+
+
+// //-------------------------------------------------------------------------------------------------------
+// Function    :  GetFullStepGeoSource
+// Description :  get geometry source term that is used in full step update
+//                use the predicted flux to calculate the corrected primitive var at half step
+//                use this corrected half step pri var to find GeoSource for full step update
+//
+// Parameter   :  ConInput     : 
+//                GeoSource    : 
+//                dF           : 
+//                x_pos        : 
+//                dt_dh2       : 
+//                dt_2         : dt/2
+//
+//-------------------------------------------------------------------------------------------------------
+void GetFullStepGeoSource(const real** & ConInput, real* & GeoSource, const real** & dF, const real* & x_pos, 
+                          const real* & dt_dh2, const real dt_2, const real Gamma_m1, const real MinPres ) {
+                             
+   real ConVar_Buffer[NCOMP_TOTAL], PriVar_Buffer[NCOMP_TOTAL];
+   const bool NormPassive_No  = false; 
+   const bool JeansMinPres_No = false;
+   
+   for (int v=0; v<NCOMP_TOTAL; v++) ConVar_Buffer[v] = Input[v][ID3] ;
+   
+   CPU_Con2Pri( ConVar_Buffer, PriVar_Buffer, Gamma_m1, MinPres, NormPassive_No, NULL_INT, NULL, 
+                JeansMinPres_No, NULL_REAL );
+   
+   GeometrySourceTerm( PriVar_Buffer, x_pos, GeoSource );
+   
+   for (int v=0; v<NCOMP_TOTAL; v++) {
+      ConVar_Buffer[v] -= dF[0][v]*dt_dh2[0] + dF[1][v]*dt_dh2[1] + dF[2][v]*dt_dh2[2] ;
+      ConVar_Buffer[v] += GeoSource[v] * dt_2 ;
+   }
+   
+   CPU_Con2Pri( ConVar_Buffer, PriVar_Buffer, Gamma_m1, MinPres, NormPassive_No, NULL_INT, NULL, 
+                JeansMinPres_No, NULL_REAL );
+   
+   GeometrySourceTerm( PriVar_Buffer, x_pos, GeoSource );
+   
+}
+
+#endif // #if (COORDINATE == CYLINDRICAL)
 
 #endif // #if ( FLU_SCHEME == MHM  ||  FLU_SCHEME == MHM_RP  ||  FLU_SCHEME == CTU )
 
