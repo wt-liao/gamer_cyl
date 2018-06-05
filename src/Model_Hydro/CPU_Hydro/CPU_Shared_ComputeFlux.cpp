@@ -22,6 +22,11 @@ extern void CPU_RiemannSolver_HLLC( const int XYZ, real Flux_Out[], const real L
                                     const real Gamma, const real MinPres );
 #endif
 
+#if ( COORDINATE == CYLINDRICAL )
+extern void GetCoord( const double Corner[], const real dh[], const int loop_size, real x_pos[], real face_pos[][2], 
+                      const int i, const int j, const int k );                                
+#endif
+
 
 
 
@@ -84,6 +89,10 @@ void CPU_ComputeFlux( const real FC_Var[][6][NCOMP_TOTAL], real FC_Flux[][3][NCO
 
    real ConVar_L[NCOMP_TOTAL], ConVar_R[NCOMP_TOTAL];
    int  ID1, ID2, dL, dR, start2[3]={0}, end1[3]={0};
+   
+#  if ( COORDINATE == CYLINDRICAL )
+   real x_pos[3], face_pos[1][2]; 
+#  endif
 
 #  if ( RSOLVER == EXACT )
    const real Gamma_m1 = Gamma - (real)1.0;
@@ -216,6 +225,34 @@ void CPU_ComputeFlux( const real FC_Var[][6][NCOMP_TOTAL], real FC_Flux[][3][NCO
 #        else
 #        error : ERROR : unsupported Riemann solver (EXACT/ROE) !!
 #        endif
+         
+         
+#        if ( COORDINATE == CYLINDRICAL )
+         GetCoord( Corner, dh, N_FC_VAR, x_pos, face_pos, i2, j2, k2);
+         
+         //### check if this part is vectorized
+         if ( d==0 ) {   
+            for (int v=0; v<NCOMP_TOTAL; v++) {
+               if (v==MOMY) FC_Flux[ID1][d][v] *= SQR(face_pos[0][1]) ;
+               else         FC_Flux[ID1][d][v] *= face_pos[0][1] ;
+            }
+         }
+         
+         else if ( d==1 ) {   
+            for (int v=0; v<NCOMP_TOTAL; v++) 
+               if (v==MOMY) FC_Flux[ID1][d][v] *= x_pos[0] ;
+         }  
+         
+         else if ( d==2 ) {
+            for (int v=0; v<NCOMP_TOTAL; v++) {
+               if (v==MOMY) FC_Flux[ID1][d][v] *= SQR(x_pos[0]) ;
+               else         FC_Flux[ID1][d][v] *= x_pos[0] ;
+            }
+         }
+         
+#        endif
+         
+         
       } // i,j,k
    } // for (int d=0; d<3; d++)
 
