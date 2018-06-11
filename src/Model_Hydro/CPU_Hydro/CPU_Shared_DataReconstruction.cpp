@@ -12,13 +12,16 @@ static void Get_EigenSystem( const real CC_Var[], real EigenVal[][NCOMP_FLUID], 
                              real REigenVec[][NCOMP_FLUID], const real Gamma );
 static void LimitSlope( const real L2[], const real L1[], const real C0[], const real R1[], const real R2[],
                         const LR_Limiter_t LR_Limiter, const real MinMod_Coeff, const real EP_Coeff,
-                        const real Gamma, const int XYZ, real Slope_Limiter[] );
+                        const real Gamma, const int XYZ, real Slope_Limiter[], const real x_pos[], const real dh[] );
 #ifdef CHAR_RECONSTRUCTION
 static void Pri2Char( real Var[], const real Gamma, const real Rho, const real Pres, const int XYZ );
 static void Char2Pri( real Var[], const real Gamma, const real Rho, const real Pres, const int XYZ );
 #endif
 
-
+# if ( COORDINATE == CYLINDRICAL )
+extern void GetCoord( const double Corner[], const real dh[], const int loop_size, real x_pos[], real face_pos[][2], 
+                      const int i, const int j, const int k );
+#endif
 
 
 #if ( LR_SCHEME == PLM )
@@ -54,7 +57,8 @@ static void Char2Pri( real Var[], const real Gamma, const real Rho, const real P
 //------------------------------------------------------------------------------------------------------
 void CPU_DataReconstruction( const real PriVar[][NCOMP_TOTAL], real FC_Var[][6][NCOMP_TOTAL], const int NIn, const int NGhost,
                              const real Gamma, const LR_Limiter_t LR_Limiter, const real MinMod_Coeff,
-                             const real EP_Coeff, const real dt, const real dh, const real MinDens, const real MinPres )
+                             const real EP_Coeff, const real dt, const real dh[], const double Corner[], 
+                             const real MinDens, const real MinPres )
 {
 
    const int dr1[3] = { 1, NIn, NIn*NIn };
@@ -62,6 +66,12 @@ void CPU_DataReconstruction( const real PriVar[][NCOMP_TOTAL], real FC_Var[][6][
    int  ID1, ID2, ID1_L, ID1_R, ID1_LL, ID1_RR, dL, dR;
    real Min, Max;
    real Slope_Limiter[NCOMP_TOTAL] = { (real)0.0 };
+   real slope_frac_L[3] = { (real)1.0, (real)1.0, (real)1.0 } ;    // primarily for curvilinear coordinate
+   real slope_frac_R[3] = { (real)1.0, (real)1.0, (real)1.0 } ;
+   
+#if ( COORDINATE == CYLINDRICAL ) 
+   real x_pos[3], face_pos[1][2]; 
+#endif
 
 // variables for the CTU scheme
 #  if ( FLU_SCHEME == CTU )
@@ -97,6 +107,13 @@ void CPU_DataReconstruction( const real PriVar[][NCOMP_TOTAL], real FC_Var[][6][
 #     if ( FLU_SCHEME == CTU )
       Get_EigenSystem( PriVar[ID1], EigenVal, LEigenVec, REigenVec, Gamma );
 #     endif
+      
+#if ( COORDINATE == CYLINDRICAL )
+      GetCoord( Corner, dh, NOut, x_pos, face_pos, i2, j2, k2);
+      const real _6x1 = (real)1.0 / ((real)6.0 * x_pos[0]);
+      slope_frac_L[0] = (real)1.0 + ( dh[0] * _6x1 );
+      slope_frac_R[0] = (real)1.0 - ( dh[0] * _6x1 );
+#endif
 
 
 //    loop over different spatial directions
@@ -115,21 +132,26 @@ void CPU_DataReconstruction( const real PriVar[][NCOMP_TOTAL], real FC_Var[][6][
             ID1_RR = ID1 + 2*dr1[d];
 
             LimitSlope( PriVar[ID1_LL], PriVar[ID1_L], PriVar[ID1], PriVar[ID1_R], PriVar[ID1_RR], LR_Limiter,
-                        MinMod_Coeff, EP_Coeff, Gamma, d, Slope_Limiter );
+                        MinMod_Coeff, EP_Coeff, Gamma, d, Slope_Limiter, NULL, NULL );
          }
 
          else
          {
+#           if ( COORDINATE == CARTESIAN )
             LimitSlope( NULL, PriVar[ID1_L], PriVar[ID1], PriVar[ID1_R], NULL, LR_Limiter,
-                        MinMod_Coeff, NULL_REAL, Gamma, d, Slope_Limiter );
+                        MinMod_Coeff, NULL_REAL, Gamma, d, Slope_Limiter, NULL, NULL );
+#           elif ( COORDINATE == CYLINDRICAL )
+            LimitSlope( NULL, PriVar[ID1_L], PriVar[ID1], PriVar[ID1_R], NULL, LR_Limiter,
+                        MinMod_Coeff, NULL_REAL, Gamma, d, Slope_Limiter, x_pos, dh );
+#           endif
          }
 
 
 //       (2-2) get the face-centered primitive variables
          for (int v=0; v<NCOMP_TOTAL; v++)
          {
-            FC_Var[ID2][dL][v] = PriVar[ID1][v] - (real)0.5*Slope_Limiter[v];
-            FC_Var[ID2][dR][v] = PriVar[ID1][v] + (real)0.5*Slope_Limiter[v];
+            FC_Var[ID2][dL][v] = PriVar[ID1][v] - (real)0.5*Slope_Limiter[v]*slope_frac_L[d];
+            FC_Var[ID2][dR][v] = PriVar[ID1][v] + (real)0.5*Slope_Limiter[v]*slope_frac_R[d];
          }
 
 
@@ -888,7 +910,7 @@ void Get_EigenSystem( const real CC_Var[], real EigenVal[][NCOMP_FLUID], real LE
 //-------------------------------------------------------------------------------------------------------
 void LimitSlope( const real L2[], const real L1[], const real C0[], const real R1[], const real R2[],
                  const LR_Limiter_t LR_Limiter, const real MinMod_Coeff, const real EP_Coeff,
-                 const real Gamma, const int XYZ, real Slope_Limiter[] )
+                 const real Gamma, const int XYZ, real Slope_Limiter[], const real x_pos[], const real dh[] )
 {
 
 // check
@@ -906,14 +928,34 @@ void LimitSlope( const real L2[], const real L1[], const real C0[], const real R
    real Slope_L[NCOMP_TOTAL], Slope_R[NCOMP_TOTAL], Slope_C[NCOMP_TOTAL], Slope_A[NCOMP_TOTAL];
    real Slope_LL[NCOMP_TOTAL], Slope_RR[NCOMP_TOTAL], Slope_LR;
    real D2_L, D2_R, D2_C, D2_Sign, D2_Limiter, Slope_Sign;  // variables for the extrema-preserving limiter
+   
+   // slope correction for curvi coordinate
+   real slope_corr_L1 = 1.0, slope_corr_L2 = 1.0;     // backward
+   real slope_corr_R1 = 1.0, slope_corr_R2 = 1.0;     // forward
+   real slope_corr_C1 = 1.0, slope_corr_C2 = 1.0;     // centered
 
+#if ( COORDINATE == CYLINDRICAL )
+#if ( LR_SCHEME == PLM )
+   if (XYZ == 0){
+      const real x1   = x_pos[0];
+      const real x1_L = x1-dh[0];
+      const real x1_R = x1+dh[0];
+   
+      slope_corr_L1 = slope_corr_L2 = (real)1.0 / ( (real)1.0 - SQR(dh[0]) / ((real)12.0 * x1 * x1_L) ) ;  
+      slope_corr_R1 = slope_corr_R2 = (real)1.0 / ( (real)1.0 - SQR(dh[0]) / ((real)12.0 * x1 * x1_R) ) ;
+      slope_corr_C1 = slope_corr_C2 = (real)1.0 / ( (real)1.0 - SQR(dh[0]) / ((real)12.0 * x1_L * x1_R) ) ;
+   }
+#elif ( LR_SCHEME == PPM )
+   
+#endif // LR_SCHEME
+#endif // COORDINATE
 
 // evaluate different slopes
    for (int v=0; v<NCOMP_TOTAL; v++)
    {
-      Slope_L[v] = C0[v] - L1[v];
-      Slope_R[v] = R1[v] - C0[v];
-      Slope_C[v] = (real)0.5*( Slope_L[v] + Slope_R[v] );
+      Slope_L[v] = slope_corr_L2 * C0[v] - slope_corr_L1 * L1[v] ;
+      Slope_R[v] = slope_corr_R2 * R1[v] - slope_corr_R1 * C0[v] ;
+      Slope_C[v] = (real)0.5*( slope_corr_C2 * R1[v] - slope_corr_C1 * L1[v] );
    }
 
    if ( LR_Limiter == VL_GMINMOD )

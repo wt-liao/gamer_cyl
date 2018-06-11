@@ -61,7 +61,7 @@ extern void GetCoord( const double Corner[], const real dh[], const int loop_siz
 //-------------------------------------------------------------------------------------------------------
 void CPU_ComputeFlux( const real FC_Var[][6][NCOMP_TOTAL], real FC_Flux[][3][NCOMP_TOTAL], const int NFlux, const int Gap,
                       const real Gamma, const bool CorrHalfVel, const real Pot_USG[], const double Corner[],
-                      const real dt, const real dh, const double Time, const OptGravityType_t GravityType,
+                      const real dt, const real dh[], const double Time, const OptGravityType_t GravityType,
                       const double ExtAcc_AuxArray[], const real MinPres )
 {
 

@@ -8,11 +8,10 @@
 extern void GetCoord( const double Corner[], const real dh[], const int loop_size, real x_pos[], real face_pos[][2], 
                       const int i, const int j, const int k );
 extern void GeometrySourceTerm( const real PriVar[], const real x_pos[], real GeoSource[] );
-static void CurviFluxGrad( const real Flux_R, const real Flux_L, real dF[][NCOMP_TOTAL], 
-                           const real x_pos[], const real face_pos[][2], const int d, const int v );
-static void GetFullStepGeoSource(const real* & ConInput, real* & GeoSource, const real* & dF, const real* & x_pos, 
-                                 const real* & dt_dh2, const real dt_2, const real Gamma_m1, 
-                                 const real MinPres, const bool JeansMinPres, const real JeansMinPres_Coeff);
+static void CurviFluxGrad( real dF[][NCOMP_TOTAL], const real x_pos[] );
+static void GetFullStepGeoSource( const real Input[][ FLU_NXT*FLU_NXT*FLU_NXT ], real* GeoSource, 
+                                  const real dF[][NCOMP_TOTAL], const real* x_pos, const real* dt_dh2, const real dt_2, 
+                                  const real Gamma_m1, const real MinPres, const int ID3 ) ;
 extern void CPU_Con2Pri( const real In[], real Out[], const real Gamma_m1, const real MinPres,
                          const bool NormPassive, const int NNorm, const int NormIdx[],
                          const bool JeansMinPres, const real JeansMinPres_Coeff );
@@ -42,7 +41,7 @@ extern void CPU_Con2Pri( const real In[], real Out[], const real Gamma_m1, const
 //                                   --> Should be set to the global variable "PassiveNorm_VarIdx"
 //-------------------------------------------------------------------------------------------------------
 void CPU_FullStepUpdate( const real Input[][ FLU_NXT*FLU_NXT*FLU_NXT ], real Output[][ PS2*PS2*PS2 ], char DE_Status[],
-                         const real Flux[][3][NCOMP_TOTAL], const real dt, const real dh[],
+                         const real Flux[][3][NCOMP_TOTAL], const real dt, const real dh[], const double Corner[],
                          const real Gamma, const real MinDens, const real MinPres, const real DualEnergySwitch,
                          const bool NormPassive, const int NNorm, const int NormIdx[] )
 {
@@ -61,6 +60,7 @@ void CPU_FullStepUpdate( const real Input[][ FLU_NXT*FLU_NXT*FLU_NXT ], real Out
    const real dt_2      = (real)0.5 * dt ;
    const real dt_dh2[3] = {dt_2/dh[0], dt_2/dh[1], dt_2/dh[2]};
    real x_pos[3], face_pos[1][2], GeoSource[NCOMP_TOTAL] ;
+   const real  Gamma_m1 = Gamma - (real)1.0; //### this has already been declared in DUAL_ENERGY
 #  endif
 
 #  if ( NCOMP_PASSIVE > 0 )
@@ -81,8 +81,9 @@ void CPU_FullStepUpdate( const real Input[][ FLU_NXT*FLU_NXT*FLU_NXT ], real Out
       for (int v=0; v<NCOMP_TOTAL; v++)   dF[d][v] = Flux[ ID1+dID1[d] ][d][v] - Flux[ID1][d][v];
       
 #     if (COORDINATE == CYLINDRICAL)
+      GetCoord( Corner, dh, PS2, x_pos, face_pos, i1, j1, k1);
       CurviFluxGrad(dF, x_pos) ;
-      GetFullStepGeoSource(ConInput, GeoSource, dF, x_pos, dt_dh2, dt_2, Gamma_m1, MinPres);
+      GetFullStepGeoSource( Input, GeoSource, dF, x_pos, dt_dh2, dt_2, Gamma_m1, MinPres, ID3);
 #     endif // COORDINATE == CYLINDRICAL
 
       for (int v=0; v<NCOMP_TOTAL; v++) {
@@ -243,14 +244,15 @@ void CurviFluxGrad( real dF[][NCOMP_TOTAL], const real x_pos[] ) {
 //                dt_2         : dt/2
 //
 //-------------------------------------------------------------------------------------------------------
-void GetFullStepGeoSource(const real** & ConInput, real* & GeoSource, const real** & dF, const real* & x_pos, 
-                          const real* & dt_dh2, const real dt_2, const real Gamma_m1, const real MinPres ) {
+void GetFullStepGeoSource( const real ConInput[][ FLU_NXT*FLU_NXT*FLU_NXT ], real* GeoSource, 
+                           const real dF[][NCOMP_TOTAL], const real* x_pos, const real* dt_dh2, const real dt_2, 
+                           const real Gamma_m1, const real MinPres, const int ID3 ) {
                              
    real ConVar_Buffer[NCOMP_TOTAL], PriVar_Buffer[NCOMP_TOTAL];
    const bool NormPassive_No  = false; 
    const bool JeansMinPres_No = false;
    
-   for (int v=0; v<NCOMP_TOTAL; v++) ConVar_Buffer[v] = Input[v][ID3] ;
+   for (int v=0; v<NCOMP_TOTAL; v++) ConVar_Buffer[v] = ConInput[v][ID3] ;
    
    CPU_Con2Pri( ConVar_Buffer, PriVar_Buffer, Gamma_m1, MinPres, NormPassive_No, NULL_INT, NULL, 
                 JeansMinPres_No, NULL_REAL );

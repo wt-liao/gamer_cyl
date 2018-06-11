@@ -7,7 +7,8 @@
 
 extern void CPU_DataReconstruction( const real PriVar[][NCOMP_TOTAL], real FC_Var[][6][NCOMP_TOTAL], const int NIn, const int NGhost,
                                     const real Gamma, const LR_Limiter_t LR_Limiter, const real MinMod_Coeff,
-                                    const real EP_Coeff, const real dt, const real dh, const real MinDens, const real MinPres );
+                                    const real EP_Coeff, const real dt, const real dh[], const double Corner[], 
+                                    const real MinDens, const real MinPres );
 extern void CPU_Con2Flux( const int XYZ, real Flux[], const real Input[], const real Gamma_m1, const real MinPres );
 extern void CPU_Con2Pri( const real In[], real Out[], const real Gamma_m1, const real MinPres,
                          const bool NormPassive, const int NNorm, const int NormIdx[],
@@ -16,10 +17,10 @@ extern void CPU_Pri2Con( const real In[], real Out[], const real _Gamma_m1,
                          const bool NormPassive, const int NNorm, const int NormIdx[] );
 extern void CPU_ComputeFlux( const real FC_Var[][6][NCOMP_TOTAL], real FC_Flux[][3][NCOMP_TOTAL], const int NFlux, const int Gap,
                              const real Gamma, const bool CorrHalfVel, const real Pot_USG[], const double Corner[],
-                             const real dt, const real dh, const double Time, const OptGravityType_t GravityType,
+                             const real dt, const real dh[], const double Time, const OptGravityType_t GravityType,
                              const double ExtAcc_AuxArray[], const real MinPres );
 extern void CPU_FullStepUpdate( const real Input[][ FLU_NXT*FLU_NXT*FLU_NXT ], real Output[][ PS2*PS2*PS2 ], char DE_Status[],
-                                const real Flux[][3][NCOMP_TOTAL], const real dt, const real dh,
+                                const real Flux[][3][NCOMP_TOTAL], const real dt, const real dh[], const double Corner[],
                                 const real Gamma, const real MinDens, const real MinPres, const real DualEnergySwitch,
                                 const bool NormPassive, const int NNorm, const int NormIdx[] );
 extern void CPU_StoreFlux( real Flux_Array[][NCOMP_TOTAL][ PS2*PS2 ], const real FC_Flux[][3][NCOMP_TOTAL] );
@@ -45,14 +46,15 @@ static void CPU_RiemannPredict( const real Flu_Array_In[][ FLU_NXT*FLU_NXT*FLU_N
 static void CPU_RiemannPredict_Flux( const real Flu_Array_In[][ FLU_NXT*FLU_NXT*FLU_NXT ], real Half_Flux[][3][NCOMP_TOTAL],
                                      const real Gamma, const real MinPres );
 #elif ( FLU_SCHEME == MHM )
-static void CPU_HancockPredict( real FC_Var[][6][NCOMP_TOTAL], const real dt, const real dh, const real Gamma,
-                                const real C_Var[][ FLU_NXT*FLU_NXT*FLU_NXT ], const real MinDens, const real MinPres );
+static void CPU_HancockPredict( real FC_Var[][6][NCOMP_TOTAL], const real dt, const real dh[], const real Gamma,
+                                const real C_Var[][ FLU_NXT*FLU_NXT*FLU_NXT ], const double Corner[], 
+                                const real MinDens, const real MinPres ) ;
 #endif
 
 #if (COORDINATE == CYLINDRICAL)
-extern void HancockFluxGrad( const real* & Flux, real & dFlux, real* & GeoSource,
-                             const real* & x_pos, const real* & face_pos, const int v, 
-                             const real* & dt_dh2, const real dt_2 ) ;
+extern void HancockFluxGrad( real Flux[][NCOMP_TOTAL], real* const & dFlux, real* GeoSource,
+                             const real* x_pos, const real face_pos[][2], const int v, 
+                             const real* dt_dh2, const real dt_2 ) ;
 extern void GetCoord( const double Corner[], const real dh[], const int loop_size, real x_pos[], real face_pos[][2], 
                       const int i, const int j, const int k );
 extern void GeometrySourceTerm( const real PriVar[], const real x_pos[], real GeoSource[] );
@@ -109,7 +111,7 @@ void CPU_FluidSolver_MHM( const real Flu_Array_In[][NCOMP_TOTAL][ FLU_NXT*FLU_NX
                           real Flux_Array[][9][NCOMP_TOTAL][ PS2*PS2 ],
                           const double Corner_Array[][3],
                           const real Pot_Array_USG[][USG_NXT_F][USG_NXT_F][USG_NXT_F],
-                          const int NPatchGroup, const real dt, const real dh, const real Gamma,
+                          const int NPatchGroup, const real dt, const real dh[], const real Gamma,
                           const bool StoreFlux, const LR_Limiter_t LR_Limiter, const real MinMod_Coeff,
                           const real EP_Coeff, const double Time, const OptGravityType_t GravityType,
                           const double ExtAcc_AuxArray[], const real MinDens, const real MinPres,
@@ -217,7 +219,7 @@ void CPU_FluidSolver_MHM( const real Flu_Array_In[][NCOMP_TOTAL][ FLU_NXT*FLU_NX
 
 //       (1.b-2) evaluate the face-centered values by data reconstruction
          CPU_DataReconstruction( PriVar, FC_Var, FLU_NXT, FLU_GHOST_SIZE-1, Gamma, LR_Limiter,
-                                 MinMod_Coeff, EP_Coeff, NULL_REAL, NULL_INT, MinDens, MinPres );
+                                 MinMod_Coeff, EP_Coeff, NULL_REAL, dh, Corner_Array[P], MinDens, MinPres );
 
 
 //       (1.b-3) primitive face-centered variables --> conserved face-centered variables
@@ -237,7 +239,7 @@ void CPU_FluidSolver_MHM( const real Flu_Array_In[][NCOMP_TOTAL][ FLU_NXT*FLU_NX
 
 
 //       (1.b-4) evaluate the half-step solutions
-         CPU_HancockPredict( FC_Var, dt, dh, Gamma, Flu_Array_In[P], MinDens, MinPres );
+         CPU_HancockPredict( FC_Var, dt, dh, Gamma, Flu_Array_In[P], Corner_Array[P], MinDens, MinPres );
 
 #        endif // #if ( FLU_SCHEME == MHM_RP ) ... else ...
 
@@ -247,14 +249,14 @@ void CPU_FluidSolver_MHM( const real Flu_Array_In[][NCOMP_TOTAL][ FLU_NXT*FLU_NX
          CPU_ComputeFlux( FC_Var, FC_Flux, N_FL_FLUX, 1, Gamma, CorrHalfVel_Yes, Pot_Array_USG[P][0][0], Corner_Array[P],
                           dt, dh, Time, GravityType, ExtAcc_AuxArray, MinPres );
 #        else
-         CPU_ComputeFlux( FC_Var, FC_Flux, N_FL_FLUX, 1, Gamma, CorrHalfVel_No,  NULL, NULL,
-                          NULL_REAL, NULL_REAL, NULL_REAL, GRAVITY_NONE, NULL, MinPres );
+         CPU_ComputeFlux( FC_Var, FC_Flux, N_FL_FLUX, 1, Gamma, CorrHalfVel_No,  NULL, Corner_Array[P],
+                          NULL_REAL, dh, NULL_REAL, GRAVITY_NONE, NULL, MinPres );
 #        endif
 
 
 //       3. full-step evolution
          CPU_FullStepUpdate( Flu_Array_In[P], Flu_Array_Out[P], DE_Array_Out[P],
-                             FC_Flux, dt, dh, Gamma, MinDens, MinPres, DualEnergySwitch,
+                             FC_Flux, dt, dh, Corner_Array[P], Gamma, MinDens, MinPres, DualEnergySwitch,
                              NormPassive, NNorm, NormIdx );
 
 
@@ -430,12 +432,12 @@ void CPU_RiemannPredict( const real Flu_Array_In[][ FLU_NXT*FLU_NXT*FLU_NXT ], c
 //-------------------------------------------------------------------------------------------------------
 void CPU_HancockPredict( real FC_Var[][6][NCOMP_TOTAL], const real dt, const real dh[], const real Gamma,
                          const real C_Var[][ FLU_NXT*FLU_NXT*FLU_NXT ], const double Corner[], 
-                         const real MinDens, const real MinPres,
-                         const bool JeansMinPres, const real JeansMinPres_Coeff )
+                         const real MinDens, const real MinPres )
 {
 
    const real  Gamma_m1 = Gamma - (real)1.0;
    const real _Gamma_m1 = (real)1.0 / Gamma_m1;
+   const real dt_2      = (real)0.5 * dt;
    const real dt_dh2[3] = { dt_2/dh[0], dt_2/dh[1], dt_2/dh[2] };
    const int  NGhost    = FLU_GHOST_SIZE - 1;
 
@@ -443,9 +445,6 @@ void CPU_HancockPredict( real FC_Var[][6][NCOMP_TOTAL], const real dt, const rea
    int ID1, ID2;
    
 #if (COORDINATE == CYLINDRICAL)
-   const bool NormPassice = false;
-   const int  NNorm       = 0 ;
-   const int* NormIdx     = NULL;
    real x_pos[3], face_pos[1][2], GeoSource[NCOMP_TOTAL], PriVar[NCOMP_TOTAL], ConVar[NCOMP_TOTAL] ; 
    real dF[3][NCOMP_TOTAL]; // ###
 #endif
@@ -459,9 +458,12 @@ void CPU_HancockPredict( real FC_Var[][6][NCOMP_TOTAL], const real dt, const rea
       ID2 = (k2*FLU_NXT  + j2)*FLU_NXT  + i2;
       
 #if   (COORDINATE == CYLINDRICAL)
+      const bool NormPassive_No  = false; 
+      const bool JeansMinPres_No = false;
+      
       GetCoord( Corner, dh, FLU_NXT, x_pos, face_pos, i2, j2, k2);
       for ( int v=0; v<NCOMP_TOTAL; v++ ) ConVar[v] = C_Var[v][ID2] ;
-      CPU_Con2Pri( ConVar, PriVar, Gamma_m1, MinPres, NormPassive, NNorm, NormIdx, JeansMinPres, JeansMinPres_Coeff );
+      CPU_Con2Pri( ConVar, PriVar, Gamma_m1, MinPres, NormPassive_No, NULL_INT, NULL, JeansMinPres_No, NULL_REAL );
       GeometrySourceTerm( PriVar, x_pos, GeoSource );
 #endif
 
@@ -470,8 +472,8 @@ void CPU_HancockPredict( real FC_Var[][6][NCOMP_TOTAL], const real dt, const rea
       for (int v=0; v<NCOMP_TOTAL; v++)
       {
 #if      (COORDINATE == CARTESIAN)
-         Flux[v] = (Flux[1][v] - Flux[0][v])*dt_dh2[0] + (Flux[3][v] - Flux[2][v])*dt_dh2[1]
-                 + (Flux[5][v] - Flux[4][v])*dt_dh2[2] ;
+         dFlux[v] = (Flux[1][v] - Flux[0][v])*dt_dh2[0] + (Flux[3][v] - Flux[2][v])*dt_dh2[1]
+                  + (Flux[5][v] - Flux[4][v])*dt_dh2[2] ;
 #elif    (COORDINATE == CYLINDRICAL)
          HancockFluxGrad( Flux, &dFlux[v], GeoSource, x_pos, face_pos, v, dt_dh2, dt_2 );
 #endif // (COORDINATE...)
@@ -525,9 +527,9 @@ void CPU_HancockPredict( real FC_Var[][6][NCOMP_TOTAL], const real dt, const rea
 //
 // NOTE        :  could extend to all coordinate, but be careful of face_pos[][]
 //-------------------------------------------------------------------------------------------------------
-void HancockFluxGrad( const real* & Flux, real & dFlux, real* & GeoSource,
-                      const real* & x_pos, const real* & face_pos, const int v, 
-                      const real* & dt_dh2, const real dt_2 ) {
+void HancockFluxGrad( real Flux[][NCOMP_TOTAL], real* const & dFlux, real* GeoSource,
+                      const real* x_pos, const real face_pos[][2], const int v, 
+                      const real* dt_dh2, const real dt_2 ) {
    
    const real _x1    = (real)1.0/ x_pos[0];
    const real _x1_sq = SQR(_x1) ;

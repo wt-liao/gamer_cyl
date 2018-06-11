@@ -35,7 +35,7 @@ void CPU_FluidSolver_MHM( const real Flu_Array_In[][NCOMP_TOTAL][ FLU_NXT*FLU_NX
                           real Flux_Array     [][9][NCOMP_TOTAL][ PS2*PS2 ],
                           const double Corner_Array[][3],
                           const real Pot_Array_USG[][USG_NXT_F][USG_NXT_F][USG_NXT_F],
-                          const int NPatchGroup, const real dt, const real dh, const real Gamma,
+                          const int NPatchGroup, const real dt, const real dh[], const real Gamma,
                           const bool StoreFlux, const LR_Limiter_t LR_Limiter, const real MinMod_Coeff,
                           const real EP_Coeff, const double Time, const OptGravityType_t GravityType,
                           const double ExtAcc_AuxArray[], const real MinDens, const real MinPres,
@@ -200,7 +200,7 @@ void CPU_FluidSolver( real h_Flu_Array_In [][FLU_NIN    ][ FLU_NXT*FLU_NXT*FLU_N
 
 //###: COORD-FIX: input dh instead of dh[0]
       CPU_FluidSolver_MHM ( h_Flu_Array_In, h_Flu_Array_Out, h_DE_Array_Out, h_Flux_Array, h_Corner_Array, h_Pot_Array_USG,
-                            NPatchGroup, dt, dh[0], Gamma, StoreFlux, LR_Limiter, MinMod_Coeff, EP_Coeff, Time,
+                            NPatchGroup, dt, dh, Gamma, StoreFlux, LR_Limiter, MinMod_Coeff, EP_Coeff, Time,
                             GravityType, ExtAcc_AuxArray, MinDens, MinPres, DualEnergySwitch, NormPassive, NNorm, NormIdx,
                             JeansMinPres, JeansMinPres_Coeff );
 
