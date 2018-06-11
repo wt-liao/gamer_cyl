@@ -51,7 +51,7 @@ void CPU_dtSolver_HydroCFL( real dt_Array[], const real Flu_Array[][NCOMP_FLUID]
       for (int i=0; i<PS1; i++) 
       {
          ID = (k*PS1 +j)*PS1 +i;
-         for (int v=0; v<NCOMP_FLUID; v++)   fluid[v] = Flu_Array[p][v][t];
+         for (int v=0; v<NCOMP_FLUID; v++)   fluid[v] = Flu_Array[p][v][ID];
          
 #        if ( COORDINATE == CYLINDRICAL )
          const real radius = Corner_Array[p][0] + i*dh[0] ;
