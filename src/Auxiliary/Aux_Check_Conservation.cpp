@@ -1,3 +1,4 @@
+#include "Copyright.h"
 #include "GAMER.h"
 
 #if ( MODEL == MHD )
@@ -80,6 +81,9 @@ void Aux_Check_Conservation( const char *comment )
 #  else
 #  error : ERROR : unsupported MODEL !!
 #  endif
+   
+   // for the convenience of curvilinear coordinate
+   double geo_momY = 1.0;
 
 
 // NCOMP_PASSIVE + 1: individual passive scalars and the sum of scalars to be normalized
@@ -96,7 +100,6 @@ void Aux_Check_Conservation( const char *comment )
 // initialize accumulative variables as zero
    for (int v=0; v<NVar; v++)    Fluid_ThisRank[v] = 0.0;
 
-
 // loop over all levels
    for (int lv=0; lv<NLEVEL; lv++)
    {
@@ -110,7 +113,6 @@ void Aux_Check_Conservation( const char *comment )
 #     if ( MODEL == ELBDM )
       for (int d=0; d<3; d++)    _dh2[d] = 0.5/amr->dh[lv][d];
 #     endif
-
 
       for (int PID0=0; PID0<amr->NPatchComma[lv][1]; PID0+=8)
       {
@@ -128,7 +130,7 @@ void Aux_Check_Conservation( const char *comment )
 #           if ( MODEL == ELBDM )
             const int t = PID - PID0;
 #           endif
-
+                        
 //          only check the leaf patches
             if ( amr->patch[0][lv][PID]->son == -1 )
             {
@@ -137,6 +139,10 @@ void Aux_Check_Conservation( const char *comment )
                for (int i=0; i<PATCH_SIZE; i++)
                {
                   const double dv = Aux_Coord_CellIdx2Volume( lv, PID, i, j, k );
+#                 if ( COORDINATE == CYLINDRICAL ) 
+                  const double radius = Aux_Coord_CellIdx2AdoptedCoord( lv, PID, 0, i ) ;
+                  geo_momY = radius ;
+#                 endif
 
 #                 if   ( MODEL == HYDRO )
 
@@ -147,7 +153,7 @@ void Aux_Check_Conservation( const char *comment )
 
                   Fluid_lv[0] += dv*amr->patch[FluSg][lv][PID]->fluid[DENS][k][j][i];
                   Fluid_lv[1] += dv*amr->patch[FluSg][lv][PID]->fluid[MOMX][k][j][i];
-                  Fluid_lv[2] += dv*amr->patch[FluSg][lv][PID]->fluid[MOMY][k][j][i];
+                  Fluid_lv[2] += dv*amr->patch[FluSg][lv][PID]->fluid[MOMY][k][j][i] * geo_momY;
                   Fluid_lv[3] += dv*amr->patch[FluSg][lv][PID]->fluid[MOMZ][k][j][i];
 
                   Ekin         = 0.5*( SQR(amr->patch[FluSg][lv][PID]->fluid[MOMX][k][j][i])
