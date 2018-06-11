@@ -52,12 +52,12 @@ void Validate()
          !Mis_CompareRealValue( amr->dh[0][0], amr->dh[0][2], NULL, false )    )
       Aux_Error( ERROR_INFO, "only work with cubic cells --> dh[lv=0] = (%20.14e, %20.14e, %20.14e) !!\n",
                  amr->dh[0][0], amr->dh[0][1], amr->dh[0][2] );
-#  else
-      Aux_Error( ERROR_INFO, "only work with the Cartesian coordinates !!\n" );
 #  endif
 
+#  if (COORDINATE == CARTESIAN)
    if ( !OPT__INIT_RESTRICT )
       Aux_Error( ERROR_INFO, "OPT__INIT_RESTRICT must be enabled !!\n" );
+#  endif
 
 
    if ( MPI_Rank == 0 )    Aux_Message( stdout, "   Validating test problem %d ... done\n", TESTPROB_ID );
@@ -180,7 +180,19 @@ void SetGridIC( real fluid[], const double x, const double y, const double z, co
 {
 
    const double Blast_Engy_Exp_Density = Blast_Engy_Exp/(4.0*M_PI/3.0*Blast_Radius*Blast_Radius*Blast_Radius);
+   
+#  if ( COORDINATE == CARTESIAN )
    const double r = SQRT( SQR(x-Blast_Center[0]) + SQR(y-Blast_Center[1]) + SQR(z-Blast_Center[2]) );
+#  elif ( COORDINATE == CYLINDRICAL )
+   const double x1 = x * COS(y) ;
+   const double x2 = x * SIN(y) ;
+   const double x3 = z ;
+   const double Blast_C1 = Blast_Center[0] * COS(Blast_Center[1]);
+   const double Blast_C2 = Blast_Center[0] * SIN(Blast_Center[1]);
+   const double Blast_C3 = Blast_Center[2];
+   
+   const double r = SQRT( SQR(x1-Blast_C1) + SQR(x2-Blast_C2) + SQR(x3-Blast_C3) );
+#  endif
 
    fluid[DENS] = Blast_Dens_Bg;
    fluid[MOMX] = 0.0;
