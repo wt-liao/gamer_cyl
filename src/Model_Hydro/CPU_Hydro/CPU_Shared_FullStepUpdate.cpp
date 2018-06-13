@@ -60,7 +60,9 @@ void CPU_FullStepUpdate( const real Input[][ FLU_NXT*FLU_NXT*FLU_NXT ], real Out
    const real dt_2      = (real)0.5 * dt ;
    const real dt_dh2[3] = {dt_2/dh[0], dt_2/dh[1], dt_2/dh[2]};
    real x_pos[3], face_pos[1][2], GeoSource[NCOMP_TOTAL] ;
+#  ifndef DUAL_ENERGY
    const real  Gamma_m1 = Gamma - (real)1.0; //### this has already been declared in DUAL_ENERGY
+#  endif
 #  endif
 
 #  if ( NCOMP_PASSIVE > 0 )
