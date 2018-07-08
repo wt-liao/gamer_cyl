@@ -42,19 +42,28 @@ extern real CPU_CheckMinPres( const real InPres, const real MinPres );
 #if   ( FLU_SCHEME == MHM_RP )
 static void CPU_RiemannPredict( const real Flu_Array_In[][ FLU_NXT*FLU_NXT*FLU_NXT ],
                                 const real Half_Flux[][3][NCOMP_TOTAL], real Half_Var[][NCOMP_TOTAL], const real dt,
-                                const real dh, const real Gamma, const real MinDens, const real MinPres );
+                                const real dh[], const real Gamma, const real MinDens, const real MinPres, 
+                                const double Corner[] );
 static void CPU_RiemannPredict_Flux( const real Flu_Array_In[][ FLU_NXT*FLU_NXT*FLU_NXT ], real Half_Flux[][3][NCOMP_TOTAL],
                                      const real Gamma, const real MinPres );
+#if (COORDINATE == CYLINDRICAL)
+static void RiemannFluxGrad( const real Flux_R, const real Flux_L, real* const & dF, const int d, const int v,
+                             const real* x_pos, const real face_pos[][2] ) ;
+#endif   // COORDINATE == CYLINDRICAL
+                             
 #elif ( FLU_SCHEME == MHM )
 static void CPU_HancockPredict( real FC_Var[][6][NCOMP_TOTAL], const real dt, const real dh[], const real Gamma,
                                 const real C_Var[][ FLU_NXT*FLU_NXT*FLU_NXT ], const double Corner[], 
                                 const real MinDens, const real MinPres ) ;
-#endif
-
 #if (COORDINATE == CYLINDRICAL)
 extern void HancockFluxGrad( real Flux[][NCOMP_TOTAL], real* const & dFlux, real* GeoSource,
                              const real* x_pos, const real face_pos[][2], const int v, 
-                             const real* dt_dh2, const real dt_2 ) ;
+                             const real* dt_dh2, const real dt_2 ) ;                              
+#endif // COORDINATE == CYLINDRICAL
+#endif
+
+
+#if (COORDINATE == CYLINDRICAL)
 extern void GetCoord( const double Corner[], const real dh[], const int loop_size, real x_pos[], real face_pos[][2], 
                       const int i, const int j, const int k );
 extern void GeometrySourceTerm( const real PriVar[], const real x_pos[], real GeoSource[] );
@@ -164,7 +173,7 @@ void CPU_FluidSolver_MHM( const real Flu_Array_In[][NCOMP_TOTAL][ FLU_NXT*FLU_NX
 
 
 //       (1.a-2) evaluate the half-step solutions
-         CPU_RiemannPredict( Flu_Array_In[P], Half_Flux, Half_Var, dt, dh, Gamma, MinDens, MinPres );
+         CPU_RiemannPredict( Flu_Array_In[P], Half_Flux, Half_Var, dt, dh, Gamma, MinDens, MinPres, Corner_Array[P] );
 
 
 //       (1.a-3) conserved variables --> primitive variables
@@ -183,7 +192,7 @@ void CPU_FluidSolver_MHM( const real Flu_Array_In[][NCOMP_TOTAL][ FLU_NXT*FLU_NX
 
 //       (1.a-4) evaluate the face-centered values by data reconstruction
          CPU_DataReconstruction( Half_Var, FC_Var, N_HF_VAR, FLU_GHOST_SIZE-2, Gamma, LR_Limiter,
-                                 MinMod_Coeff, EP_Coeff, NULL_REAL, NULL_INT, MinDens, MinPres );
+                                 MinMod_Coeff, EP_Coeff, NULL_REAL, dh, Corner_Array[P], MinDens, MinPres );
 
 
 //       (1.a-5) primitive face-centered variables --> conserved face-centered variables
@@ -370,17 +379,22 @@ void CPU_RiemannPredict_Flux( const real Flu_Array_In[][ FLU_NXT*FLU_NXT*FLU_NXT
 //                MinDens/Pres : Minimum allowed density and pressure
 //-------------------------------------------------------------------------------------------------------
 void CPU_RiemannPredict( const real Flu_Array_In[][ FLU_NXT*FLU_NXT*FLU_NXT ], const real Half_Flux[][3][NCOMP_TOTAL],
-                         real Half_Var[][NCOMP_TOTAL], const real dt, const real dh, const real Gamma,
-                         const real MinDens, const real MinPres )
+                         real Half_Var[][NCOMP_TOTAL], const real dt, const real dh[], const real Gamma,
+                         const real MinDens, const real MinPres, const double Corner[] )
 {
 
    const int  dID3[3]   = { 1, N_HF_FLUX, N_HF_FLUX*N_HF_FLUX };
-   const real dt_dh2    = (real)0.5*dt/dh;
+   const real dt_2      = (real)0.5 * dt;
+   const real dt_dh2[3] = { dt_2/dh[0], dt_2/dh[1], dt_2/dh[2] };
    const real  Gamma_m1 = Gamma - (real)1.0;
    const real _Gamma_m1 = (real)1.0 / Gamma_m1;
 
    real dF[3][NCOMP_TOTAL];
    int ID1, ID2, ID3;
+   
+#  if (COORDINATE == CYLINDRICAL)
+   real x_pos[3], face_pos[1][2], GeoSource[NCOMP_TOTAL], PriVar[NCOMP_TOTAL], ConVar[NCOMP_TOTAL] ; 
+#  endif
 
 
    for (int k1=0, k2=1;  k1<N_HF_VAR;  k1++, k2++)
@@ -390,12 +404,34 @@ void CPU_RiemannPredict( const real Flu_Array_In[][ FLU_NXT*FLU_NXT*FLU_NXT ], c
       ID1 = (k1*N_HF_VAR  + j1)*N_HF_VAR  + i1;
       ID2 = (k2*FLU_NXT   + j2)*FLU_NXT   + i2;
       ID3 = (k1*N_HF_FLUX + j1)*N_HF_FLUX + i1;
+      
+#if   (COORDINATE == CYLINDRICAL)
+      const bool NormPassive_No  = false; 
+      const bool JeansMinPres_No = false;
+      
+      GetCoord( Corner, dh, FLU_NXT, x_pos, face_pos, i2, j2, k2);
+      for ( int v=0; v<NCOMP_TOTAL; v++ ) ConVar[v] = Flu_Array_In[v][ID2] ;
+      CPU_Con2Pri( ConVar, PriVar, Gamma_m1, MinPres, NormPassive_No, NULL_INT, NULL, JeansMinPres_No, NULL_REAL );
+      GeometrySourceTerm( PriVar, x_pos, GeoSource );
+#endif
 
-      for (int d=0; d<3; d++)
-      for (int v=0; v<NCOMP_TOTAL; v++)    dF[d][v] = Half_Flux[ ID3+dID3[d] ][d][v] - Half_Flux[ID3][d][v];
+      for (int d=0; d<3; d++) {
+      for (int v=0; v<NCOMP_TOTAL; v++) {    
+#        if (COORDINATE == CARTESIAN)
+         dF[d][v] = Half_Flux[ ID3+dID3[d] ][d][v] - Half_Flux[ID3][d][v];
+#        elif (COORDINATE == CYLINDRICAL)
+         RiemannFluxGrad(Half_Flux[ ID3+dID3[d] ][d][v], Half_Flux[ID3][d][v], &(dF[d][v]), d, v, x_pos, face_pos) ;
+#        endif
+         
+      }}
 
-      for (int v=0; v<NCOMP_TOTAL; v++)
-         Half_Var[ID1][v] = Flu_Array_In[v][ID2] - dt_dh2*( dF[0][v] + dF[1][v] + dF[2][v] );
+      for (int v=0; v<NCOMP_TOTAL; v++) {
+         Half_Var[ID1][v] = Flu_Array_In[v][ID2] - ( dF[0][v]*dt_dh2[0] + dF[1][v]*dt_dh2[1] + dF[2][v]*dt_dh2[2] );
+#        if (COORDINATE == CYLINDRICAL)
+         Half_Var[ID1][v] += GeoSource[v]*dt_2 ;
+#        endif
+      }
+      
 
 //    ensure positive density and pressure
       Half_Var[ID1][0] = FMAX( Half_Var[ID1][0], MinDens );
@@ -408,6 +444,42 @@ void CPU_RiemannPredict( const real Flu_Array_In[][ FLU_NXT*FLU_NXT*FLU_NXT ], c
    } // i,j,k
 
 } // FUNCTION : CPU_RiemannPredict
+
+
+#if (COORDINATE == CYLINDRICAL)
+//-------------------------------------------------------------------------------------------------------
+// Function    :  RiemannFluxGrad
+// Description :  get transverse flux gradient and source term for one cell 
+//
+// Parameter   :  Flux         : 
+//                dF           : 
+//                GeoSource    :
+//                x_pos        : xyz position of the cell
+//                face_pos     : xyz position of cell faces
+//                v            : from 0 - (NCOMP_TOTAL-1)
+//
+// NOTE        :  could extend to all coordinate, but be careful of face_pos[][]
+//-------------------------------------------------------------------------------------------------------
+void RiemannFluxGrad( const real Flux_R, const real Flux_L, real* const & dF, const int d, const int v,
+                      const real* x_pos, const real face_pos[][2] ) {
+   
+   const real _x1    = (real)1.0/ x_pos[0];
+   const real _x1_sq = SQR(_x1) ;
+   
+   if ( v == MOMY ) {
+      if      ( d==0 ) *dF = (SQR(face_pos[0][1])*Flux_R - SQR(face_pos[0][0])*Flux_L) * _x1_sq ;
+      else if ( d==1 ) *dF = (Flux_R - Flux_L) * _x1 ;
+      else if ( d==2 ) *dF = Flux_R - Flux_L ; ;
+   }  
+   else {
+      if      ( d==0 ) *dF = (face_pos[0][1]*Flux_R - face_pos[0][0]*Flux_L) * _x1 ;
+      else if ( d==1 ) *dF = (Flux_R - Flux_L) * _x1 ;
+      else if ( d==2 ) *dF = Flux_R - Flux_L ; ;
+   }   
+   
+} // FUNCTION: RiemannFluxGrad
+#endif // COORDINATE == CYLINDRICAL
+
 #endif // #if ( FLU_SCHEME == MHM_RP )
 
 
@@ -446,7 +518,7 @@ void CPU_HancockPredict( real FC_Var[][6][NCOMP_TOTAL], const real dt, const rea
    
 #if (COORDINATE == CYLINDRICAL)
    real x_pos[3], face_pos[1][2], GeoSource[NCOMP_TOTAL], PriVar[NCOMP_TOTAL], ConVar[NCOMP_TOTAL] ; 
-   real dF[3][NCOMP_TOTAL]; // ###
+   real dF[3][NCOMP_TOTAL]; // ### don't need anymore
 #endif
 
 
