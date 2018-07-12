@@ -35,7 +35,7 @@ void CPU_HydroGravitySolver(       real Flu_Array_New[][GRA_NIN][PS1][PS1][PS1],
                              const real Pot_Array_USG[][USG_NXT_G][USG_NXT_G][USG_NXT_G],
                              const real Flu_Array_USG[][GRA_NIN-1][PS1][PS1][PS1],
                                    char DE_Array[][PS1][PS1][PS1],
-                             const int NPatchGroup, const real dt, const real dh, const bool P5_Gradient,
+                             const int NPatchGroup, const real dt, const real dh[], const bool P5_Gradient,
                              const OptGravityType_t GravityType, const double ExtAcc_AuxArray[],
                              const double TimeNew, const double TimeOld, const real MinEint );
 
@@ -148,7 +148,7 @@ void CPU_PoissonGravitySolver( const real h_Rho_Array    [][RHO_NXT][RHO_NXT][RH
       Aux_Error( ERROR_INFO, "currently the Cartesian coordinates only work with cubic cells --> dh = (%20.14e, %20.14e, %20.14e) !!\n",
                  dh[0], dh[1], dh[2] );
 #  else
-   Aux_Error( ERROR_INFO, "non-Cartesian coordinates do not support %s() yet !!\n", __FUNCTION__ );
+   //Aux_Error( ERROR_INFO, "non-Cartesian coordinates do not support %s() yet !!\n", __FUNCTION__ );
 #  endif
 
 
@@ -183,7 +183,7 @@ void CPU_PoissonGravitySolver( const real h_Rho_Array    [][RHO_NXT][RHO_NXT][RH
 #     if   ( MODEL == HYDRO )
 //###: COORD-FIX: use dh instead of dh[0]
       CPU_HydroGravitySolver( h_Flu_Array, h_Pot_Array_Out, h_Corner_Array, h_Pot_Array_USG, h_Flu_Array_USG, h_DE_Array,
-                              NPatchGroup, dt, dh[0], P5_Gradient, GravityType, ExtAcc_AuxArray, TimeNew, TimeOld, MinEint );
+                              NPatchGroup, dt, dh, P5_Gradient, GravityType, ExtAcc_AuxArray, TimeNew, TimeOld, MinEint );
 
 #     elif ( MODEL == MHD )
 #     error : WAIT MHD !!!

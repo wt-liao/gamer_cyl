@@ -17,7 +17,7 @@ void CPU_dtSolver_HydroCFL( real dt_Array[], const real Flu_Array[][NCOMP_FLUID]
 void CPU_dtSolver_HydroGravity( real dt_Array[],
                                 const real Pot_Array[][ CUBE(GRA_NXT) ],
                                 const double Corner_Array[][3],
-                                const int NPatchGroup, const real dh, const real Safety, const bool P5_Gradient,
+                                const int NPatchGroup, const real dh[], const real Safety, const bool P5_Gradient,
                                 const OptGravityType_t GravityType, const double ExtAcc_AuxArray[],
                                 const double ExtAcc_Time );
 #endif
@@ -86,7 +86,7 @@ void CPU_dtSolver( const Solver_t TSolver, real dt_Array[], const real Flu_Array
 #     ifdef GRAVITY
 //###: COORD-FIX: use dh instead of dh[0]
       case DT_GRA_SOLVER:
-         CPU_dtSolver_HydroGravity( dt_Array, Pot_Array, Corner_Array, NPatchGroup, dh[0], Safety, P5_Gradient,
+         CPU_dtSolver_HydroGravity( dt_Array, Pot_Array, Corner_Array, NPatchGroup, dh, Safety, P5_Gradient,
                                     GravityType, ExtAcc_AuxArray, TargetTime );
       break;
 #     endif

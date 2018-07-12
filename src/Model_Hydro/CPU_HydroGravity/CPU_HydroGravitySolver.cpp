@@ -40,7 +40,7 @@ void CPU_HydroGravitySolver(       real Flu_Array_New[][GRA_NIN][PS1][PS1][PS1],
                              const real Pot_Array_USG[][USG_NXT_G][USG_NXT_G][USG_NXT_G],
                              const real Flu_Array_USG[][GRA_NIN-1][PS1][PS1][PS1],
                                    char DE_Array[][PS1][PS1][PS1],
-                             const int NPatchGroup, const real dt, const real dh, const bool P5_Gradient,
+                             const int NPatchGroup, const real dt, const real dh[], const bool P5_Gradient,
                              const OptGravityType_t GravityType, const double ExtAcc_AuxArray[],
                              const double TimeNew, const double TimeOld, const real MinEint )
 {
@@ -68,9 +68,13 @@ void CPU_HydroGravitySolver(       real Flu_Array_New[][GRA_NIN][PS1][PS1][PS1],
 #  endif // #ifdef GAMER_DEBUG
 
 
-   const int  NPatch    = NPatchGroup*8;
-   const real Gra_Const = ( P5_Gradient ) ? -dt/(12.0*dh) : -dt/(2.0*dh);
-   const real Const_8   = (real)8.0;
+   const int  NPatch       = NPatchGroup*8;
+   const real Const_8      = (real)8.0;
+   
+   real Gra_Const[3] ;     // ### this should be const real ...
+   if (P5_Gradient)  for (int d=0; d<3; d++) Gra_Const[d] = -dt*dh[d]/12.0 ; 
+   else              for (int d=0; d<3; d++) Gra_Const[d] = -dt*dh[d]/2.0  ; 
+
 
 #  ifdef UNSPLIT_GRAVITY
    real AccNew[3], AccOld[3], PxNew, PxOld, PyNew, PyOld, PzNew, PzOld, RhoNew, RhoOld;
@@ -79,6 +83,11 @@ void CPU_HydroGravitySolver(       real Flu_Array_New[][GRA_NIN][PS1][PS1][PS1],
 #  endif
    real Eint_in, Ek_out, _Rho2;
    double x, y, z;
+   
+   real geo_factor = (real) 1.0 ;
+#  if (COORDINATE == CYLINDRICAL)
+   real radius ;
+#  endif
 
 
 // loop over all patches
@@ -110,13 +119,18 @@ void CPU_HydroGravitySolver(       real Flu_Array_New[][GRA_NIN][PS1][PS1][PS1],
          AccOld[1] = (real)0.0;
          AccOld[2] = (real)0.0;
 #        endif
+         
+#        if (COORDINATE == CYLINDRICAL)
+         radius     = Corner_Array[P][0] + (double)(ii*dh[0]);
+         geo_factor = (real)1.0 / radius; 
+#        endif
 
 //       external gravity
          if ( GravityType == GRAVITY_EXTERNAL  ||  GravityType == GRAVITY_BOTH )
          {
-            z = Corner_Array[P][2] + (double)(kk*dh);
-            y = Corner_Array[P][1] + (double)(jj*dh);
-            x = Corner_Array[P][0] + (double)(ii*dh);
+            z = Corner_Array[P][2] + (double)(kk*dh[2]);
+            y = Corner_Array[P][1] + (double)(jj*dh[1]);
+            x = Corner_Array[P][0] + (double)(ii*dh[0]);
 
             CPU_ExternalAcc( AccNew, x, y, z, TimeNew, ExtAcc_AuxArray );
             for (int d=0; d<3; d++)    AccNew[d] *= dt;
@@ -133,33 +147,33 @@ void CPU_HydroGravitySolver(       real Flu_Array_New[][GRA_NIN][PS1][PS1][PS1],
          {
             if ( P5_Gradient )
             {
-               AccNew[0] += Gra_Const * ( -         Pot_Array_New[P][k1  ][j1  ][i1+2] +         Pot_Array_New[P][k1  ][j1  ][i1-2]
-                                          + Const_8*Pot_Array_New[P][k1  ][j1  ][i1+1] - Const_8*Pot_Array_New[P][k1  ][j1  ][i1-1] );
-               AccNew[1] += Gra_Const * ( -         Pot_Array_New[P][k1  ][j1+2][i1  ] +         Pot_Array_New[P][k1  ][j1-2][i1  ]
-                                          + Const_8*Pot_Array_New[P][k1  ][j1+1][i1  ] - Const_8*Pot_Array_New[P][k1  ][j1-1][i1  ] );
-               AccNew[2] += Gra_Const * ( -         Pot_Array_New[P][k1+2][j1  ][i1  ] +         Pot_Array_New[P][k1-2][j1  ][i1  ]
-                                          + Const_8*Pot_Array_New[P][k1+1][j1  ][i1  ] - Const_8*Pot_Array_New[P][k1-1][j1  ][i1  ] );
+               AccNew[0] += Gra_Const[0] * ( -         Pot_Array_New[P][k1  ][j1  ][i1+2] +         Pot_Array_New[P][k1  ][j1  ][i1-2]
+                                             + Const_8*Pot_Array_New[P][k1  ][j1  ][i1+1] - Const_8*Pot_Array_New[P][k1  ][j1  ][i1-1] );
+               AccNew[1] += Gra_Const[1] * ( -         Pot_Array_New[P][k1  ][j1+2][i1  ] +         Pot_Array_New[P][k1  ][j1-2][i1  ]
+                                             + Const_8*Pot_Array_New[P][k1  ][j1+1][i1  ] - Const_8*Pot_Array_New[P][k1  ][j1-1][i1  ] ) * geo_factor;
+               AccNew[2] += Gra_Const[2] * ( -         Pot_Array_New[P][k1+2][j1  ][i1  ] +         Pot_Array_New[P][k1-2][j1  ][i1  ]
+                                             + Const_8*Pot_Array_New[P][k1+1][j1  ][i1  ] - Const_8*Pot_Array_New[P][k1-1][j1  ][i1  ] );
 
 #              ifdef UNSPLIT_GRAVITY
-               AccOld[0] += Gra_Const * ( -         Pot_Array_USG[P][k2  ][j2  ][i2+2] +         Pot_Array_USG[P][k2  ][j2  ][i2-2]
-                                          + Const_8*Pot_Array_USG[P][k2  ][j2  ][i2+1] - Const_8*Pot_Array_USG[P][k2  ][j2  ][i2-1] );
-               AccOld[1] += Gra_Const * ( -         Pot_Array_USG[P][k2  ][j2+2][i2  ] +         Pot_Array_USG[P][k2  ][j2-2][i2  ]
-                                          + Const_8*Pot_Array_USG[P][k2  ][j2+1][i2  ] - Const_8*Pot_Array_USG[P][k2  ][j2-1][i2  ] );
-               AccOld[2] += Gra_Const * ( -         Pot_Array_USG[P][k2+2][j2  ][i2  ] +         Pot_Array_USG[P][k2-2][j2  ][i2  ]
-                                          + Const_8*Pot_Array_USG[P][k2+1][j2  ][i2  ] - Const_8*Pot_Array_USG[P][k2-1][j2  ][i2  ] );
+               AccOld[0] += Gra_Const[0] * ( -         Pot_Array_USG[P][k2  ][j2  ][i2+2] +         Pot_Array_USG[P][k2  ][j2  ][i2-2]
+                                             + Const_8*Pot_Array_USG[P][k2  ][j2  ][i2+1] - Const_8*Pot_Array_USG[P][k2  ][j2  ][i2-1] );
+               AccOld[1] += Gra_Const[1] * ( -         Pot_Array_USG[P][k2  ][j2+2][i2  ] +         Pot_Array_USG[P][k2  ][j2-2][i2  ]
+                                             + Const_8*Pot_Array_USG[P][k2  ][j2+1][i2  ] - Const_8*Pot_Array_USG[P][k2  ][j2-1][i2  ] ) * geo_factor;
+               AccOld[2] += Gra_Const[2] * ( -         Pot_Array_USG[P][k2+2][j2  ][i2  ] +         Pot_Array_USG[P][k2-2][j2  ][i2  ]
+                                             + Const_8*Pot_Array_USG[P][k2+1][j2  ][i2  ] - Const_8*Pot_Array_USG[P][k2-1][j2  ][i2  ] );
 #              endif
             }
 
             else
             {
-               AccNew[0] += Gra_Const * ( Pot_Array_New[P][k1  ][j1  ][i1+1] - Pot_Array_New[P][k1  ][j1  ][i1-1] );
-               AccNew[1] += Gra_Const * ( Pot_Array_New[P][k1  ][j1+1][i1  ] - Pot_Array_New[P][k1  ][j1-1][i1  ] );
-               AccNew[2] += Gra_Const * ( Pot_Array_New[P][k1+1][j1  ][i1  ] - Pot_Array_New[P][k1-1][j1  ][i1  ] );
+               AccNew[0] += Gra_Const[0] * ( Pot_Array_New[P][k1  ][j1  ][i1+1] - Pot_Array_New[P][k1  ][j1  ][i1-1] );
+               AccNew[1] += Gra_Const[1] * ( Pot_Array_New[P][k1  ][j1+1][i1  ] - Pot_Array_New[P][k1  ][j1-1][i1  ] ) * geo_factor;
+               AccNew[2] += Gra_Const[2] * ( Pot_Array_New[P][k1+1][j1  ][i1  ] - Pot_Array_New[P][k1-1][j1  ][i1  ] );
 
 #              ifdef UNSPLIT_GRAVITY
-               AccOld[0] += Gra_Const * ( Pot_Array_USG[P][k2  ][j2  ][i2+1] - Pot_Array_USG[P][k2  ][j2  ][i2-1] );
-               AccOld[1] += Gra_Const * ( Pot_Array_USG[P][k2  ][j2+1][i2  ] - Pot_Array_USG[P][k2  ][j2-1][i2  ] );
-               AccOld[2] += Gra_Const * ( Pot_Array_USG[P][k2+1][j2  ][i2  ] - Pot_Array_USG[P][k2-1][j2  ][i2  ] );
+               AccOld[0] += Gra_Const[0] * ( Pot_Array_USG[P][k2  ][j2  ][i2+1] - Pot_Array_USG[P][k2  ][j2  ][i2-1] );
+               AccOld[1] += Gra_Const[1] * ( Pot_Array_USG[P][k2  ][j2+1][i2  ] - Pot_Array_USG[P][k2  ][j2-1][i2  ] ) * geo_factor;
+               AccOld[2] += Gra_Const[2] * ( Pot_Array_USG[P][k2+1][j2  ][i2  ] - Pot_Array_USG[P][k2-1][j2  ][i2  ] );
 #              endif
             }
          } // if ( GravityType == GRAVITY_SELF  ||  GravityType == GRAVITY_BOTH )

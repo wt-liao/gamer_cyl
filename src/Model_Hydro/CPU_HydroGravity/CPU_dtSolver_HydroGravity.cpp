@@ -33,7 +33,7 @@
 void CPU_dtSolver_HydroGravity( real dt_Array[],
                                 const real Pot_Array[][ CUBE(GRA_NXT) ],
                                 const double Corner_Array[][3],
-                                const int NPatchGroup, const real dh, const real Safety, const bool P5_Gradient,
+                                const int NPatchGroup, const real dh[], const real Safety, const bool P5_Gradient,
                                 const OptGravityType_t GravityType, const double ExtAcc_AuxArray[],
                                 const double ExtAcc_Time )
 {
@@ -45,22 +45,32 @@ void CPU_dtSolver_HydroGravity( real dt_Array[],
 #  endif // #ifdef GAMER_DEBUG
 
 
-   const int  NPatch    = NPatchGroup*8;
-   const real Gra_Const = ( P5_Gradient ) ? (real)-1.0/((real)12.0*dh) : (real)-1.0/((real)2.0*dh);
-   const real Const_8   = (real)8.0;
-   const int  did1[3]   = { 1, GRA_NXT, SQR(GRA_NXT) };
-   const int  did2[3]   = { 2*did1[0], 2*did1[1], 2*did1[2] };
+   const int  NPatch       = NPatchGroup*8;
+   const real Const_8      = (real)8.0;
+   const int  did1[3]      = { 1, GRA_NXT, SQR(GRA_NXT) };
+   const int  did2[3]      = { 2*did1[0], 2*did1[1], 2*did1[2] };
+   
+   real Gra_Const[3] ;     // ### this should be const real ...
+   if (P5_Gradient)  for (int d=0; d<3; d++) Gra_Const[d] = -dh[d]/12.0 ; 
+   else              for (int d=0; d<3; d++) Gra_Const[d] = -dh[d]/2.0  ; 
 
-   real   Acc[3], AccMax;
+   real   Acc[3], dx_Acc_Min;
    double x, y, z;
    int    id;
+   
+   real dx[3] = {dh[0], dh[1], dh[2]} ;
+   real geo_factor = (real) 1.0 ;
+   
+#  if (COORDINATE == CYLINDRICAL)
+   real radius ;
+#  endif
 
 
 // loop over all patches
-#  pragma omp parallel for private( Acc, AccMax, x, y, z, id ) schedule( runtime )
+#  pragma omp parallel for private( Acc, dx_Acc_Min, x, y, z, id ) schedule( runtime )
    for (int P=0; P<NPatch; P++)
    {
-      AccMax = (real)0.0;
+      dx_Acc_Min = HUGE_NUMBER;
 
       for (int k=GRA_GHOST_SIZE, kk=0; k<GRA_NXT-GRA_GHOST_SIZE; k++, kk++)
       for (int j=GRA_GHOST_SIZE, jj=0; j<GRA_NXT-GRA_GHOST_SIZE; j++, jj++)
@@ -70,13 +80,19 @@ void CPU_dtSolver_HydroGravity( real dt_Array[],
          Acc[0] = (real)0.0;
          Acc[1] = (real)0.0;
          Acc[2] = (real)0.0;
+         
+#        if (COORDINATE == CYLINDRICAL)
+         radius     = Corner_Array[P][0] + (double)(ii*dh[0]);
+         geo_factor = (real)1.0 / radius; 
+         dx[1]      = radius * dh[1] ;
+#        endif
 
 //       external gravity
          if ( GravityType == GRAVITY_EXTERNAL  ||  GravityType == GRAVITY_BOTH )
          {
-            x = Corner_Array[P][0] + (double)ii*dh;
-            y = Corner_Array[P][1] + (double)jj*dh;
-            z = Corner_Array[P][2] + (double)kk*dh;
+            x = Corner_Array[P][0] + (double)ii*dh[0];
+            y = Corner_Array[P][1] + (double)jj*dh[1];
+            z = Corner_Array[P][2] + (double)kk*dh[2];
 
             CPU_ExternalAcc( Acc, x, y, z, ExtAcc_Time, ExtAcc_AuxArray );
          }
@@ -86,28 +102,28 @@ void CPU_dtSolver_HydroGravity( real dt_Array[],
          {
             if ( P5_Gradient )
             {
-               Acc[0] += Gra_Const * ( -         Pot_Array[P][ id + did2[0] ] +         Pot_Array[P][ id - did2[0] ]
-                                       + Const_8*Pot_Array[P][ id + did1[0] ] - Const_8*Pot_Array[P][ id - did1[0] ] );
-               Acc[1] += Gra_Const * ( -         Pot_Array[P][ id + did2[1] ] +         Pot_Array[P][ id - did2[1] ]
-                                       + Const_8*Pot_Array[P][ id + did1[1] ] - Const_8*Pot_Array[P][ id - did1[1] ] );
-               Acc[2] += Gra_Const * ( -         Pot_Array[P][ id + did2[2] ] +         Pot_Array[P][ id - did2[2] ]
-                                       + Const_8*Pot_Array[P][ id + did1[2] ] - Const_8*Pot_Array[P][ id - did1[2] ] );
+               Acc[0] += Gra_Const[0] * ( -         Pot_Array[P][ id + did2[0] ] +         Pot_Array[P][ id - did2[0] ]
+                                          + Const_8*Pot_Array[P][ id + did1[0] ] - Const_8*Pot_Array[P][ id - did1[0] ] );
+               Acc[1] += Gra_Const[1] * ( -         Pot_Array[P][ id + did2[1] ] +         Pot_Array[P][ id - did2[1] ]
+                                          + Const_8*Pot_Array[P][ id + did1[1] ] - Const_8*Pot_Array[P][ id - did1[1] ] ) * geo_factor;
+               Acc[2] += Gra_Const[2] * ( -         Pot_Array[P][ id + did2[2] ] +         Pot_Array[P][ id - did2[2] ] 
+                                          + Const_8*Pot_Array[P][ id + did1[2] ] - Const_8*Pot_Array[P][ id - did1[2] ] );
             }
 
             else
             {
-               Acc[0] += Gra_Const * ( Pot_Array[P][ id + did1[0] ] - Pot_Array[P][ id - did1[0] ] );
-               Acc[1] += Gra_Const * ( Pot_Array[P][ id + did1[1] ] - Pot_Array[P][ id - did1[1] ] );
-               Acc[2] += Gra_Const * ( Pot_Array[P][ id + did1[2] ] - Pot_Array[P][ id - did1[2] ] );
+               Acc[0] += Gra_Const[0] * ( Pot_Array[P][ id + did1[0] ] - Pot_Array[P][ id - did1[0] ] );
+               Acc[1] += Gra_Const[1] * ( Pot_Array[P][ id + did1[1] ] - Pot_Array[P][ id - did1[1] ] ) * geo_factor ;
+               Acc[2] += Gra_Const[2] * ( Pot_Array[P][ id + did1[2] ] - Pot_Array[P][ id - did1[2] ] );
             }
          } // if ( GravityType == GRAVITY_SELF  ||  GravityType == GRAVITY_BOTH )
 
 //       get the maximum acceleration
-         for (int d=0; d<3; d++)    AccMax = FMAX( AccMax, FABS(Acc[d]) );
+         for (int d=0; d<3; d++)    dx_Acc_Min = FMIN( dx_Acc_Min, FABS(dx[d]/Acc[d]) );
       } // i,j,k
 
 //    get the minimum dt
-      dt_Array[P] = Safety*SQRT( (real)2.0*dh/AccMax );
+      dt_Array[P] = Safety*SQRT( (real)2.0*dx_Acc_Min );
 
    } // for (int P=0; P<NPatch; P++)
 
