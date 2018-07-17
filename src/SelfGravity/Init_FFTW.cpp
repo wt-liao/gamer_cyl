@@ -3,14 +3,17 @@
 #ifdef GRAVITY
 
 
-
+#if ( COORDINATE == CARTESIAN )
 #ifdef SERIAL
 rfftwnd_plan     FFTW_Plan, FFTW_Plan_Inv, FFTW_Plan_PS;    // PS : plan for calculating the power spectrum
 #else
 rfftwnd_mpi_plan FFTW_Plan, FFTW_Plan_Inv, FFTW_Plan_PS;
 #endif
 
+#elif ( COORDINATE == CYLINDRICAL )
+rfftwnd_plan     FFTW_Plan, FFTW_Plan_Inv;
 
+#endif // COORDINATE ... 
 
 
 //-------------------------------------------------------------------------------------------------------
@@ -21,8 +24,64 @@ void Init_FFTW()
 {
 
    if ( MPI_Rank == 0 )    Aux_Message( stdout, "%s ... ", __FUNCTION__ );
+   
+#  if (COORDINATE == CARTESIAN)
+   Init_CrtFFTW() ;
+   
+#  elif (COORDINATE == CYLINDRICAL)
+   Init_CylFFTW() ;
+   
+#  endif
+
+   if ( MPI_Rank == 0 )    Aux_Message( stdout, "done\n" ); 
+
+} // FUNCTION : Init_FFTW
 
 
+//-------------------------------------------------------------------------------------------------------
+// Function    :  End_FFTW
+// Description :  Delete the FFTW plans 
+//-------------------------------------------------------------------------------------------------------
+void End_FFTW()
+{
+
+   if ( MPI_Rank == 0 )    Aux_Message( stdout, "%s ... ", __FUNCTION__ );
+
+#  if ( COORDINATE == CARTESIAN )
+#  ifdef SERIAL
+   if ( FFTW_Plan_PS != FFTW_Plan ) 
+   rfftwnd_destroy_plan    ( FFTW_Plan_PS  );
+
+   rfftwnd_destroy_plan    ( FFTW_Plan     );
+   rfftwnd_destroy_plan    ( FFTW_Plan_Inv );
+#  else
+   if ( FFTW_Plan_PS != FFTW_Plan ) 
+   rfftwnd_mpi_destroy_plan( FFTW_Plan_PS  );
+
+   rfftwnd_mpi_destroy_plan( FFTW_Plan     );
+   rfftwnd_mpi_destroy_plan( FFTW_Plan_Inv );
+#  endif
+   
+   
+#  elif ( COORDINATE == CYLINDRICAL )
+   rfftwnd_destroy_plan    ( FFTW_Plan     );
+   rfftwnd_destroy_plan    ( FFTW_Plan_Inv );
+   
+#  endif // COORDINATE ...
+
+   if ( MPI_Rank == 0 )    Aux_Message( stdout, "done\n" );
+
+} // FUNCTION : End_FFTW
+
+
+
+#if (COORDINATE == CARTESIAN)
+//-------------------------------------------------------------------------------------------------------
+// Function    :  Init_CrtFFTW
+// Description :  Create the FFTW plans for Cartesian coordinate  
+//-------------------------------------------------------------------------------------------------------
+void Init_CrtFFTW()  {
+   
 // determine the FFT size
    int FFT_Size[3] = { NX0_TOT[0], NX0_TOT[1], NX0_TOT[2] };
 
@@ -70,40 +129,29 @@ void Init_FFTW()
 
    else
       FFTW_Plan_PS = FFTW_Plan;
+   
+} // FUNCTION : Init_CrtFFTW
 
 
-   if ( MPI_Rank == 0 )    Aux_Message( stdout, "done\n" ); 
-
-} // FUNCTION : Init_FFTW
-
-
-
+#elif (COORDINATE == CYLINDRICAL)
 //-------------------------------------------------------------------------------------------------------
-// Function    :  End_FFTW
-// Description :  Delete the FFTW plans 
+// Function    :  Init_CylFFTW
+// Description :  Create the 2D FFTW plans 
 //-------------------------------------------------------------------------------------------------------
-void End_FFTW()
-{
+void Init_CylFFTW(){
+      
+   // determine the FFT size; FFT_Size[0] is redundunt
+   int FFT_Size[3] = { NX0_TOT[0], NX0_TOT[1], NX0_TOT[2]*2 };
 
-   if ( MPI_Rank == 0 )    Aux_Message( stdout, "%s ... ", __FUNCTION__ );
+   FFTW_Plan     = rfftw2d_create_plan( FFT_Size[2], FFT_Size[1], FFTW_REAL_TO_COMPLEX, 
+                                        FFTW_MEASURE | FFTW_IN_PLACE );
 
-#  ifdef SERIAL
-   if ( FFTW_Plan_PS != FFTW_Plan ) 
-   rfftwnd_destroy_plan    ( FFTW_Plan_PS  );
+   FFTW_Plan_Inv = rfftw2d_create_plan( FFT_Size[2], FFT_Size[1], FFTW_COMPLEX_TO_REAL, 
+                                        FFTW_MEASURE | FFTW_IN_PLACE );
+   
+} //FUNCTION: Init_CylFFTW
 
-   rfftwnd_destroy_plan    ( FFTW_Plan     );
-   rfftwnd_destroy_plan    ( FFTW_Plan_Inv );
-#  else
-   if ( FFTW_Plan_PS != FFTW_Plan ) 
-   rfftwnd_mpi_destroy_plan( FFTW_Plan_PS  );
-
-   rfftwnd_mpi_destroy_plan( FFTW_Plan     );
-   rfftwnd_mpi_destroy_plan( FFTW_Plan_Inv );
-#  endif
-
-   if ( MPI_Rank == 0 )    Aux_Message( stdout, "done\n" );
-
-} // FUNCTION : End_FFTW
+#endif // if (COORDINATE == CARTESIAN), elif (COORDINATE == CYLINDRICAL)
 
 
 

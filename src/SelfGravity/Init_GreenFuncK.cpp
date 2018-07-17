@@ -34,13 +34,14 @@ void Init_GreenFuncK()
       Aux_Error( ERROR_INFO, "currently the Cartesian coordinates only work with cubic cells --> dh[lv=0] = (%20.14e, %20.14e, %20.14e) !!\n",
                  amr->dh[0][0], amr->dh[0][1], amr->dh[0][2] );
 #  else
-   Aux_Error( ERROR_INFO, "non-Cartesian coordinates do not support %s() yet !!\n", __FUNCTION__ );
+   //Aux_Error( ERROR_INFO, "non-Cartesian coordinates do not support %s() yet !!\n", __FUNCTION__ );
 #  endif
 
    if ( OPT__BC_POT != BC_POT_ISOLATED )
       Aux_Message( stderr, "WARNING : OPT__BC_POT != BC_POT_ISOLATED, why do you need to calculate the Green's function !?\n" );
 
 
+#  if ( COORDINATE == CARTESIAN )
 // 1. get the array indices used by FFTW
    const int FFT_Size[3] = { 2*NX0_TOT[0], 2*NX0_TOT[1], 2*NX0_TOT[2] };
    int local_nx, local_ny, local_nz, local_z_start, local_ny_after_transpose, local_y_start_after_transpose, total_local_size;
@@ -96,6 +97,11 @@ void Init_GreenFuncK()
 #  else
    rfftwnd_mpi( FFTW_Plan, 1, GreenFuncK, NULL, FFTW_TRANSPOSED_ORDER );
 #  endif
+   
+   
+#  elif ( COORDINATE == CYLINDRICAL )
+   Init_CylKernel();
+#  endif 
 
 
    if ( MPI_Rank == 0 )    Aux_Message( stdout, "%s ... done\n", __FUNCTION__ );

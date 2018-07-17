@@ -603,10 +603,14 @@ void CPU_PoissonSolver_FFT( const real Poi_Coeff, const int SaveSg, const double
       Aux_Error( ERROR_INFO, "currently the Cartesian coordinates only work with cubic cells --> dh[lv=0] = (%20.14e, %20.14e, %20.14e) !!\n",
                  amr->dh[0][0], amr->dh[0][1], amr->dh[0][2] );
 #  else
-   Aux_Error( ERROR_INFO, "non-Cartesian coordinates do not support %s() yet !!\n", __FUNCTION__ );
+   // Aux_Error( ERROR_INFO, "non-Cartesian coordinates do not support %s() yet !!\n", __FUNCTION__ );
 #  endif
+                 
+#  if ( COORDINATE == CYLINDRICAL )
+   //### need Poi_Coeff?
+   CPU_CylPoissonSolver(Poi_Coeff, SaveSg, PrepTime);
 
-
+#  elif ( COORDINATE == CARTESIAN )
 // determine the FFT size (the zero-padding method is adopted for the isolated BC)
    int FFT_Size[3] = { NX0_TOT[0], NX0_TOT[1], NX0_TOT[2] };
 
@@ -689,6 +693,8 @@ void CPU_PoissonSolver_FFT( const real Poi_Coeff, const int SaveSg, const double
    delete [] RecvBuf;
    delete [] SendBuf_SIdx;
    delete [] RecvBuf_SIdx;
+   
+#  endif // if COORDINATE == CYLINDRICAL, elif ...
 
 } // FUNCTION : CPU_PoissonSolver_FFT
 

@@ -115,7 +115,36 @@ double               ELBDM_LAMBDA;
 double               AveDensity_Init = -1.0;    // initialize it as <= 0 to check if it is properly set later
 int                  Pot_ParaBuf, Rho_ParaBuf;
 
-real                *GreenFuncK      = NULL;
+#if (COORDINATE == CARTESIAN)
+real                *GreenFuncK       = NULL;
+#elif (COORDINATE == CYLINDRICAL)
+real               **KernelFuncK      = NULL;
+real               **RhoK             = NULL;
+real               **PhiK             = NULL;
+real                *SendBuf_Rho      = NULL;
+real                *RecvBuf_Rho      = NULL;
+real                *SendBuf_Phi      = NULL;
+real                *RecvBuf_Phi      = NULL;
+real                *SendBuf_RhoK_re  = NULL;
+real                *SendBuf_RhoK_im  = NULL;
+real                *RhoK_All_re      = NULL;
+real                *RhoK_All_im      = NULL;
+real                *PhiK_All_re      = NULL;
+real                *PhiK_All_im      = NULL;
+real                *PhiK_local_re    = NULL;
+real                *PhiK_local_im    = NULL;
+int                 *SendBuf_IDPlanXp = NULL;
+int                 *RecvBuf_IDPlanXp = NULL;
+int                 *SendBuf_I        = NULL;
+int                 *RecvBuf_I        = NULL;
+long                *SendBuf_IDPlanYZ = NULL;
+long                *RecvBuf_IDPlanYZ = NULL;
+long                *SendBuf_PID      = NULL;
+long                *RecvBuf_PID      = NULL;
+MPI_Comm             rank_i_comm      = MPI_COMM_NULL;
+MPI_Comm             rank_ip_comm     = MPI_COMM_NULL;
+#endif
+
 double               GFUNC_COEFF0;
 double               DT__GRAVITY;
 double               NEWTON_G;

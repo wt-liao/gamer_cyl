@@ -43,10 +43,47 @@ void End_MemFree_PoissonGravity()
 #     endif
    }
 
+
+#  if ( COORDINATE == CARTESIAN )
    if ( GreenFuncK != NULL )  delete [] GreenFuncK;
+   
+#  elif ( COORDINATE == CYLINDRICAL )
+   // 1.0 free memory
+   Aux_DeallocateArray2D(KernelFuncK);
+   // 1.1
+   Aux_DeallocateArray2D(RhoK);
+   Aux_DeallocateArray2D(PhiK);
+   // 1.2
+   delete [] SendBuf_Rho ; 
+   delete [] SendBuf_IDPlanXp ;
+   delete [] SendBuf_IDPlanYZ ;
+   delete [] RecvBuf_Rho ; 
+   delete [] RecvBuf_IDPlanXp ;
+   delete [] RecvBuf_IDPlanYZ ;
+   // 1.3
+   delete [] SendBuf_RhoK_re ;
+   delete [] SendBuf_RhoK_im ;
+   delete [] RhoK_All_re ;
+   delete [] RhoK_All_im ;
+   delete [] PhiK_All_re ; 
+   delete [] PhiK_All_im ;
+   delete [] PhiK_local_re ;
+   delete [] PhiK_local_im ;
+   // 1.4
+   delete [] SendBuf_Phi ; 
+   delete [] SendBuf_PID ;
+   delete [] SendBuf_I ;
+   delete [] RecvBuf_Phi ;
+   delete [] RecvBuf_PID ;
+   delete [] RecvBuf_I ;
+   
+   
+   // 2.0 free new MPI_comm
+   MPI_Comm_free(&rank_i_comm );
+   MPI_Comm_free(&rank_ip_comm);
+   
+#  endif // COORDINATE 
 
 } // FUNCTION : End_MemFree_PoissonGravity
-
-
 
 #endif // #if ( !defined GPU  &&  defined GRAVITY )
