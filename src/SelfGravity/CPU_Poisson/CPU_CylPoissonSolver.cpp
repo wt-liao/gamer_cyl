@@ -34,7 +34,7 @@ void Patch2Slab(real **RhoK, int SlabID2Rank[], long SlabID2PID[], const double 
    const int  NPatchZ        = NX0_TOT[2]/PS1;
    const int  NSlab          = amr->NPatchComma[0][1]*PS1;
    const long NSlabTotal     = NPatchTotal[0]*PS1;
-   const int  local_nxp_slab = local_nxp * NX0_TOT[1] * NX0_TOT[2] / PSSize;
+   const int  local_nxp_slab = local_nxp * NPatchY * NPatchZ;
    
    int  Cr[3], BPos_Xp;
    int  TRANK_IP, TRANK_I, TRank;
@@ -83,7 +83,7 @@ void Patch2Slab(real **RhoK, int SlabID2Rank[], long SlabID2PID[], const double 
          for (int ip=0; ip<PS1; ip++) {
             // BPos_Xp = RANK_I*global_nxp + RANK_IP*local_nxp + residual_nxp_in_that_rank
             BPos_Xp  = Cr[0] + ip;
-            SlabID   = ( BPos_Xp*NPatchZ + int(Cr[2]/PS1) ) * NPatchY + int(Cr[1]/PS1) ;
+            SlabID   = (long)( BPos_Xp*NPatchZ + int(Cr[2]/PS1) ) * NPatchY + int(Cr[1]/PS1) ;
             radius_p = Aux_Coord_CellIdx2AdoptedCoord(0, PID, 0, ip);
                         
             // find TRANK_IP and TRANK_I
@@ -126,7 +126,7 @@ void Patch2Slab(real **RhoK, int SlabID2Rank[], long SlabID2PID[], const double 
       NSlabDisp[r] = NSlabDisp[r-1] + ListAllNSlab[r-1];
    
    MPI_Allgatherv( TempBuf_Rank,   NSlab, MPI_INT,  ListAllRank,   ListAllNSlab, NSlabDisp, MPI_INT,  MPI_COMM_WORLD );
-   MPI_Allgatherv( TempBuf_PID,    NSlab, MPI_INT,  ListAllPID,    ListAllNSlab, NSlabDisp, MPI_INT,  MPI_COMM_WORLD );
+   MPI_Allgatherv( TempBuf_PID,    NSlab, MPI_LONG, ListAllPID,    ListAllNSlab, NSlabDisp, MPI_LONG, MPI_COMM_WORLD );
    MPI_Allgatherv( TempBuf_SlabID, NSlab, MPI_LONG, ListAllSlabID, ListAllNSlab, NSlabDisp, MPI_LONG, MPI_COMM_WORLD );
    
    
@@ -232,7 +232,6 @@ void Slab2Patch(real **PhiK, const int SaveSg, int SlabID2Rank[], long SlabID2PI
                 const int local_nx, const int local_ny, const int local_nx_start ) {
                       
    const int  PSSize        = PS1 * PS1;
-   const int  Scale0        = amr->scale[0];
    const real fftw_norm     = (real) 1.0 / (real) ( NX0_TOT[1]*((real)2.0*NX0_TOT[2]) ) ;
    const long NRecvSlab     = (long)amr->NPatchComma[0][1]*PS1;   // total number of received patch slices
    const int  NPatchY       = NX0_TOT[1]/PS1;
@@ -244,8 +243,8 @@ void Slab2Patch(real **PhiK, const int SaveSg, int SlabID2Rank[], long SlabID2PI
    
    int  SendCount[MPI_NRank], RecvCount[MPI_NRank], SendCount_Phi[MPI_NRank], RecvCount_Phi[MPI_NRank];
    int  SendDisp [MPI_NRank], RecvDisp [MPI_NRank], SendDisp_Phi [MPI_NRank], RecvDisp_Phi [MPI_NRank];
-   int  Cr[3], Cr0, Cr1, Cr2, ii, jj, kk, ID_planYZ, TRank;
-   long SlabID, PID;  
+   int  Cr0, Cr1, Cr2, ii, jj, kk, TRank;
+   long SlabID, PID, ID_planYZ;  
    
    // initialization
    for (int r=0; r<MPI_NRank; r++)  SendCount[r] = 0;
@@ -258,7 +257,7 @@ void Slab2Patch(real **PhiK, const int SaveSg, int SlabID2Rank[], long SlabID2PI
       for (Cr2 = 0; Cr2 < NX0_TOT[2]; Cr2 += PS1) 
       for (Cr1 = 0; Cr1 < NX0_TOT[1]; Cr1 += PS1) {
          
-         SlabID = ( Cr0*NPatchZ + int(Cr2/PS1) ) * NPatchY + int(Cr1/PS1) ;
+         SlabID = (long)( Cr0*NPatchZ + int(Cr2/PS1) ) * NPatchY + int(Cr1/PS1) ;
          TRank  = SlabID2Rank[SlabID] ; 
          PID    = SlabID2PID [SlabID] ;
          
@@ -311,8 +310,8 @@ void Slab2Patch(real **PhiK, const int SaveSg, int SlabID2Rank[], long SlabID2PI
    MPI_Alltoallv( SendBuf_Phi, SendCount_Phi, SendDisp_Phi, MPI_DOUBLE, 
                   RecvBuf_Phi, RecvCount_Phi, RecvDisp_Phi, MPI_DOUBLE, MPI_COMM_WORLD );
                   
-   MPI_Alltoallv( SendBuf_PID, SendCount, SendDisp, MPI_INT, 
-                  RecvBuf_PID, RecvCount, RecvDisp, MPI_INT, MPI_COMM_WORLD );
+   MPI_Alltoallv( SendBuf_PID, SendCount, SendDisp, MPI_LONG, 
+                  RecvBuf_PID, RecvCount, RecvDisp, MPI_LONG, MPI_COMM_WORLD );
    
    MPI_Alltoallv( SendBuf_I,   SendCount, SendDisp, MPI_INT, 
                   RecvBuf_I,   RecvCount, RecvDisp, MPI_INT, MPI_COMM_WORLD );
@@ -325,13 +324,9 @@ void Slab2Patch(real **PhiK, const int SaveSg, int SlabID2Rank[], long SlabID2PI
       PID = RecvBuf_PID[t] ; 
       ii  = RecvBuf_I  [t] ;
       int i = ii % PS1 ;
-      
-      for (int d=0; d<3; d++) Cr[d] = amr->patch[0][0][PID]->corner[d] / Scale0 ;
-      
-      // ### need kk, jj?
-      for (int k=0; k<PS1; k++) { kk = Cr[2] + k;
-      for (int j=0; j<PS1; j++) { jj = Cr[1] + j;
-         
+            
+      for (int k=0; k<PS1; k++) { 
+      for (int j=0; j<PS1; j++) { 
          amr->patch[SaveSg][0][PID]->pot[k][j][i] = RecvBuf_Phi[count] * fftw_norm ; 
          count++ ;
       }}
@@ -507,9 +502,6 @@ void CPU_CylPoissonSolver( const real Poi_Coeff, const int SaveSg, const double 
    const int  local_nz        = FFT_Size[2]; 
    const long slab_size       = local_ny * local_nz ;
    
-   // ### for debug
-   Aux_Message(stderr, "Rank = %d: (RANK_IP, RANK_I, RANK_I_TOT, local_nx, local_nxp, local_nx_start, local_nxp_start) = (%d, %d, %d, %d, %d, %d, %d). \n", 
-               MPI_Rank, RANK_IP, RANK_I, RANK_I_TOT, local_nx, local_nxp, local_nx_start, local_nxp_start );
    
 # endif // ifdef SERIAL, else...
    
