@@ -142,16 +142,10 @@ void SF_CreateStar_AGORA( const int lv, const real TimeNew, const real dt, Rando
       fluid   = amr->patch[FluSg][lv][PID]->fluid;
 #     ifdef STORE_POT_GHOST
       pot_ext = amr->patch[PotSg][lv][PID]->pot_ext;
-<<<<<<< HEAD
       X0      = amr->patch[0][lv][PID]->EdgeL[0] + 0.5*dh[0];
       Y0      = amr->patch[0][lv][PID]->EdgeL[1] + 0.5*dh[1];
       Z0      = amr->patch[0][lv][PID]->EdgeL[2] + 0.5*dh[2];
-=======
 #     endif
-      x0      = amr->patch[0][lv][PID]->EdgeL[0] + 0.5*dh;
-      y0      = amr->patch[0][lv][PID]->EdgeL[1] + 0.5*dh;
-      z0      = amr->patch[0][lv][PID]->EdgeL[2] + 0.5*dh;
->>>>>>> master
       NNewPar = 0;
 
       for (int k=0; k<PS1; k++)
@@ -219,25 +213,14 @@ void SF_CreateStar_AGORA( const int lv, const real TimeNew, const real dt, Rando
          Y        = Y0 + j*dh[1];
          Z        = Z0 + k*dh[2];
 
-<<<<<<< HEAD
-         NewParVar[NNewPar][PAR_MASS] = StarMass;
-         NewParVar[NNewPar][PAR_POSX] = X;
-         NewParVar[NNewPar][PAR_POSY] = Y;
-         NewParVar[NNewPar][PAR_POSZ] = Z;
-         NewParVar[NNewPar][PAR_VELX] = fluid[MOMX][k][j][i]*_GasDens;
-         NewParVar[NNewPar][PAR_VELY] = fluid[MOMY][k][j][i]*_GasDens;
-         NewParVar[NNewPar][PAR_VELZ] = fluid[MOMZ][k][j][i]*_GasDens;
-         NewParVar[NNewPar][PAR_TIME] = TimeNew;
-=======
          NewParAtt[NNewPar][PAR_MASS] = StarMass;
-         NewParAtt[NNewPar][PAR_POSX] = x;
-         NewParAtt[NNewPar][PAR_POSY] = y;
-         NewParAtt[NNewPar][PAR_POSZ] = z;
+         NewParAtt[NNewPar][PAR_POSX] = X;
+         NewParAtt[NNewPar][PAR_POSY] = Y;
+         NewParAtt[NNewPar][PAR_POSZ] = Z;
          NewParAtt[NNewPar][PAR_VELX] = fluid[MOMX][k][j][i]*_GasDens;
          NewParAtt[NNewPar][PAR_VELY] = fluid[MOMY][k][j][i]*_GasDens;
          NewParAtt[NNewPar][PAR_VELZ] = fluid[MOMZ][k][j][i]*_GasDens;
          NewParAtt[NNewPar][PAR_TIME] = TimeNew;
->>>>>>> master
 
 //       particle acceleration
 #        ifdef STORE_PAR_ACC

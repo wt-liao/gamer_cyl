@@ -240,26 +240,20 @@ void OutputError()
    const double coeff_Her      = -2.0*M_PI*NEWTON_G*SQR(Gra_Radius0)*Gra_Dens0;
 
    real  (*fluid)[PS1][PS1][PS1], nume, anal, abserr, relerr;
-   double dh, x, y, z, x0, y0, z0, r, s;
+   double x, y, z, r, s;
 
 
 // 1. calculate errors and overwrite gas field
 //    [MOMX] --> absolute errors of potential
 //    [MOMY] --> relative errors of potential
-#  pragma omp parallel for private( fluid, nume, anal, abserr, relerr, dh, x, y, z, x0, y0, z0, r, s ) schedule( runtime )
+#  pragma omp parallel for private( fluid, nume, anal, abserr, relerr, x, y, z, r, s ) schedule( runtime )
    for (int lv=0; lv<NLEVEL; lv++)
    {
-      dh = amr->dh[lv];
-
       for (int PID=0; PID<amr->NPatchComma[lv][1]; PID++)
       {
-         x0 = amr->patch[0][lv][PID]->EdgeL[0] + 0.5*dh;
-         y0 = amr->patch[0][lv][PID]->EdgeL[1] + 0.5*dh;
-         z0 = amr->patch[0][lv][PID]->EdgeL[2] + 0.5*dh;
-
-         for (int k=0; k<PS1; k++)  {  z = z0 + k*dh;
-         for (int j=0; j<PS1; j++)  {  y = y0 + j*dh;
-         for (int i=0; i<PS1; i++)  {  x = x0 + i*dh;
+         for (int k=0; k<PS1; k++)  {  z = Aux_Coord_CellIdx2AdoptedCoord( lv, PID, 2, k );
+         for (int j=0; j<PS1; j++)  {  y = Aux_Coord_CellIdx2AdoptedCoord( lv, PID, 1, j );
+         for (int i=0; i<PS1; i++)  {  x = Aux_Coord_CellIdx2AdoptedCoord( lv, PID, 0, i );
 
             fluid = amr->patch[ amr->FluSg[lv] ][lv][PID]->fluid;
             nume  = amr->patch[ amr->PotSg[lv] ][lv][PID]->pot[k][j][i];
