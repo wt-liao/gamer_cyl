@@ -50,7 +50,7 @@ void Par_PassParticle2Sibling( const int lv, const bool TimingSendPar )
                                      amr->BoxEdgeL[1] + amr->BoxScale[1]*dh_min[1],
                                      amr->BoxEdgeL[2] + amr->BoxScale[2]*dh_min[2] };
 
-// ParPos should NOT be used after calling Par_LB_ExchangeParticleBetweenPatch() since amr->Par->ParVar may be reallocated
+// ParPos should NOT be used after calling Par_LB_ExchangeParticleBetweenPatch() since amr->Par->Attribute may be reallocated
    real *ParPos[3]               = { amr->Par->PosX, amr->Par->PosY, amr->Par->PosZ };
 
    int     NPar_Remove_Tot=0;

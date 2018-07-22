@@ -697,6 +697,14 @@ void CorrectUnphysical( const int lv, const int NPG, const int *PID0_List,
                                                                                           "Unknown" );
 #                 endif
                   fprintf( File, "\n" );
+
+                  fprintf( File, "               (%14s, %14s, %14s, %14s, %14s, %14s",
+                           FieldLabel[DENS], FieldLabel[MOMX], FieldLabel[MOMY], FieldLabel[MOMZ], FieldLabel[ENGY], "Pressure" );
+#                 if ( DUAL_ENERGY == DE_ENPY )
+                  fprintf( File, ", %14s", FieldLabel[ENPY] );
+#                 endif
+                  fprintf( File, ")\n" );
+
                   fprintf( File, "input        = (%14.7e, %14.7e, %14.7e, %14.7e, %14.7e, %14.7e",
                            In[DENS], In[MOMX], In[MOMY], In[MOMZ], In[ENGY],
                            CPU_GetPressure(In[DENS], In[MOMX], In[MOMY], In[MOMZ], In[ENGY],
@@ -705,6 +713,7 @@ void CorrectUnphysical( const int lv, const int NPG, const int *PID0_List,
                   fprintf( File, ", %14.7e", In[ENPY] );
 #                 endif
                   fprintf( File, ")\n" );
+
                   fprintf( File, "ouptut (old) = (%14.7e, %14.7e, %14.7e, %14.7e, %14.7e, %14.7e",
                            Out[DENS], Out[MOMX], Out[MOMY], Out[MOMZ], Out[ENGY],
                            CPU_GetPressure(Out[DENS], Out[MOMX], Out[MOMY], Out[MOMZ], Out[ENGY],
@@ -713,6 +722,7 @@ void CorrectUnphysical( const int lv, const int NPG, const int *PID0_List,
                   fprintf( File, ", %14.7e", Out[ENPY] );
 #                 endif
                   fprintf( File, ")\n" );
+
                   fprintf( File, "output (new) = (%14.7e, %14.7e, %14.7e, %14.7e, %14.7e, %14.7e",
                            Update[DENS], Update[MOMX], Update[MOMY], Update[MOMZ], Update[ENGY],
                            CPU_GetPressure(Update[DENS], Update[MOMX], Update[MOMY], Update[MOMZ], Update[ENGY],
@@ -723,12 +733,11 @@ void CorrectUnphysical( const int lv, const int NPG, const int *PID0_List,
                   fprintf( File, ")\n" );
 
 //                output all data in the input fluid array (including ghost zones)
-                  fprintf( File, "\n===============================================================================================\n" );
-                  fprintf( File, "(%2s,%2s,%2s)%14s%14s%14s%14s%14s%14s",
-                           "i", "j", "k", "Density", "Px", "Py", "Pz", "Energy", "Pressure" );
-#                 if ( NCOMP_PASSIVE > 0 )
-                  for (int v=0; v<NCOMP_PASSIVE; v++)    fprintf( File, "%14s", PassiveFieldName_Grid[v] );
-#                 endif
+                  fprintf( File, "\nFull input array including ghost zones\n" );
+                  fprintf( File, "===============================================================================================\n" );
+                  fprintf( File, "(%2s,%2s,%2s)", "i", "j", "k" );
+                  for (int v=0; v<NCOMP_TOTAL; v++)   fprintf( File, "%14s", FieldLabel[v] );
+                  fprintf( File, "%14s", "Pressure" );
                   fprintf( File, "\n" );
 
                   for (int k=0; k<FLU_NXT; k++)
