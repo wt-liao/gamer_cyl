@@ -9,10 +9,10 @@
 
 
 // soften length implementation
-#  define SOFTEN_PLUMMER
+//#  define SOFTEN_PLUMMER
 //#  define SOFTEN_RUFFERT
 
-
+//extern real Rayleigh_Disk_Slope;
 
 
 //-----------------------------------------------------------------------------------------
@@ -49,14 +49,19 @@ void CUPOT_ExternalAcc( real Acc[], const double X, const double Y, const double
 void   CPU_ExternalAcc( real Acc[], const double X, const double Y, const double Z, const double Time, const double UserArray[] )
 #endif
 {
-
+   /*
    const double Cen[3] = { UserArray[0], UserArray[1], UserArray[2] };
    const real GM       = (real)UserArray[3];
    const real eps      = (real)UserArray[4];
+
    const real dx       = (real)(X - Cen[0]);
    const real dy       = (real)(Y - Cen[1]);
    const real dz       = (real)(Z - Cen[2]);
+#  if ( COORDINATE == CARTESIAN )
    const real r        = SQRT( dx*dx + dy*dy + dz*dz );
+#  elif ( COORDINATE == CYLINDRICAL )
+   const real r        = SQRT( dx*dx + dz*dz );
+#  endif
 
 // Plummer
 #  if   ( defined SOFTEN_PLUMMER )
@@ -71,9 +76,29 @@ void   CPU_ExternalAcc( real Acc[], const double X, const double Y, const double
    const real _r3 = (real)1.0/CUBE(r);
 #  endif
 
+#  if ( COORDINATE == CARTESIAN )
    Acc[0] = -GM*_r3*dx;
    Acc[1] = -GM*_r3*dy;
    Acc[2] = -GM*_r3*dz;
+#  elif ( COORDINATE == CYLINDRICAL )
+   Acc[0] = -GM*_r3*dx;
+   Acc[1] = (real) 0.0;
+   Acc[2] = -GM*_r3*dz;
+#  endif
+   */
+
+   
+// customize for Rayleigh disk test problem
+   
+   if (TESTPROB_ID == 21) {
+      const real Rayleigh_Disk_Slope = UserArray[0] ;
+      
+      Acc[0] = -POW( X, -Rayleigh_Disk_Slope ) ;
+      //Acc[0] = -POW( X, -2.0 ) ;
+      Acc[1] = (real) 0.0 ;
+      Acc[2] = (real) 0.0 ;
+   }
+   
 
 } // FUNCTION : CUPOT_ExternalAcc / CPU_ExternalAcc
 

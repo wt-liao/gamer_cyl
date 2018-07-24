@@ -1,0 +1,6 @@
+# problem-specific runtime parameters
+Sphere_Dens          1.0e1          # mass density inside sphere
+Sphere_Radius        3.5            # sphere radius
+#Sphere_Center_X      0.5            # sphere center x [box center]
+#Sphere_Center_Y      0.5            # sphere center y [box center]
+#Sphere_Center_Z      0.5            # sphere center z [box center]
