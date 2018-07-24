@@ -33,8 +33,8 @@ void Init_CylKernel(){
    //### this arrangement will have memory cap by the size of 3D array
    //### NEED a scheme to determine RANK_I_TOT, RANK_IP_TOT for general case 
    
-   const int RANK_I_TOT  = MPI_NRank;
-   const int RANK_IP_TOT = 1;       // CEIL ( (2*NX0_TOT[0]*NX0_TOT[1]*NX0_TOT[2])/memory_cap );
+   //const int RANK_I_TOT  = MPI_NRank;
+   //const int RANK_IP_TOT = 1;       // CEIL ( (2*NX0_TOT[0]*NX0_TOT[1]*NX0_TOT[2])/memory_cap );
    
    // MPI_RANK = RANK_IP*(RANK_I_TOT) + RANK_I 
    const int RANK_IP         = int(MPI_Rank/RANK_I_TOT);          // const int RANK_IP = 0;
@@ -112,7 +112,8 @@ void Init_CylKernel(){
 //-------------------------------------------------------------------------------------------------------
 void Init_MemAllocate_CylPoisson(const int local_nx, const int local_nxp, const int global_nx, 
                                  const int global_nxp, const long slab_size){
-   // need parameters: local_nx, local_nxp, slab_size
+   
+   if (MPI_Rank == 0) Aux_Message(stdout, "Init_MemAllocate_CylPoisson... ") ;
    
    const int  NSlab           = amr->NPatchComma[0][1]*PS1;   // number of slabs in each node 
    const int  PSSize          = PS1 * PS1;
@@ -153,6 +154,9 @@ void Init_MemAllocate_CylPoisson(const int local_nx, const int local_nxp, const 
    RecvBuf_Phi      = new real [ NSlab*PSSize ] ;
    RecvBuf_PID      = new long [ NSlab        ] ;
    RecvBuf_I        = new int  [ NSlab        ] ;
+   
+   //
+   if (MPI_Rank == 0) Aux_Message(stdout, "done \n ") ;
    
 }  //FUNCTION: Init_MemAllocate_CylPoisson
 

@@ -118,6 +118,7 @@ int                  Pot_ParaBuf, Rho_ParaBuf;
 #if (COORDINATE == CARTESIAN)
 real                *GreenFuncK       = NULL;
 #elif (COORDINATE == CYLINDRICAL)
+int                  RANK_I_TOT, RANK_IP_TOT;
 real               **KernelFuncK      = NULL;
 real               **RhoK             = NULL;
 real               **PhiK             = NULL;

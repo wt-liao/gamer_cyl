@@ -91,6 +91,10 @@ void Init_Load_Parameter()
    ReadPara->Add( "OPT__BC_POT",                &OPT__BC_POT,                    -1,               1,             2              );
 // do not check GFUNC_COEFF0 since it may be reset by Init_ResetDefaultParameter()
    ReadPara->Add( "GFUNC_COEFF0",               &GFUNC_COEFF0,                   -1.0,             NoMin_double,  NoMax_double   );
+#  if (COORDINATE == CYLINDRICAL)
+   ReadPara->Add( "RANK_I_TOT",                 &RANK_I_TOT,                     MPI_NRank,        1,             MPI_NRank      );
+   ReadPara->Add( "RANK_IP_TOT",                &RANK_IP_TOT,                    1,                1,             MPI_NRank      );
+#  endif
 #  endif
 
 

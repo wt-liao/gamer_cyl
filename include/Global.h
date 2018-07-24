@@ -130,6 +130,8 @@ extern real      *GreenFuncK;
 #elif ( COORDINATE == CYLINDRICAL )
 extern real     **KernelFuncK;
 extern real     **RhoK, **PhiK;
+//
+extern int       RANK_I_TOT, RANK_IP_TOT ;
 // below are for MPI
 extern real     *SendBuf_Rho, *RecvBuf_Rho, *SendBuf_Phi, *RecvBuf_Phi;
 extern real     *SendBuf_RhoK_re, *SendBuf_RhoK_im, *RhoK_All_re, *RhoK_All_im;
