@@ -27,6 +27,8 @@ void Patch2Slab(real **RhoK, int SlabID2Rank[], long SlabID2PID[], const double 
                 const int global_nxp_unit, const int local_nxp_unit, const int local_nxp, const int local_ny,
                 const int local_nxp_start, const int RANK_I_TOT, const int RANK_IP_TOT ) {
    // perhaps don't need: RANK_IP_TOT
+                   
+   if (MPI_Rank == 0) Aux_Message(stdout, "In Function <%s> ... \n", __FUNCTION__);
    
    const int  PSSize         = PS1*PS1;                                // patch slice size
    const int  Scale0         = amr->scale[0];
@@ -229,8 +231,10 @@ void Flatten2DVec( vector< vector<T> > Vec, T Array[] ){
 //                4. construct SendDisp, RecvDisp
 //-------------------------------------------------------------------------------------------------------
 void Slab2Patch(real **PhiK, const int SaveSg, int SlabID2Rank[], long SlabID2PID[],
-                const int local_nx, const int local_ny, const int local_nx_start ) {
+                const int local_nx, const int local_ny, const int local_nx_start, const real Coeff ) {
                       
+   if (MPI_Rank == 0) Aux_Message(stdout, "In Function <%s> ... \n", __FUNCTION__);
+   
    const int  PSSize        = PS1 * PS1;
    const real fftw_norm     = (real) 1.0 / (real) ( NX0_TOT[1]*((real)2.0*NX0_TOT[2]) ) ;
    const long NRecvSlab     = (long)amr->NPatchComma[0][1]*PS1;   // total number of received patch slices
@@ -327,7 +331,7 @@ void Slab2Patch(real **PhiK, const int SaveSg, int SlabID2Rank[], long SlabID2PI
             
       for (int k=0; k<PS1; k++) { 
       for (int j=0; j<PS1; j++) { 
-         amr->patch[SaveSg][0][PID]->pot[k][j][i] = RecvBuf_Phi[count] * fftw_norm ; 
+         amr->patch[SaveSg][0][PID]->pot[k][j][i] = RecvBuf_Phi[count] * fftw_norm * Coeff ; 
          count++ ;
       }}
    }
@@ -352,6 +356,8 @@ void Slab2Patch(real **PhiK, const int SaveSg, int SlabID2Rank[], long SlabID2PI
 void Pot_Isolated(real ** RhoK, real ** PhiK, const long slab_size,
                   const int local_nx, const int local_nxp, const int global_nx, const int global_nxp,
                   const int RANK_I, const int RANK_IP, const int RANK_I_TOT, const int RANK_IP_TOT ){
+   
+   if (MPI_Rank == 0) Aux_Message(stdout, "In Function <%s> ... \n", __FUNCTION__);
       
    fftw_complex *RhoK_cplx, *PhiK_cplx, *SubKernel;
    real         *RhoK_re_ptr, *RhoK_im_ptr, *PhiK_re_ptr, *PhiK_im_ptr;
@@ -453,6 +459,8 @@ void Pot_Isolated(real ** RhoK, real ** PhiK, const long slab_size,
 //-------------------------------------------------------------------------------------------------------
 void CPU_CylPoissonSolver( const real Poi_Coeff, const int SaveSg, const double PrepTime ){
    
+   if (MPI_Rank == 0) Aux_Message(stdout, "In Function <%s> ... \n", __FUNCTION__);
+   
    // determine the FFT size; FFT_Size[0] is redundunt
    int  FFT_Size[3] = { NX0_TOT[0], NX0_TOT[1], NX0_TOT[2]*2 };
    int  SlabID2Rank[ NPatchTotal[0]*PS1 ] ;
@@ -473,8 +481,8 @@ void CPU_CylPoissonSolver( const real Poi_Coeff, const int SaveSg, const double 
    //### this arrangement will have memory cap by the size of 3D array
    //### NEED a scheme to determine RANK_I_TOT, RANK_IP_TOT for general case 
    
-   const int RANK_I_TOT  = MPI_NRank;
-   const int RANK_IP_TOT = 1;       // CEIL ( (2*NX0_TOT[0]*NX0_TOT[1]*NX0_TOT[2])/memory_cap );
+   //const int RANK_I_TOT  = MPI_NRank;
+   //const int RANK_IP_TOT = 1;       // CEIL ( (2*NX0_TOT[0]*NX0_TOT[1]*NX0_TOT[2])/memory_cap );
    
    // MPI_RANK = RANK_IP*(RANK_I_TOT) + RANK_I 
    const int RANK_IP         = int(MPI_Rank/RANK_I_TOT);          // const int RANK_IP = 0;
@@ -530,7 +538,7 @@ void CPU_CylPoissonSolver( const real Poi_Coeff, const int SaveSg, const double 
       Aux_Error( ERROR_INFO, "Cylindrical poisson sovler only support isolated boundary condition. \n");
    
    // 3.
-   Slab2Patch(PhiK, SaveSg, SlabID2Rank, SlabID2PID, local_nx, local_ny, local_nx_start ) ;
+   Slab2Patch(PhiK, SaveSg, SlabID2Rank, SlabID2PID, local_nx, local_ny, local_nx_start, Poi_Coeff ) ;
 
 
 } // CPU_CylPoissonSolver_FFT

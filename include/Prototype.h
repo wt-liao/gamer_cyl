@@ -315,7 +315,7 @@ void Patch2Slab(real **RhoK, int SlabID2Rank[], long SlabID2PID[], const double 
                 const int global_nxp_unit, const int local_nxp_unit, const int local_nxp, const int local_ny,
                 const int local_nxp_start, const int RANK_I_TOT, const int RANK_IP_TOT );
 void Slab2Patch(real **PhiK, const int SaveSg, int SlabID2Rank[], long SlabID2PID[],
-                const int local_nx, const int local_ny, const int local_nx_start );
+                const int local_nx, const int local_ny, const int local_nx_start, const real Coeff );
 #endif
 void End_MemFree_PoissonGravity();
 void Gra_AdvanceDt( const int lv, const double TimeNew, const double TimeOld, const double dt,
