@@ -72,9 +72,8 @@ void CPU_HydroGravitySolver(       real Flu_Array_New[][GRA_NIN][PS1][PS1][PS1],
    const real Const_8      = (real)8.0;
    
    real Gra_Const[3] ;     // ### this should be const real ...
-   if (P5_Gradient)  for (int d=0; d<3; d++) Gra_Const[d] = -dt*dh[d]/12.0 ; 
-   else              for (int d=0; d<3; d++) Gra_Const[d] = -dt*dh[d]/2.0  ; 
-
+   if (P5_Gradient)  for (int d=0; d<3; d++) Gra_Const[d] = -dt/(12.0*dh[d]) ; 
+   else              for (int d=0; d<3; d++) Gra_Const[d] = -dt/(2.0 *dh[d]) ; 
 
 #  ifdef UNSPLIT_GRAVITY
    real AccNew[3], AccOld[3], PxNew, PxOld, PyNew, PyOld, PzNew, PzOld, RhoNew, RhoOld;
@@ -84,19 +83,19 @@ void CPU_HydroGravitySolver(       real Flu_Array_New[][GRA_NIN][PS1][PS1][PS1],
    real Eint_in, Ek_out, _Rho2;
    double x, y, z;
    
-   real geo_factor = (real) 1.0 ;
+   double geo_factor = 1.0 ;
 #  if (COORDINATE == CYLINDRICAL)
-   real radius ;
+   double radius ;
 #  endif
 
 
 // loop over all patches
 #  ifdef UNSPLIT_GRAVITY
 #  pragma omp parallel for private( AccNew, AccOld, PxNew, PxOld, PyNew, PyOld, PzNew, PzOld, RhoNew, RhoOld, \
-                                    x, y, z, Eint_in, Ek_out, _Rho2 ) schedule( runtime )
+                                    x, y, z, Eint_in, Ek_out, _Rho2, radius, geo_factor ) schedule( runtime )
 #  else
 #  pragma omp parallel for private( AccNew, PxNew, PyNew, PzNew, RhoNew, \
-                                    x, y, z, Eint_in, Ek_out, _Rho2 ) schedule( runtime )
+                                    x, y, z, Eint_in, Ek_out, _Rho2, radius, geo_factor ) schedule( runtime )
 #  endif
    for (int P=0; P<NPatch; P++)
    {
@@ -122,7 +121,7 @@ void CPU_HydroGravitySolver(       real Flu_Array_New[][GRA_NIN][PS1][PS1][PS1],
          
 #        if (COORDINATE == CYLINDRICAL)
          radius     = Corner_Array[P][0] + (double)(ii*dh[0]);
-         geo_factor = (real)1.0 / radius; 
+         geo_factor = 1.0 / radius; 
 #        endif
 
 //       external gravity
@@ -140,7 +139,6 @@ void CPU_HydroGravitySolver(       real Flu_Array_New[][GRA_NIN][PS1][PS1][PS1],
             for (int d=0; d<3; d++)    AccOld[d] *= dt;
 #           endif
          }
-
 
 //       self-gravity
          if ( GravityType == GRAVITY_SELF  ||  GravityType == GRAVITY_BOTH )
@@ -177,7 +175,6 @@ void CPU_HydroGravitySolver(       real Flu_Array_New[][GRA_NIN][PS1][PS1][PS1],
 #              endif
             }
          } // if ( GravityType == GRAVITY_SELF  ||  GravityType == GRAVITY_BOTH )
-
 
 //       advance fluid
 #        ifdef UNSPLIT_GRAVITY

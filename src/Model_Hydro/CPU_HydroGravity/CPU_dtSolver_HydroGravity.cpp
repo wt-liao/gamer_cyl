@@ -51,8 +51,8 @@ void CPU_dtSolver_HydroGravity( real dt_Array[],
    const int  did2[3]      = { 2*did1[0], 2*did1[1], 2*did1[2] };
    
    real Gra_Const[3] ;     // ### this should be const real ...
-   if (P5_Gradient)  for (int d=0; d<3; d++) Gra_Const[d] = -dh[d]/12.0 ; 
-   else              for (int d=0; d<3; d++) Gra_Const[d] = -dh[d]/2.0  ; 
+   if (P5_Gradient)  for (int d=0; d<3; d++) Gra_Const[d] = -1.0/(12.0*dh[d]) ; 
+   else              for (int d=0; d<3; d++) Gra_Const[d] = -1.0/(2.0 *dh[d])  ; 
 
    real   Acc[3], dx_Acc_Min;
    double x, y, z;
