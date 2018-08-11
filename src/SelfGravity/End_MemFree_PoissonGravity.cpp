@@ -61,18 +61,18 @@ void End_MemFree_PoissonGravity()
    delete [] RecvBuf_IDPlanXp ;
    delete [] RecvBuf_IDPlanYZ ;
    // 1.3
-   delete [] SendBuf_RhoK_re ;
-   delete [] SendBuf_RhoK_im ;
-   delete [] RhoK_All_re ;
-   delete [] RhoK_All_im ;
    delete [] PhiK_All_re ; 
    delete [] PhiK_All_im ;
-   delete [] PhiK_local_re ;
-   delete [] PhiK_local_im ;
+   if (RANK_IP == 0) {
+      delete [] PhiK_local_re ;
+      delete [] PhiK_local_im ;
+   }
    // 1.4
-   delete [] SendBuf_Phi ; 
-   delete [] SendBuf_PID ;
-   delete [] SendBuf_I ;
+   if (RANK_IP == 0) {
+      delete [] SendBuf_Phi ; 
+      delete [] SendBuf_PID ;
+      delete [] SendBuf_I ;
+   }
    delete [] RecvBuf_Phi ;
    delete [] RecvBuf_PID ;
    delete [] RecvBuf_I ;

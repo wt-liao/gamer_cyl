@@ -119,6 +119,7 @@ int                  Pot_ParaBuf, Rho_ParaBuf;
 real                *GreenFuncK       = NULL;
 #elif (COORDINATE == CYLINDRICAL)
 int                  RANK_I_TOT, RANK_IP_TOT;
+int                  RANK_I, RANK_IP, global_nx_unit, global_nxp_unit, global_nx, global_nxp;
 real               **KernelFuncK      = NULL;
 real               **RhoK             = NULL;
 real               **PhiK             = NULL;
@@ -126,10 +127,6 @@ real                *SendBuf_Rho      = NULL;
 real                *RecvBuf_Rho      = NULL;
 real                *SendBuf_Phi      = NULL;
 real                *RecvBuf_Phi      = NULL;
-real                *SendBuf_RhoK_re  = NULL;
-real                *SendBuf_RhoK_im  = NULL;
-real                *RhoK_All_re      = NULL;
-real                *RhoK_All_im      = NULL;
 real                *PhiK_All_re      = NULL;
 real                *PhiK_All_im      = NULL;
 real                *PhiK_local_re    = NULL;

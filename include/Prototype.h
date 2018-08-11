@@ -307,13 +307,11 @@ void Init_CrtFFTW();
 #elif (COORDINATE == CYLINDRICAL)
 void Init_CylFFTW();
 void Init_CylKernel();
-void Init_MemAllocate_CylPoisson(const int local_nx, const int local_nxp, const int global_nx, 
-                                 const int global_nxp, const long slab_size);
+void Init_MemAllocate_CylPoisson(const long slab_size);
 void End_MemFree_CylPoisson();
 void CPU_CylPoissonSolver( const real Poi_Coeff, const int SaveSg, const double PrepTime );
 void Patch2Slab(real **RhoK, int SlabID2Rank[], long SlabID2PID[], const double PrepTime, 
-                const int global_nxp_unit, const int local_nxp_unit, const int local_nxp, const int local_ny,
-                const int local_nxp_start, const int RANK_I_TOT, const int RANK_IP_TOT );
+                const int local_ny, const int global_nxp_start );
 void Slab2Patch(real **PhiK, const int SaveSg, int SlabID2Rank[], long SlabID2PID[],
                 const int local_nx, const int local_ny, const int local_nx_start, const real Coeff );
 #endif

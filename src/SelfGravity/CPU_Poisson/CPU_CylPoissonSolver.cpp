@@ -8,9 +8,7 @@ using std::vector;
 #if (COORDINATE == CYLINDRICAL)
 #ifdef GRAVITY
 
-static void Pot_Isolated(real ** RhoK, real ** PhiK, const long slab_size,
-                         const int local_nx, const int local_nxp, const int global_nx, const int global_nxp,
-                         const int RANK_I, const int RANK_IP, const int RANK_I_TOT, const int RANK_IP_TOT ) ;
+static void Pot_Isolated( real ** RhoK, real ** PhiK, const long slab_size ) ;
 
 
 template <class T>
@@ -24,19 +22,16 @@ extern rfftwnd_plan FFTW_Plan, FFTW_Plan_Inv;
 // Description :  (prepare for density)
 //-------------------------------------------------------------------------------------------------------
 void Patch2Slab(real **RhoK, int SlabID2Rank[], long SlabID2PID[], const double PrepTime, 
-                const int global_nxp_unit, const int local_nxp_unit, const int local_nxp, const int local_ny,
-                const int local_nxp_start, const int RANK_I_TOT, const int RANK_IP_TOT ) {
-   // perhaps don't need: RANK_IP_TOT
-                   
-   if (MPI_Rank == 0) Aux_Message(stdout, "In Function <%s> ... \n", __FUNCTION__);
-   
-   const int  PSSize         = PS1*PS1;                                // patch slice size
-   const int  Scale0         = amr->scale[0];
-   const int  NPatchY        = NX0_TOT[1]/PS1;
-   const int  NPatchZ        = NX0_TOT[2]/PS1;
-   const int  NSlab          = amr->NPatchComma[0][1]*PS1;
-   const long NSlabTotal     = NPatchTotal[0]*PS1;
-   const int  local_nxp_slab = local_nxp * NPatchY * NPatchZ;
+                const int local_ny, const int global_nxp_start ) {
+                      
+   const int  PSSize           = PS1*PS1;                                // patch slice size
+   const int  Scale0           = amr->scale[0];
+   const int  NPatchY          = NX0_TOT[1]/PS1;
+   const int  NPatchZ          = NX0_TOT[2]/PS1;
+   const int  NSlab            = amr->NPatchComma[0][1]*PS1;
+   const long NSlabTotal       = NPatchTotal[0]*PS1;
+   const int  global_nxp_slab  = global_nxp * NPatchY * NPatchZ;
+   const long global_nxp_total = global_nxp * NX0_TOT[1] * NX0_TOT[2];
    
    int  Cr[3], BPos_Xp;
    int  TRANK_IP, TRANK_I, TRank;
@@ -87,16 +82,12 @@ void Patch2Slab(real **RhoK, int SlabID2Rank[], long SlabID2PID[], const double 
             BPos_Xp  = Cr[0] + ip;
             SlabID   = (long)( BPos_Xp*NPatchZ + int(Cr[2]/PS1) ) * NPatchY + int(Cr[1]/PS1) ;
             radius_p = Aux_Coord_CellIdx2AdoptedCoord(0, PID, 0, ip);
-                        
+            
             // find TRANK_IP and TRANK_I
-            TRANK_IP = int( BPos_Xp/global_nxp_unit );
-            TRANK_I  = int( (BPos_Xp - TRANK_IP*global_nxp_unit) / local_nxp_unit ) ;
+            TRANK_IP = int( BPos_Xp/global_nxp_unit );            
+            TRANK_I  = 0;  
             TRank    = TRANK_IP*(RANK_I_TOT) + TRANK_I ; 
                         
-            TempBuf_Rank  [idx] = MPI_Rank ; 
-            TempBuf_PID   [idx] = PID ;
-            TempBuf_SlabID[idx] = SlabID ;               
-            
             TempBuf_IDPlanXp[TRank].push_back( BPos_Xp );
             TempBuf_IDPlanYZ[TRank].push_back( Cr[2]*local_ny + Cr[1] );
             
@@ -104,18 +95,18 @@ void Patch2Slab(real **RhoK, int SlabID2Rank[], long SlabID2PID[], const double 
             for (int j=0; j<PS1; j++) {
                TempBuf_Rho[TRank].push_back( Dens[LocalID][k][j][ip] * radius_p );
             }}
-            
-            idx ++ ;
             SendCount[TRank] ++;
             
+            TempBuf_Rank  [idx] = MPI_Rank ; 
+            TempBuf_PID   [idx] = PID ;
+            TempBuf_SlabID[idx] = SlabID ;
+            idx ++ ;
+            
          } // for (ip=0; ip<PS1; ... )
-         
-      } // for (PID=PID0, LocalID=0; PID<PID0+8; ... ) 
-      
+      } // for (PID=PID0, LocalID=0; PID<PID0+8; ... )  
    } // for (PID0=0; PID0<amr->NPatchComma[0][1]; ...)
    
    delete [] Dens;
-   
    
    
 // 3.0 prepare SlabID2Rank, SlabID2PID
@@ -168,7 +159,8 @@ void Patch2Slab(real **RhoK, int SlabID2Rank[], long SlabID2PID[], const double 
    Flatten2DVec(TempBuf_IDPlanYZ, SendBuf_IDPlanYZ);
    
    
-// 4. exchange data by MPI   
+// 4. exchange data by MPI 
+// 4.1 first exange data to rank w/ i=0
    MPI_Alltoallv( SendBuf_IDPlanXp, SendCount, SendDisp, MPI_INT,
                   RecvBuf_IDPlanXp, RecvCount, RecvDisp, MPI_INT, MPI_COMM_WORLD );
    
@@ -178,16 +170,20 @@ void Patch2Slab(real **RhoK, int SlabID2Rank[], long SlabID2PID[], const double 
    MPI_Alltoallv( SendBuf_Rho, SendCount_Rho, SendDisp_Rho, MPI_DOUBLE,
                   RecvBuf_Rho, RecvCount_Rho, RecvDisp_Rho, MPI_DOUBLE, MPI_COMM_WORLD );
                   
+// 4.2 broadcast data along ip=const
+   MPI_Bcast( RecvBuf_IDPlanXp, global_nxp_slab,  MPI_INT,    0, rank_ip_comm );
+   MPI_Bcast( RecvBuf_IDPlanYZ, global_nxp_slab,  MPI_LONG,   0, rank_ip_comm );
+   MPI_Bcast( RecvBuf_Rho,      global_nxp_total, MPI_DOUBLE, 0, rank_ip_comm );
+   
 
 // 5. store the received density to the padded array "RhoK" for FFTW
-   
    long count = 0 ;
    int ID_planXp, jj ;
    long ID_planYZ;
    
-   for (long t=0; t<local_nxp_slab ; t++)
+   for (long t=0; t<global_nxp_slab ; t++)
    {
-      ID_planXp = RecvBuf_IDPlanXp[t] - local_nxp_start;
+      ID_planXp = RecvBuf_IDPlanXp[t] - global_nxp_start;
       ID_planYZ = RecvBuf_IDPlanYZ[t];
 
       for (int j=0; j<PS1; j++) {
@@ -197,8 +193,8 @@ void Patch2Slab(real **RhoK, int SlabID2Rank[], long SlabID2PID[], const double 
          count ++ ;
       }}
    }
-
-}
+   
+} // FUNCTION: Patch2Slab
 
 
 //-------------------------------------------------------------------------------------------------------
@@ -231,10 +227,8 @@ void Flatten2DVec( vector< vector<T> > Vec, T Array[] ){
 //                4. construct SendDisp, RecvDisp
 //-------------------------------------------------------------------------------------------------------
 void Slab2Patch(real **PhiK, const int SaveSg, int SlabID2Rank[], long SlabID2PID[],
-                const int local_nx, const int local_ny, const int local_nx_start, const real Coeff ) {
-                      
-   if (MPI_Rank == 0) Aux_Message(stdout, "In Function <%s> ... \n", __FUNCTION__);
-   
+                const int local_ny, const int global_nx_start, const real Coeff ) {
+                         
    const int  PSSize        = PS1 * PS1;
    const real fftw_norm     = (real) 1.0 / (real) ( NX0_TOT[1]*((real)2.0*NX0_TOT[2]) ) ;
    const long NRecvSlab     = (long)amr->NPatchComma[0][1]*PS1;   // total number of received patch slices
@@ -254,37 +248,41 @@ void Slab2Patch(real **PhiK, const int SaveSg, int SlabID2Rank[], long SlabID2PI
    for (int r=0; r<MPI_NRank; r++)  SendCount[r] = 0;
    
    // 1. loop over all slabs and save to a 2D TempBuf vector
-   for (int i=0; i<local_nx; i++ ) {
-      Cr0 = local_nx_start + i; 
+   if (RANK_IP == 0) {
       
-      // loop over all slabs
-      for (Cr2 = 0; Cr2 < NX0_TOT[2]; Cr2 += PS1) 
-      for (Cr1 = 0; Cr1 < NX0_TOT[1]; Cr1 += PS1) {
+      for (int i=0; i<global_nx; i++ ) {
+         Cr0 = global_nx_start + i; 
+      
+         // loop over all slabs
+         for (Cr2 = 0; Cr2 < NX0_TOT[2]; Cr2 += PS1) 
+         for (Cr1 = 0; Cr1 < NX0_TOT[1]; Cr1 += PS1) {
          
-         SlabID = (long)( Cr0*NPatchZ + int(Cr2/PS1) ) * NPatchY + int(Cr1/PS1) ;
-         TRank  = SlabID2Rank[SlabID] ; 
-         PID    = SlabID2PID [SlabID] ;
+            SlabID = (long)( Cr0*NPatchZ + int(Cr2/PS1) ) * NPatchY + int(Cr1/PS1) ;
+            TRank  = SlabID2Rank[SlabID] ; 
+            PID    = SlabID2PID [SlabID] ;
          
-         TempBuf_PID[TRank].push_back(PID);
-         TempBuf_I  [TRank].push_back(Cr0);
+            TempBuf_PID[TRank].push_back(PID);
+            TempBuf_I  [TRank].push_back(Cr0);
          
-         // save Phi in TempBuf_Phi
-         for (int k=0; k<PS1; k++) { kk = Cr2 + k;
-         for (int j=0; j<PS1; j++) { jj = Cr1 + j;
-            ID_planYZ = kk*local_ny + jj ;
-            TempBuf_Phi[TRank].push_back( PhiK[i][ID_planYZ] );
-
-         }}
+            // save Phi in TempBuf_Phi
+            for (int k=0; k<PS1; k++) { kk = Cr2 + k;
+            for (int j=0; j<PS1; j++) { jj = Cr1 + j;
+               ID_planYZ = kk*local_ny + jj ;
+               TempBuf_Phi[TRank].push_back( PhiK[i][ID_planYZ] );
+            }} // for j, k
          
-         SendCount[TRank] ++ ;
+            SendCount[TRank] ++ ;
          
-      } // for Cr2, Cr1
-   } // for (int i=0; ... )
+         } // for Cr2, Cr1
+      } // for (int i=0; ... )
+   
    
    // 2. flatten 2D TempBuf vector to a 1D SendBuf array 
-   Flatten2DVec(TempBuf_Phi, SendBuf_Phi) ;
-   Flatten2DVec(TempBuf_PID, SendBuf_PID) ;
-   Flatten2DVec(TempBuf_I  , SendBuf_I  ) ; 
+      Flatten2DVec(TempBuf_Phi, SendBuf_Phi) ;
+      Flatten2DVec(TempBuf_PID, SendBuf_PID) ;
+      Flatten2DVec(TempBuf_I  , SendBuf_I  ) ; 
+   
+   } // if RANK_IP == 0
    
 
    // 3. distribute SendCount in all processors
@@ -294,7 +292,7 @@ void Slab2Patch(real **PhiK, const int SaveSg, int SlabID2Rank[], long SlabID2PI
       SendCount_Phi[r] = SendCount[r]*PSSize;
       RecvCount_Phi[r] = RecvCount[r]*PSSize;
    }
-   
+
    
    // 4. Construct SendDisp, RecvDisp
    SendDisp[0]     = 0;
@@ -335,7 +333,7 @@ void Slab2Patch(real **PhiK, const int SaveSg, int SlabID2Rank[], long SlabID2PI
          count++ ;
       }}
    }
-
+   
 }
 
 
@@ -353,102 +351,69 @@ void Slab2Patch(real **PhiK, const int SaveSg, int SlabID2Rank[], long SlabID2PI
 //                5. iFFT PhiK back to real space
 //                   
 //-------------------------------------------------------------------------------------------------------
-void Pot_Isolated(real ** RhoK, real ** PhiK, const long slab_size,
-                  const int local_nx, const int local_nxp, const int global_nx, const int global_nxp,
-                  const int RANK_I, const int RANK_IP, const int RANK_I_TOT, const int RANK_IP_TOT ){
-   
-   if (MPI_Rank == 0) Aux_Message(stdout, "In Function <%s> ... \n", __FUNCTION__);
-      
-   fftw_complex *RhoK_cplx, *PhiK_cplx, *SubKernel;
-   real         *RhoK_re_ptr, *RhoK_im_ptr, *PhiK_re_ptr, *PhiK_im_ptr;
+void Pot_Isolated( real ** RhoK, real ** PhiK, const long slab_size ){
+         
+   fftw_complex *RhoK_cplx, Temp_cplx;
+   fftw_complex *PhiK_cplx, *SubKernel;
+   real         *PhiK_re_ptr, *PhiK_im_ptr;
    int          ID_planX, CommCount, target_rank;
    const long   slab_size_hf = slab_size/2; 
    
    
    // 1. collect all RhoK along ip=const direction   
-   // 1.1 prepare for SendBuf
-   for (int ip=0; ip<local_nxp; ip++) {
+   for (int ip=0; ip<global_nxp; ip++) 
       rfftwnd_one_real_to_complex( FFTW_Plan, RhoK[ip], NULL );
-      //### this part could potentially be done by memcpy
-      RhoK_cplx = (fftw_complex*) RhoK[ip];
-      for (int t=0; t<slab_size; t++) {
-         SendBuf_RhoK_re[ip*slab_size + t] = (real)RhoK_cplx[t].re;
-         SendBuf_RhoK_im[ip*slab_size + t] = (real)RhoK_cplx[t].im;
-      }  
-   }
-   
-   // 2.0 collect RhoK to RhoK_All
-   // ### do this part with rank_ip_comm
-   
-   CommCount = local_nxp * slab_size;
-   int SendCount[MPI_NRank], RecvCount[MPI_NRank], SendDisp[MPI_NRank], RecvDisp[MPI_NRank] ; 
-   
-   for (int rank_ip=0; rank_ip<RANK_IP_TOT; rank_ip++) { int fac = (rank_ip == RANK_IP)? 1 : 0 ;
-   for (int rank_i =0; rank_i <RANK_I_TOT ; rank_i ++) {
-      target_rank = rank_ip*(RANK_I_TOT) + rank_i;
-      
-      // SendCount and RecvCount is either 0 or CommCount
-      SendCount[target_rank] = CommCount * fac;
-      RecvCount[target_rank] = CommCount * fac;
-      SendDisp[target_rank] = 0;                // SendDisp is always 0
-      RecvDisp[target_rank] = (rank_i*CommCount) * fac;
-   }}
-   
-   MPI_Alltoallv( SendBuf_RhoK_re, SendCount, SendDisp, MPI_DOUBLE, 
-                  RhoK_All_re,     RecvCount, RecvDisp, MPI_DOUBLE, MPI_COMM_WORLD );
-   MPI_Alltoallv( SendBuf_RhoK_im, SendCount, SendDisp, MPI_DOUBLE, 
-                  RhoK_All_im,     RecvCount, RecvDisp, MPI_DOUBLE, MPI_COMM_WORLD );
-   
-   
    
    // 3. integrate to get PhiK
+   // 3.1 set PhiK to zeros
    for (int t=0; t<global_nx*slab_size_hf; t++ )   PhiK_All_re[t] = PhiK_All_im[t] = (real) 0.0;
    
-   // integrate locally over r' to get partially integrated PhiK in each rank
+   // 3.2 integrate locally over r' to get partially integrated PhiK in each rank
    for (int i=0; i<global_nx; i++ ){
       PhiK_re_ptr = & PhiK_All_re[i*slab_size_hf] ; 
       PhiK_im_ptr = & PhiK_All_im[i*slab_size_hf] ;
       
       for (int ip=0; ip<global_nxp; ip++){
          ID_planX  = i*global_nxp + ip ;
-
-         RhoK_re_ptr = & RhoK_All_re[ip*slab_size] ;
-         RhoK_im_ptr = & RhoK_All_im[ip*slab_size] ;
          
+         RhoK_cplx = (fftw_complex *) (RhoK[ip]);
          SubKernel = (fftw_complex *) KernelFuncK[ID_planX];
+         
       
          for (long t=0; t<slab_size_hf; t++) {
-            PhiK_re_ptr[t] += RhoK_re_ptr[t] * SubKernel[t].re - RhoK_im_ptr[t] * SubKernel[t].im ;
-            PhiK_im_ptr[t] += RhoK_re_ptr[t] * SubKernel[t].im + RhoK_im_ptr[t] * SubKernel[t].re ;            
+            Temp_cplx = RhoK_cplx[t];
+            
+            PhiK_re_ptr[t] += Temp_cplx.re * SubKernel[t].re - Temp_cplx.im * SubKernel[t].im ;
+            PhiK_im_ptr[t] += Temp_cplx.re * SubKernel[t].im + Temp_cplx.im * SubKernel[t].re ;            
          }
       } // for (ip=0; ...)
    } // for (i=0; ...)
    
    
-   // 4. add PhiK across different rank for total summation (integration)
-   CommCount = local_nx * slab_size_hf;
-
-   for (int rank_ip=0; rank_ip<RANK_IP_TOT; rank_ip++) {
-      MPI_Reduce( &(PhiK_All_re[rank_ip*CommCount]), PhiK_local_re, CommCount, MPI_DOUBLE, MPI_SUM, rank_ip, rank_i_comm) ; 
-      MPI_Reduce( &(PhiK_All_im[rank_ip*CommCount]), PhiK_local_im, CommCount, MPI_DOUBLE, MPI_SUM, rank_ip, rank_i_comm) ;  
-   }
+   // 4. add PhiK across different rank for total summation/integration
+   CommCount = global_nx * slab_size_hf;
    
-   // copy PhiK_local to PhiK
-   // ### can this possibly be done through memcpy
-   PhiK_cplx = (fftw_complex *) PhiK[0] ;
-   for (int t=0; t<local_nx*slab_size_hf; t++) {
-      PhiK_cplx[t].re = PhiK_local_re[t];
-      PhiK_cplx[t].im = PhiK_local_im[t];
-   }
-   //### this memcpy involves a type conversion: complex->fftw_conplex, check if it is ok
-   //memcpy( PhiK_cplx, PhiK_local, sizeof(PhiK_local) );
+   MPI_Reduce( PhiK_All_re, PhiK_local_re, CommCount, MPI_DOUBLE, MPI_SUM, 0, rank_i_comm) ; 
+   MPI_Reduce( PhiK_All_im, PhiK_local_im, CommCount, MPI_DOUBLE, MPI_SUM, 0, rank_i_comm) ;
+   
+   
+   if (RANK_IP == 0) {
+      // copy PhiK_local to PhiK
+      // ### can this possibly be done through memcpy
+      PhiK_cplx = (fftw_complex *) PhiK[0] ;
+      for (int t=0; t<global_nx*slab_size_hf; t++) {
+         PhiK_cplx[t].re = PhiK_local_re[t] ;
+         PhiK_cplx[t].im = PhiK_local_im[t];  //###
+      }
    
    
    // 5. iFFT PhiK back to real space 
-   for ( int i=0; i<local_nx; i++ ) {
-      PhiK_cplx = (fftw_complex *) PhiK[i] ;
-      rfftwnd_one_complex_to_real( FFTW_Plan_Inv, PhiK_cplx, NULL );
-   }
+      for ( int i=0; i<global_nx; i++ ) {
+         PhiK_cplx = (fftw_complex *) PhiK[i] ;
+         rfftwnd_one_complex_to_real( FFTW_Plan_Inv, PhiK_cplx, NULL );
+      } 
+   
+   } // if RANK_IP == 0
    
 }
 
@@ -467,78 +432,42 @@ void CPU_CylPoissonSolver( const real Poi_Coeff, const int SaveSg, const double 
    long SlabID2PID [ NPatchTotal[0]*PS1 ] ;
    
 # ifdef SERIAL
-   const int local_nx        = NX0_TOT[0];
-   const int local_nxp       = NX0_TOT[0]; 
-   const int local_ny        = 2*(FFT_Size[1]/2+1);
-   const int local_nz        = FFT_Size[2]; 
-   const int local_nx_start  = 0;    
-   const int local_nxp_start = 0 ;
-   const int RANK_I_TOT      = 1;
-   const int RANK_IP_TOT     = 1;
+   Aux_Message(stderr, "Cylindrical Self-Gravity is not yet ready for serial mode! \n");
    
 # else
-   //### arrange the cores to be MPI_NRANK * 1
-   //### this arrangement will have memory cap by the size of 3D array
-   //### NEED a scheme to determine RANK_I_TOT, RANK_IP_TOT for general case 
-   
-   //const int RANK_I_TOT  = MPI_NRank;
-   //const int RANK_IP_TOT = 1;       // CEIL ( (2*NX0_TOT[0]*NX0_TOT[1]*NX0_TOT[2])/memory_cap );
-   
-   // MPI_RANK = RANK_IP*(RANK_I_TOT) + RANK_I 
-   const int RANK_IP         = int(MPI_Rank/RANK_I_TOT);          // const int RANK_IP = 0;
-   const int RANK_I          = MPI_Rank % RANK_I_TOT ;            // const int RANK_I  = MPI_Rank;    
-   const int global_nx_unit  = ceil(NX0_TOT[0]/RANK_I_TOT );
-   const int global_nxp_unit = ceil(NX0_TOT[0]/RANK_IP_TOT);
-   const int local_nx_unit   = ceil(global_nx_unit / RANK_IP_TOT);
-   const int local_nxp_unit  = ceil(global_nxp_unit/ RANK_I_TOT );
-   
-   int global_nx, global_nxp, local_nx, local_nxp ;
-   
-   if (RANK_I  != RANK_I_TOT-1)  global_nx  = global_nx_unit;   
-   else                          global_nx  = NX0_TOT[0] - global_nx_unit *(RANK_I_TOT -1);
-   if (RANK_IP != RANK_IP_TOT-1) global_nxp = global_nxp_unit;
-   else                          global_nxp = NX0_TOT[0] - global_nxp_unit*(RANK_IP_TOT-1);
-   
-   if (RANK_I  != RANK_I_TOT-1)  local_nxp = local_nxp_unit;   
-   else                          local_nxp = global_nxp_unit - local_nxp_unit*(RANK_I_TOT -1);
-   if (RANK_IP != RANK_IP_TOT-1) local_nx  = local_nx_unit;
-   else                          local_nx  = global_nx_unit  - local_nx_unit *(RANK_IP_TOT-1);
-   
-   const int  local_nx_start  = RANK_I *global_nx_unit  + RANK_IP*local_nx_unit  ;
-   const int  local_nxp_start = RANK_IP*global_nxp_unit + RANK_I *local_nxp_unit ;
-   const int  local_ny        = 2*(FFT_Size[1]/2+1);
-   const int  local_nz        = FFT_Size[2]; 
-   const long slab_size       = local_ny * local_nz ;
-   
+   const int  global_nx_start  = RANK_I *global_nx_unit ;
+   const int  global_nxp_start = RANK_IP*global_nxp_unit;
+   const int  local_ny         = 2*(FFT_Size[1]/2+1);
+   const int  local_nz         = FFT_Size[2]; 
+   const long slab_size        = local_ny * local_nz ;
    
 # endif // ifdef SERIAL, else...
    
    
    // init RhoK array to zerol
-   for (int ip=0; ip<local_nxp; ip++)
+   for (int ip=0; ip<global_nxp; ip++)
    for (int t=0;  t<slab_size;  t++ ) {
       RhoK[ip][t] = (real) 0.0;
    }
+   
    // ### need to do it to PhiK as well??
-   for (int i=0; i<local_nx;  i++)
+   for (int i=0; i<global_nx;  i++)
    for (int t=0; t<slab_size; t++ ) {
       PhiK[i][t] = (real) 0.0;
    }
    
    
    // 1. get (real)RhoK[ip] - Patch2Slab()
-   Patch2Slab( RhoK, SlabID2Rank, SlabID2PID, PrepTime, global_nxp_unit, local_nxp_unit, 
-               local_nxp, local_ny, local_nxp_start, RANK_I_TOT, RANK_IP_TOT ) ;
+   Patch2Slab( RhoK, SlabID2Rank, SlabID2PID, PrepTime, local_ny, global_nxp_start ) ;
    
    // 2.
    if ( OPT__BC_POT == BC_POT_ISOLATED ) 
-      Pot_Isolated( RhoK, PhiK, slab_size, local_nx, local_nxp, global_nx, global_nxp,
-                    RANK_I, RANK_IP, RANK_I_TOT, RANK_IP_TOT ) ;
+      Pot_Isolated( RhoK, PhiK, slab_size ) ;
    else
       Aux_Error( ERROR_INFO, "Cylindrical poisson sovler only support isolated boundary condition. \n");
    
    // 3.
-   Slab2Patch(PhiK, SaveSg, SlabID2Rank, SlabID2PID, local_nx, local_ny, local_nx_start, Poi_Coeff ) ;
+   Slab2Patch( PhiK, SaveSg, SlabID2Rank, SlabID2PID, local_ny, global_nx_start, Poi_Coeff ) ;
 
 
 } // CPU_CylPoissonSolver_FFT

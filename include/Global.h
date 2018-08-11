@@ -134,10 +134,11 @@ extern real     **RhoK, **PhiK;
 extern int       RANK_I_TOT, RANK_IP_TOT ;
 // below are for MPI
 extern real     *SendBuf_Rho, *RecvBuf_Rho, *SendBuf_Phi, *RecvBuf_Phi;
-extern real     *SendBuf_RhoK_re, *SendBuf_RhoK_im, *RhoK_All_re, *RhoK_All_im;
 extern real     *PhiK_All_re, *PhiK_All_im, *PhiK_local_re, *PhiK_local_im;
 extern int      *SendBuf_IDPlanXp, *RecvBuf_IDPlanXp, *SendBuf_I, *RecvBuf_I ;
 extern long     *SendBuf_IDPlanYZ, *RecvBuf_IDPlanYZ, *SendBuf_PID, *RecvBuf_PID ;
+//
+extern int       RANK_I, RANK_IP, global_nx_unit, global_nxp_unit, global_nx, global_nxp;
 //
 extern MPI_Comm rank_i_comm, rank_ip_comm;
 #endif
