@@ -46,10 +46,16 @@ const TestProbID_t
    TESTPROB_HYDRO_COLLIDING_JETS               =   10,
    TESTPROB_HYDRO_PLUMMER                      =   11,
    
+   TESTPROB_HYDRO_CYL_POISSON_3GAUSSIAN        =   18,
    TESTPROB_HYDRO_CYL_POISSON_4SPHERE          =   19,
    TESTPROB_HYDRO_CYL_POISSON                  =   20,
    TESTPROB_HYDRO_RAYLEIGH_DISK                =   21,
    TESTPROB_HYDRO_KEPLERIAN_DISK               =   22,
+   TESTPROB_HYDRO_KUZMIN_DISK                  =   23,
+   
+   TESTPROB_HYDRO_SG_THIN_DISK                 =   25,
+   
+   
 
    TESTPROB_ELBDM_EXTPOT                       = 1000;
 

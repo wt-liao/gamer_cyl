@@ -16,10 +16,14 @@ void Init_TestProb_Hydro_Riemann();
 void Init_TestProb_Hydro_CollidingJets();
 void Init_TestProb_Hydro_Plummer();
 
+void Init_TestProb_Hydro_CylPoisson3Gauss();
 void Init_TestProb_Hydro_CylPoisson4Sphere();
 void Init_TestProb_Hydro_CylPoisson();
 void Init_TestProb_Hydro_RayleighDisk();
 void Init_TestProb_Hydro_KeplerianDisk();
+void Init_TestProb_Hydro_KuzminDisk();
+
+void Init_TestProb_Hydro_SGThinDisk();
 
 void Init_TestProb_ELBDM_ExtPot();
 
@@ -59,10 +63,14 @@ void Init_TestProb()
       case TESTPROB_HYDRO_COLLIDING_JETS :               Init_TestProb_Hydro_CollidingJets();               break;
       case TESTPROB_HYDRO_PLUMMER :                      Init_TestProb_Hydro_Plummer();                     break;
       
+      case TESTPROB_HYDRO_CYL_POISSON_3GAUSSIAN :        Init_TestProb_Hydro_CylPoisson3Gauss();            break;
       case TESTPROB_HYDRO_CYL_POISSON_4SPHERE :          Init_TestProb_Hydro_CylPoisson4Sphere();           break;
       case TESTPROB_HYDRO_CYL_POISSON :                  Init_TestProb_Hydro_CylPoisson();                  break;
       case TESTPROB_HYDRO_RAYLEIGH_DISK :                Init_TestProb_Hydro_RayleighDisk();                break;
       case TESTPROB_HYDRO_KEPLERIAN_DISK :               Init_TestProb_Hydro_KeplerianDisk();               break;
+      case TESTPROB_HYDRO_KUZMIN_DISK :                  Init_TestProb_Hydro_KuzminDisk();                  break;
+      
+      case TESTPROB_HYDRO_SG_THIN_DISK :                 Init_TestProb_Hydro_SGThinDisk();                  break;
 
       case TESTPROB_ELBDM_EXTPOT :                       Init_TestProb_ELBDM_ExtPot();                      break;
 
