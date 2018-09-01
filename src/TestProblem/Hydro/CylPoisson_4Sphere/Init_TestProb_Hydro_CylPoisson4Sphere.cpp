@@ -214,11 +214,12 @@ void SetGridIC( real fluid[], const double x, const double y, const double z, co
 // Description : 
 //-------------------------------------------------------------------------------------------------------
 void Output_L1Error_CylPoisson4Sphere(){
-   
+      
    double analytic_sum = 0.0, L1_error = 0.0, total_error = 0.0;
    double global_analytic_sum = 0.0, global_total_error = 0.0;
    double L1_local = 0.0, L1_global = 0.0;
    double analytic_sol ;
+   
    
    int FluSg, PotSg;
    double x_cyl, y_cyl, z_cyl, x_crt, y_crt, z_crt, dist2center, dV;
@@ -269,7 +270,7 @@ void Output_L1Error_CylPoisson4Sphere(){
                   dist2center = SQRT( SQR(x_crt-sphere_x1[count]) + SQR(y_crt-sphere_x2[count]) + SQR(z_crt-sphere_x3[count]) );
                   
                   if ( dist2center <= Sphere_Radius ) 
-                     analytic_sol += -2.0/3.0*M_PI*Sphere_Dens*( 3.0*SQR(Sphere_Radius) - SQR(dist2center) );
+                     analytic_sol += -2.0/3.0*M_PI*Sphere_Dens*( 3.0*SQR(Sphere_Radius) - SQR(dist2center) ) ;
                   else 
                      analytic_sol += -4.0/3.0*M_PI*Sphere_Dens*CUBE(Sphere_Radius)/dist2center ;
                }

@@ -24,6 +24,8 @@ extern rfftwnd_plan FFTW_Plan, FFTW_Plan_Inv;
 void Patch2Slab(real **RhoK, int SlabID2Rank[], long SlabID2PID[], const double PrepTime, 
                 const int local_ny, const int global_nxp_start ) {
                       
+   //Aux_Message(stdout, "Rank = %d: In Function <%s>. \n", MPI_Rank, __FUNCTION__);
+   
    const int  PSSize           = PS1*PS1;                                // patch slice size
    const int  Scale0           = amr->scale[0];
    const int  NPatchY          = NX0_TOT[1]/PS1;
@@ -228,6 +230,8 @@ void Flatten2DVec( vector< vector<T> > Vec, T Array[] ){
 //-------------------------------------------------------------------------------------------------------
 void Slab2Patch(real **PhiK, const int SaveSg, int SlabID2Rank[], long SlabID2PID[],
                 const int local_ny, const int global_nx_start, const real Coeff ) {
+                   
+   //Aux_Message(stdout, "Rank = %d: In Function <%s>. \n", MPI_Rank, __FUNCTION__);
                          
    const int  PSSize        = PS1 * PS1;
    const real fftw_norm     = (real) 1.0 / (real) ( NX0_TOT[1]*((real)2.0*NX0_TOT[2]) ) ;
@@ -329,7 +333,7 @@ void Slab2Patch(real **PhiK, const int SaveSg, int SlabID2Rank[], long SlabID2PI
             
       for (int k=0; k<PS1; k++) { 
       for (int j=0; j<PS1; j++) { 
-         amr->patch[SaveSg][0][PID]->pot[k][j][i] = RecvBuf_Phi[count] * fftw_norm * Coeff ; 
+         amr->patch[SaveSg][0][PID]->pot[k][j][i] = RecvBuf_Phi[count] * fftw_norm ; 
          count++ ;
       }}
    }
@@ -352,7 +356,9 @@ void Slab2Patch(real **PhiK, const int SaveSg, int SlabID2Rank[], long SlabID2PI
 //                   
 //-------------------------------------------------------------------------------------------------------
 void Pot_Isolated( real ** RhoK, real ** PhiK, const long slab_size ){
-         
+   
+   //Aux_Message(stdout, "Rank = %d: In Function <%s>. \n", MPI_Rank, __FUNCTION__);         
+   
    fftw_complex *RhoK_cplx, Temp_cplx;
    fftw_complex *PhiK_cplx, *SubKernel;
    real         *PhiK_re_ptr, *PhiK_im_ptr;
@@ -424,7 +430,7 @@ void Pot_Isolated( real ** RhoK, real ** PhiK, const long slab_size ){
 //-------------------------------------------------------------------------------------------------------
 void CPU_CylPoissonSolver( const real Poi_Coeff, const int SaveSg, const double PrepTime ){
    
-   if (MPI_Rank == 0) Aux_Message(stdout, "In Function <%s> ... \n", __FUNCTION__);
+   //if (MPI_Rank == 0) Aux_Message(stdout, "In Function <%s> ... \n", __FUNCTION__);
    
    // determine the FFT size; FFT_Size[0] is redundunt
    int  FFT_Size[3] = { NX0_TOT[0], NX0_TOT[1], NX0_TOT[2]*2 };
@@ -468,7 +474,7 @@ void CPU_CylPoissonSolver( const real Poi_Coeff, const int SaveSg, const double 
    
    // 3.
    Slab2Patch( PhiK, SaveSg, SlabID2Rank, SlabID2PID, local_ny, global_nx_start, Poi_Coeff ) ;
-
+   
 
 } // CPU_CylPoissonSolver_FFT
 
