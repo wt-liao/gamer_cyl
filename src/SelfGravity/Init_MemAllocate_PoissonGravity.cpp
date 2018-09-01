@@ -29,8 +29,12 @@ void Init_MemAllocate_PoissonGravity( const int Pot_NPG )
 #     endif
       h_Flu_Array_G    [t] = new real   [Pot_NP][GRA_NIN  ][PS1][PS1][PS1];
 
+#     if (COORDINATE == CARTESIAN)
       if ( OPT__GRAVITY_TYPE == GRAVITY_EXTERNAL  ||  OPT__GRAVITY_TYPE == GRAVITY_BOTH  ||  OPT__EXTERNAL_POT )
       h_Corner_Array_G [t] = new double [Pot_NP][3];
+#     elif (COORDINATE == CYLINDRICAL)
+      h_Corner_Array_G [t] = new double [Pot_NP][3];
+#     endif // COORDINATE
 
 #     ifdef DUAL_ENERGY
       h_DE_Array_G     [t] = new char   [Pot_NP][PS1][PS1][PS1];

@@ -304,9 +304,14 @@ void Preparation_Step( const Solver_t TSolver, const int lv, const double TimeNe
          TIMING_SYNC(   Gra_Prepare_Pot( lv, TimeNew, h_Pot_Array_P_Out[ArrayID], NPG, PID0_List ),
                         Timer_Poi_PrePot_F[lv]   );
 
+#        if (COORDINATE == CARTESIAN)
          if ( OPT__GRAVITY_TYPE == GRAVITY_EXTERNAL  ||  OPT__GRAVITY_TYPE == GRAVITY_BOTH  ||  OPT__EXTERNAL_POT )
          TIMING_SYNC(   Gra_Prepare_Corner( lv, h_Corner_Array_G[ArrayID], NPG, PID0_List ),
                         Timer_Poi_PreFlu[lv]   );
+#        elif (COORDINATE == CYLINDRICAL)
+         TIMING_SYNC(   Gra_Prepare_Corner( lv, h_Corner_Array_G[ArrayID], NPG, PID0_List ),
+                        Timer_Poi_PreFlu[lv]   );
+#        endif
 
 #        ifdef UNSPLIT_GRAVITY
 //       use the same timer "Timer_Poi_PreFlu" as Gra_Prepare_Flu and Gra_Prepare_Corner
