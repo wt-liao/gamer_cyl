@@ -43,6 +43,7 @@ SIMU_OPTION += -DMODEL=HYDRO
 #SIMU_OPTION += -DPARTICLE
 
 # support Grackle, a chemistry and radiative cooling library
+# --> must set NCOMP_PASSIVE_USER according to the primordial chemistry network set by GRACKLE_PRIMORDIAL
 # --> please enable OpenMP when compiling Grackle (by "make omp-on")
 #SIMU_OPTION += -DSUPPORT_GRACKLE
 
@@ -70,9 +71,9 @@ SIMU_OPTION += -DRSOLVER=ROE
 # --> DE_EINT is not supported yet; useless for RTVD/WAF
 #SIMU_OPTION += -DDUAL_ENERGY=DE_ENPY
 
-# number of passively advected scalars (**excluding** entropy or internal energy used by DUAL_ENERGY)
+# number of user-defined passively advected scalars
+# --> set it to 0 or comment it out if none is required
 # --> useless for RTVD/WAF
-# --> for simulations without any passive scalar, either set it to 0 or comment it out
 SIMU_OPTION += -DNCOMP_PASSIVE_USER=0
 
 
@@ -133,9 +134,9 @@ SIMU_OPTION += -DSTORE_PAR_ACC
 # --> must turn on STORE_POT_GHOST when STORE_PAR_ACC is adopted
 #SIMU_OPTION += -DSTAR_FORMATION
 
-# number of passive particle attributes (**excluding** PAR_CREATION_TIME used by STAR_FORMATION)
-# --> for simulations without any passive attributes, either set it to 0 or comment it out
-SIMU_OPTION += -DPAR_NPASSIVE_USER=0
+# number of user-defined particle attributes
+# --> set it to 0 or comment it out if none is required
+SIMU_OPTION += -DPAR_NATT_USER=0
 endif # PARTICLE
 
 
@@ -281,6 +282,7 @@ MPI_PATH     :=
 HDF5_PATH    :=
 GRACKLE_PATH :=
 GSL_PATH     :=
+LIBYT_PATH   :=
 
 # NCSA-bluewaters (only need to specify the path of user-installed packages)
 #GRACKLE_PATH :=
@@ -325,11 +327,16 @@ GSL_PATH     :=
 
 # NTU-hulk (openmpi-intel-qlc)
 #CUDA_PATH    := /opt/gpu/cuda/4.2
-#FFTW_PATH    := /opt/math/fftw/2.1.5-intel-qlc
+#FFTW_PATH    := /opt/math/fftw/2.1.5-intel-openmpi-1.4.3-qlc
 #MPI_PATH     := /usr/mpi/intel/openmpi-1.4.3-qlc
-#HDF5_PATH    := /opt/hdf5/1.8.9
+#HDF5_PATH    := /opt/hdf5/1.8.20
 #GRACKLE_PATH := /work1/fish/Software/grackle
-#MPI_PATH     := /opt/mpi/openmpi/1.6.0-intel
+#GSL_PATH     := /opt/math/gsl/2.5
+#LIBYT_PATH   := /project/fish/libyt/libyt
+#FFTW_PATH    := /opt/math/fftw/2.1.5-intel-openmpi-1.6.0-qlc
+#MPI_PATH     := /opt/mpi/openmpi/1.6.0-intel-qlc
+#FFTW_PATH    := /opt/math/fftw/2.1.5-intel-openmpi-2.1.5-qlc
+#MPI_PATH     := /opt/mpi/openmpi/2.1.5-intel-qlc
 #CUDA_PATH    := /usr/local/cuda-7.5
 
 # NTU-hulk (openmpi-gcc-qlc)
@@ -338,6 +345,8 @@ GSL_PATH     :=
 #MPI_PATH     := /usr/mpi/gcc/openmpi-1.4.3-qlc
 #HDF5_PATH    := /opt/hdf5/1.8.9
 #GRACKLE_PATH := /work1/fish/Software/grackle
+#GSL_PATH     := /opt/math/gsl
+#LIBYT_PATH   := /project/fish/libyt/libyt
 #MPI_PATH     := /opt/mpi/openmpi/1.8.1-gcc-qlc
 #CUDA_PATH    := /usr/local/cuda-7.5
 
@@ -384,8 +393,7 @@ CC_FILE     += End_GAMER.cpp  End_MemFree.cpp  End_MemFree_Fluid.cpp  End_StopMa
                Init_MemAllocate_Fluid.cpp  Init_Parallelization.cpp  Init_RecordBasePatch.cpp  Init_Refine.cpp \
                Init_ByRestart_v1.cpp  Init_ByFunction.cpp  Init_TestProb.cpp  Init_ByFile.cpp  Init_OpenMP.cpp \
                Init_ByRestart_HDF5.cpp  Init_ResetParameter.cpp  Init_ByRestart_v2.cpp  Init_MemoryPool.cpp \
-               Init_Unit.cpp  Init_PassiveVariable.cpp  Init_MemAllocate_dt.cpp  End_MemFree_dt.cpp \
-               Init_UniformGrid.cpp
+               Init_Unit.cpp  Init_UniformGrid.cpp  Init_Field.cpp  Init_MemAllocate_dt.cpp  End_MemFree_dt.cpp
 
 CC_FILE     += Interpolate.cpp  Int_CQuadratic.cpp  Int_MinMod1D.cpp  Int_MinMod3D.cpp  Int_vanLeer.cpp \
                Int_Quadratic.cpp  Int_Table.cpp  Int_CQuartic.cpp  Int_Quartic.cpp
@@ -512,7 +520,7 @@ CC_FILE     += Par_Init_ByFunction.cpp  Par_Output_TextFile.cpp  Par_FindHomePat
                Par_MassAssignment.cpp  Par_UpdateParticle.cpp  Par_GetTimeStep_VelAcc.cpp \
                Par_PassParticle2Sibling.cpp  Par_CountParticleInDescendant.cpp  Par_Aux_GetConservedQuantity.cpp \
                Par_Aux_InitCheck.cpp  Par_Aux_Record_ParticleCount.cpp  Par_PassParticle2Son_AllPatch.cpp \
-               Par_Synchronize.cpp  Par_PredictPos.cpp  Par_Init_ByFile.cpp
+               Par_Synchronize.cpp  Par_PredictPos.cpp  Par_Init_ByFile.cpp  Par_Init_Attribute.cpp
 
 vpath %.cu     Particle/GPU
 vpath %.cpp    Particle/CPU  Particle
@@ -585,9 +593,7 @@ endif # SUPPORT_LIBYT
 # Grackle source files (included only if "SUPPORT_GRACKLE" is turned on)
 # ------------------------------------------------------------------------------------
 ifeq "$(filter -DSUPPORT_GRACKLE, $(SIMU_OPTION))" "-DSUPPORT_GRACKLE"
-CUDA_FILE   += CUAPI_MemAllocate_Grackle.cu  CUAPI_MemFree_Grackle.cu
-
-CC_FILE     += CPU_GrackleSolver_Original.cpp
+CC_FILE     += CPU_GrackleSolver.cpp
 
 CC_FILE     += Grackle_Init.cpp  Grackle_End.cpp  Init_MemAllocate_Grackle.cpp  End_MemFree_Grackle.cpp \
                Grackle_Prepare.cpp  Grackle_Close.cpp  Grackle_Init_FieldData.cpp  Grackle_AdvanceDt.cpp

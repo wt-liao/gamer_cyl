@@ -121,27 +121,18 @@ void Output_DumpData_Part( const OptOutputPart_t Part, const bool BaseOnly, cons
          {
             fprintf( File, "#%10s %10s %10s %20s %20s %20s", "i", "j", "k", "X", "Y", "Z" );
 
-#           if   ( MODEL == HYDRO )
-            fprintf( File, "%14s%14s%14s%14s%14s%14s", "Density", "Momentum X", "Momentum Y", "Momentum Z", "Energy",
-                                                       "Pressure" );
-
-#           elif ( MODEL == MHD )
-#           warning : WAIT MHD !!!
-
-#           elif ( MODEL == ELBDM )
-            fprintf( File, "%14s%14s%14s", "Density", "Real", "Imag" );
-
-#           else
-#           error : ERROR : unsupported MODEL !!
-#           endif // MODEL
-
-            for (int v=0; v<NCOMP_PASSIVE; v++)
-            fprintf( File, "%14s", PassiveFieldName_Grid[v] );
+            for (int v=0; v<NCOMP_TOTAL; v++)
+            fprintf( File, "%14s", FieldLabel[v] );
 
 #           ifdef GRAVITY
             if ( OPT__OUTPUT_POT )
-            fprintf( File, "%14s", "Potential" );
-#           endif // GRAVITY
+            fprintf( File, "%14s", PotLabel );
+#           endif
+
+//          other derived fields
+#           if ( MODEL == HYDRO  ||  MODEL == MHD )
+            fprintf( File, "%14s", "Pressure" );
+#           endif
 
             fprintf( File, "\n" );
          } // if ( TargetMPIRank == 0 )
@@ -232,9 +223,9 @@ void WriteFile( FILE *File, const int lv, const int PID, const int i, const int 
                 const int ii, const int jj, const int kk )
 {
 
-   real u[NCOMP_FLUID];
+   real u[NCOMP_TOTAL];
 
-   for (int v=0; v<NCOMP_FLUID; v++)   u[v] = amr->patch[ amr->FluSg[lv] ][lv][PID]->fluid[v][k][j][i];
+   for (int v=0; v<NCOMP_TOTAL; v++)   u[v] = amr->patch[ amr->FluSg[lv] ][lv][PID]->fluid[v][k][j][i];
 
 // output cell indices and coordinates
    fprintf( File, " %10d %10d %10d %20.14e %20.14e %20.14e",
@@ -242,25 +233,22 @@ void WriteFile( FILE *File, const int lv, const int PID, const int i, const int 
                         Aux_Coord_CellIdx2AdoptedCoord( lv, PID, 1, j ),
                         Aux_Coord_CellIdx2AdoptedCoord( lv, PID, 2, k ) );
 
-// output all active variables in the fluid array
-   for (int v=0; v<NCOMP_FLUID; v++)   fprintf( File, " %13.6e", u[v] );
+// output all variables in the fluid array
+   for (int v=0; v<NCOMP_TOTAL; v++)   fprintf( File, " %13.6e", u[v] );
 
-// output pressure in HYDRO
+// output potential
+#  ifdef GRAVITY
+   if ( OPT__OUTPUT_POT )
+   fprintf( File, " %13.6e", amr->patch[ amr->PotSg[lv] ][lv][PID]->pot[k][j][i] );
+#  endif
+
+// output other derived fields
 #  if   ( MODEL == HYDRO )
    const bool CheckMinPres_Yes = true;
    fprintf( File, " %13.6e", CPU_GetPressure(u[DENS], u[MOMX], u[MOMY], u[MOMZ], u[ENGY], GAMMA-1.0, CheckMinPres_Yes, MIN_PRES) );
 #  elif ( MODEL == MHD )
 #  warning : WAIT MHD !!!
 #  endif // MODEL
-
-// output all passive scalars
-   for (int v=NCOMP_FLUID; v<NCOMP_TOTAL; v++)  fprintf( File, " %13.6e", amr->patch[ amr->FluSg[lv] ][lv][PID]->fluid[v][k][j][i] );
-
-// output potential
-#  ifdef GRAVITY
-   if ( OPT__OUTPUT_POT )
-   fprintf( File, " %13.6e", amr->patch[ amr->PotSg[lv] ][lv][PID]->pot[k][j][i] );
-#  endif // gravity
 
    fprintf( File, "\n" );
 

@@ -148,7 +148,6 @@ void End_GAMER();
 void End_MemFree();
 void End_MemFree_Fluid();
 void End_MemFree_dt();
-void End_MemFree_PassiveFieldName();
 void End_StopManually( int &Terminate_global );
 void Init_BaseLevel();
 void Init_GAMER( int *argc, char ***argv );
@@ -165,17 +164,19 @@ void Init_RecordBasePatch();
 void Init_Refine( const int lv );
 void Init_ByRestart();
 void Init_Unit();
-void Init_PassiveVariable();
-#ifdef SUPPORT_HDF5
-void Init_ByRestart_HDF5( const char *FileName );
-#endif
 void Init_Reload_OldFormat();
 void Init_ByFunction();
 void Init_TestProb();
 void Init_ByFile();
 void Init_UniformGrid( const int lv, const bool FindHomePatchForPar );
+void Init_Field();
+FieldIdx_t AddField( char *InputLabel, const NormPassive_t Norm );
+FieldIdx_t GetFieldIndex( char *InputLabel, const Check_t Check );
 #ifdef OPENMP
 void Init_OpenMP();
+#endif
+#ifdef SUPPORT_HDF5
+void Init_ByRestart_HDF5( const char *FileName );
 #endif
 
 
@@ -491,10 +492,6 @@ void CUAPI_Asyn_PoissonGravitySolver( const real h_Rho_Array    [][RHO_NXT][RHO_
 void CUAPI_MemAllocate_PoissonGravity( const int Pot_NPatchGroup );
 void CUAPI_MemFree_PoissonGravity();
 #endif // #ifdef GRAVITY
-#ifdef SUPPORT_GRACKLE
-void CUAPI_MemAllocate_Grackle( const int Che_NPG );
-void CUAPI_MemFree_Grackle();
-#endif
 #endif // #ifdef GPU
 
 
@@ -530,6 +527,9 @@ void Prepare_PatchData_InitParticleDensityArray( const int lv );
 void Prepare_PatchData_FreeParticleDensityArray( const int lv );
 void Par_PredictPos( const long NPar, const long *ParList, real *ParPosX, real *ParPosY, real *ParPosZ,
                      const double TargetTime );
+void Par_Init_Attribute();
+FieldIdx_t AddParticleAttribute( char *InputLabel );
+FieldIdx_t GetParticleAttributeIndex( char *InputLabel, const Check_t Check );
 #ifdef LOAD_BALANCE
 void Par_LB_CollectParticle2OneLevel( const int FaLv, const bool PredictPos, const double TargetTime,
                                       const bool SibBufPatch, const bool FaSibBufPatch, const bool JustCountNPar,
@@ -544,7 +544,7 @@ void Par_LB_ExchangeParticleBetweenPatch( const int lv,
                                           const int Send_NPatchTotal, const int *Send_PIDList, int *Send_NPatchEachRank,
                                           const int Recv_NPatchTotal, const int *Recv_PIDList, int *Recv_NPatchEachRank,
                                           Timer_t *Timer, const char *Timer_Comment );
-void Par_LB_SendParticleData( const int NParVar, int *SendBuf_NPatchEachRank, int *SendBuf_NParEachPatch,
+void Par_LB_SendParticleData( const int NParAtt, int *SendBuf_NPatchEachRank, int *SendBuf_NParEachPatch,
                               long *SendBuf_LBIdxEachPatch, real *SendBuf_ParDataEachPatch, const int NSendParTotal,
                               int *&RecvBuf_NPatchEachRank, int *&RecvBuf_NParEachPatch, long *&RecvBuf_LBIdxEachPatch,
                               real *&RecvBuf_ParDataEachPatch, int &NRecvPatchTotal, int &NRecvParTotal,
@@ -569,15 +569,15 @@ void YT_Inline();
 // Grackle
 #ifdef SUPPORT_GRACKLE
 void Grackle_Init();
+void Grackle_Init_FieldData();
 void Grackle_End();
 void Init_MemAllocate_Grackle( const int Che_NPG );
 void End_MemFree_Grackle();
 void Grackle_Prepare( const int lv, real h_Che_Array[], const int NPG, const int *PID0_List );
 void Grackle_Close( const int lv, const int SaveSg, const real h_Che_Array[], const int NPG, const int *PID0_List );
-void Grackle_Init_FieldData( const int Che_NPG );
 void Grackle_AdvanceDt( const int lv, const double TimeNew, const double TimeOld, const double dt, const int SaveSg,
                         const bool OverlapMPI, const bool Overlap_Sync );
-void CPU_GrackleSolver_Original( grackle_field_data *Che_FieldData, code_units Che_Units, const int NPatchGroup, const real dt );
+void CPU_GrackleSolver( grackle_field_data *Che_FieldData, code_units Che_Units, const int NPatchGroup, const real dt );
 #endif // #ifdef SUPPORT_GRACKLE
 
 

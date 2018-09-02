@@ -1,4 +1,7 @@
+// define DEFINE_GLOBAL since this file **defines** all global variables
+#define DEFINE_GLOBAL
 #include "GAMER.h"
+#undef DEFINE_GLOBAL
 #include "CUFLU.h"
 
 #ifdef GRAVITY
@@ -38,8 +41,6 @@ int                  MPI_Rank, MPI_Rank_X[3], MPI_SibRank[26], NX0[3], NPatchTot
 int                 *BaseP = NULL;
 int                  Flu_ParaBuf;
 
-char                *PassiveFieldName_Grid[NCOMP_PASSIVE];
-
 double               DT__FLUID, DT__FLUID_INIT, END_T, OUTPUT_DT, DT__SYNC_PARENT_LV, DT__SYNC_CHILDREN_LV;
 long                 END_STEP;
 int                  NX0_TOT[3], OUTPUT_STEP, REGRID_COUNT, FLU_GPU_NPGROUP, DT_GPU_NPGROUP, OMP_NTHREAD;
@@ -60,6 +61,7 @@ bool                 OPT__CK_RESTRICT, OPT__CK_PATCH_ALLOCATE, OPT__FIXUP_FLUX, 
 bool                 OPT__UM_IC_DOWNGRADE, OPT__UM_IC_REFINE, OPT__TIMING_MPI;
 bool                 OPT__CK_CONSERVATION, OPT__RESET_FLUID, OPT__RECORD_USER, OPT__NORMALIZE_PASSIVE, AUTO_REDUCE_DT;
 bool                 OPT__OPTIMIZE_AGGRESSIVE, OPT__INIT_GRID_WITH_OMP, OPT__NO_FLAG_NEAR_BOUNDARY;
+UM_IC_Format_t       OPT__UM_IC_FORMAT;
 TestProbID_t         TESTPROB_ID;
 OptInit_t            OPT__INIT;
 OptOutputFormat_t    OPT__OUTPUT_TOTAL;
@@ -179,7 +181,6 @@ bool                 OPT__OUTPUT_PAR_TEXT, OPT__CK_PARTICLE, OPT__FLAG_NPAR_CELL
 int                  OPT__PARTICLE_COUNT, OPT__FLAG_NPAR_PATCH, FlagTable_NParPatch[NLEVEL-1], FlagTable_NParCell[NLEVEL-1];
 double               FlagTable_ParMassCell[NLEVEL-1];
 ParOutputDens_t      OPT__OUTPUT_PAR_DENS;
-char                *PassiveFieldName_Par[PAR_NPASSIVE];
 #endif
 
 // (2-6) yt inline analysis
@@ -190,7 +191,7 @@ yt_verbose           YT_VERBOSE;
 
 // (2-7) Grackle
 #ifdef SUPPORT_GRACKLE
-GrackleMode_t        GRACKLE_MODE;
+bool                 GRACKLE_ACTIVATE;
 bool                 GRACKLE_VERBOSE;
 bool                 GRACKLE_COOLING;
 GracklePriChe_t      GRACKLE_PRIMORDIAL;
