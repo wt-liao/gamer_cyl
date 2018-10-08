@@ -100,11 +100,11 @@ void CPU_ComputeFlux( const real FC_Var[][6][NCOMP_TOTAL], real FC_Flux[][3][NCO
 #  endif
 
 #  ifdef UNSPLIT_GRAVITY
-   const real   GraConst = -(real)0.5*dt/dh;
-   const int    dID3[3]  = { 1, USG_NXT_F, USG_NXT_F*USG_NXT_F };
-   const int    didx     = USG_GHOST_SIZE - 1;    // assuming FC_Var has one ghost zone on each side
-   const double dh_half  = 0.5*(double)dh;
-   const real   dt_half  = (real)0.5*dt;
+   const int    dID3[3]     = { 1, USG_NXT_F, USG_NXT_F*USG_NXT_F };
+   const int    didx        = USG_GHOST_SIZE - 1;    // assuming FC_Var has one ghost zone on each side
+   const double dh_half[3]  = {0.5*(double)dh[0], 0.5*(double)dh[1], 0.5*(double)dh[2]} ;
+   const real   dt_half     = (real)0.5*dt;
+   real  GraConst[3]        = {-dt_half/dh[0], -dt_half/dh[1], -dt_half/dh[2]} ;
 
    int    d1, d2, d3, ID3;
    real   eL, eR, Acc[3];
@@ -112,7 +112,7 @@ void CPU_ComputeFlux( const real FC_Var[][6][NCOMP_TOTAL], real FC_Flux[][3][NCO
 
 // assuming N_FC_VAR = PS2+2 (ghostzone = 1 on each side) --> CrShift is the central coordinates of FC_Var[0]
    if (  CorrHalfVel  &&  ( GravityType == GRAVITY_EXTERNAL || GravityType == GRAVITY_BOTH )  )
-      for (int d=0; d<3; d++)    CrShift[d] = Corner[d] - (double)dh;
+      for (int d=0; d<3; d++)    CrShift[d] = Corner[d] - (double)dh[d];
 #  endif
 
 
@@ -166,28 +166,34 @@ void CPU_ComputeFlux( const real FC_Var[][6][NCOMP_TOTAL], real FC_Flux[][3][NCO
             Acc[2] = (real)0.0;
 
 //          external gravity
-            if ( GravityType == GRAVITY_EXTERNAL  ||  GravityType == GRAVITY_BOTH )
+            if ( GravityType == GRAVITY_EXTERNAL  ||  GravityType == GRAVITY_BOTH || COORDINATE == CYLINDRICAL )
             {
-               xyz[0]  = CrShift[0] + (double)(i2*dh);
-               xyz[1]  = CrShift[1] + (double)(j2*dh);
-               xyz[2]  = CrShift[2] + (double)(k2*dh);
-               xyz[d] += dh_half;
+               xyz[0]  = CrShift[0] + (double)(i2*dh[0]);
+               xyz[1]  = CrShift[1] + (double)(j2*dh[1]);
+               xyz[2]  = CrShift[2] + (double)(k2*dh[2]);
+               xyz[d] += dh_half[d];
 
                CPU_ExternalAcc( Acc, xyz[0], xyz[1], xyz[2], Time, ExtAcc_AuxArray );
 
                for (int d=0; d<3; d++)    Acc[d] *= dt_half;
             }
+            
+#           if (COORDINATE == CYLINDRICAL)
+            //### this can be faster!
+            //### it assumes avearging two potential at the same r first, then do the derevative
+            GraConst[1] = -dt_half/(dh[1]*xyz[0]) ; 
+#           endif
 
 //          self-gravity
             if ( GravityType == GRAVITY_SELF  ||  GravityType == GRAVITY_BOTH )
             {
                ID3      = ( (k2+didx)*USG_NXT_F + (j2+didx) )*USG_NXT_F + (i2+didx);
 
-               Acc[d1] +=            GraConst*( Pot_USG[ ID3+dID3[d1] ] - Pot_USG[ ID3                   ] );
-               Acc[d2] += (real)0.25*GraConst*( Pot_USG[ ID3+dID3[d2] ] + Pot_USG[ ID3+dID3[d2]+dID3[d1] ]
-                                               -Pot_USG[ ID3-dID3[d2] ] - Pot_USG[ ID3-dID3[d2]+dID3[d1] ] );
-               Acc[d3] += (real)0.25*GraConst*( Pot_USG[ ID3+dID3[d3] ] + Pot_USG[ ID3+dID3[d3]+dID3[d1] ]
-                                               -Pot_USG[ ID3-dID3[d3] ] - Pot_USG[ ID3-dID3[d3]+dID3[d1] ] );
+               Acc[d1] +=            GraConst[d1]*( Pot_USG[ ID3+dID3[d1] ] - Pot_USG[ ID3                   ] );               
+               Acc[d2] += (real)0.25*GraConst[d2]*( Pot_USG[ ID3+dID3[d2] ] + Pot_USG[ ID3+dID3[d2]+dID3[d1] ]
+                                                   -Pot_USG[ ID3-dID3[d2] ] - Pot_USG[ ID3-dID3[d2]+dID3[d1] ] );
+               Acc[d3] += (real)0.25*GraConst[d3]*( Pot_USG[ ID3+dID3[d3] ] + Pot_USG[ ID3+dID3[d3]+dID3[d1] ]
+                                                   -Pot_USG[ ID3-dID3[d3] ] - Pot_USG[ ID3-dID3[d3]+dID3[d1] ] );
             }
 
 //          store the internal energy density
