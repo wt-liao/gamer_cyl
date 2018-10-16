@@ -61,10 +61,11 @@ void Aux_Check_Parameter()
 #  else
 
 #  ifdef GRAVITY
-#     error : ERROR : non-Cartesian coordinates do not support GRAVITY yet !!
+//###
+//     error : ERROR : non-Cartesian coordinates do not support GRAVITY yet !!
 
-   if ( OPT__GRAVITY_TYPE == GRAVITY_EXTERNAL  ||  OPT__GRAVITY_TYPE == GRAVITY_BOTH )
-      Aux_Error( ERROR_INFO, "non-Cartesian coordinates do not support external gravity yet !!\n" );
+   //if ( OPT__GRAVITY_TYPE == GRAVITY_EXTERNAL  ||  OPT__GRAVITY_TYPE == GRAVITY_BOTH )
+   //   Aux_Error( ERROR_INFO, "non-Cartesian coordinates do not support external gravity yet !!\n" );
 
    if ( OPT__EXTERNAL_POT )
       Aux_Error( ERROR_INFO, "non-Cartesian coordinates do not support external potential yet !!\n" );
