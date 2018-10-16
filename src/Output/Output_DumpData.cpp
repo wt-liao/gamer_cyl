@@ -189,7 +189,7 @@ void Output_DumpData( const int Stage )
                                                                 OUTPUT_PART_Y, OUTPUT_PART_Z, FileName_Part );
       if ( OPT__OUTPUT_USER  &&
            Output_User_Ptr != NULL )      Output_User_Ptr();
-#     ifdef GRAVITY
+#     if (defined GRAVITY && (COORDINATE == CARTESIAN))
       if ( OPT__OUTPUT_BASEPS )           Output_BasePowerSpectrum( FileName_PS );
 #     endif
 #     ifdef PARTICLE
