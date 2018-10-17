@@ -97,11 +97,7 @@ double               MIN_DENS, MIN_PRES;
 #ifdef DUAL_ENERGY
 double               DUAL_ENERGY_SWITCH;
 #endif
-#if (COORDINATE == CYLINDRICAL)
-//### cooling is currently limited in cyl
-bool                 Cooling, CheckCool_dt;
-real                 cool_rate ;
-#endif // COORDINATE == CYLINDRICAL
+
 
 #elif ( MODEL == ELBDM )
 double               DT__PHASE, FlagTable_EngyDensity[NLEVEL-1][2];

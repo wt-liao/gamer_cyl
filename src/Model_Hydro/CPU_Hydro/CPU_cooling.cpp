@@ -1,6 +1,7 @@
 #include "GAMER.h"
 
-extern void CoolingFunc(real cool_rate, const real PriVar);
+#ifdef COOLING
+extern void CoolingFunc(real cool_rate, const real PriVar[]);
 
 
 //-------------------------------------------------------------------------------------------------------
@@ -12,7 +13,7 @@ extern void CoolingFunc(real cool_rate, const real PriVar);
 //
 // NOTE        :  
 //-------------------------------------------------------------------------------------------------------
-void CoolingFunc(real cool_rate, const real PriVar) {
+void CoolingFunc(real cool_rate, const real PriVar[]) {
    
    // this is an example for const cooling time
    real cool_time = 10.0;
@@ -23,3 +24,5 @@ void CoolingFunc(real cool_rate, const real PriVar) {
    cool_rate = ie / cool_time ;
    
 } // FUNCTION: CoolingFunc
+
+#endif // COOLING

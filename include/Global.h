@@ -99,11 +99,6 @@ extern double           MIN_DENS, MIN_PRES;
 #ifdef DUAL_ENERGY
 extern double           DUAL_ENERGY_SWITCH;
 #endif
-#if (COORDINATE == CYLINDRICAL)
-//### cooling is currently limited in cyl
-extern bool             Cooling, CheckCool_dt;
-extern real             cool_rate ;
-#endif // COORDINATE == CYLINDRICAL
 
 #elif ( MODEL == MHD )
 #warning WAIT MHD !!!
