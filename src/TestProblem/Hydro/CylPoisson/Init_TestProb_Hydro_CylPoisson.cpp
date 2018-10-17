@@ -310,7 +310,9 @@ void Init_TestProb_Hydro_CylPoisson()
 
 // set the function pointers of various problem-specific routines
    Init_Function_User_Ptr   = SetGridIC;
+#ifdef GRAVITY
    Output_User_Ptr          = Output_L1Error_CylPoisson;
+#endif
    Flag_User_Ptr            = NULL;
    Mis_GetTimeStep_User_Ptr = NULL;
    Aux_Record_User_Ptr      = NULL;
