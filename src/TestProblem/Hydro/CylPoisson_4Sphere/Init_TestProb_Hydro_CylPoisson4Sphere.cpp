@@ -214,7 +214,7 @@ void SetGridIC( real fluid[], const double x, const double y, const double z, co
 // Description : 
 //-------------------------------------------------------------------------------------------------------
 void Output_L1Error_CylPoisson4Sphere(){
-      
+#ifdef GRAVITY
    double analytic_sum = 0.0, L1_error = 0.0, total_error = 0.0;
    double global_analytic_sum = 0.0, global_total_error = 0.0;
    double L1_local = 0.0, L1_global = 0.0;
@@ -298,7 +298,7 @@ void Output_L1Error_CylPoisson4Sphere(){
       Aux_Message( stdout, "[Cylindrical Poisson Solver] L1 error (old version) = %20.12f. \n", L1_error );
       Aux_Message( stdout, "[Cylindrical Poisson Solver] L1 error (new version) = %20.12f. \n", L1_global );
    }
-      
+#endif // GRAVITY     
 }
 
 
@@ -333,7 +333,9 @@ void Init_TestProb_Hydro_CylPoisson4Sphere()
 
 // set the function pointers of various problem-specific routines
    Init_Function_User_Ptr   = SetGridIC;
+#ifdef GRAVITY
    Output_User_Ptr          = Output_L1Error_CylPoisson4Sphere;
+#endif
    Flag_User_Ptr            = NULL;
    Mis_GetTimeStep_User_Ptr = NULL;
    Aux_Record_User_Ptr      = NULL;
