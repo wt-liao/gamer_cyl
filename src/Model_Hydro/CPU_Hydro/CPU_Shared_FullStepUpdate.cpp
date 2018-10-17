@@ -276,7 +276,7 @@ void GetFullStepGeoSource( const real ConInput[][ FLU_NXT*FLU_NXT*FLU_NXT ], rea
    if (Cooling) {
       CoolingFunc(cool_rate, PriVar_Buffer);
       // ### note that GeoSource now includes both GeoSource and Cooling
-      GeoSource[Engy] -= cool_rate ; 
+      GeoSource[ENGY] -= cool_rate ; 
    }
 }
 

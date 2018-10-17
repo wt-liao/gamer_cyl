@@ -418,7 +418,7 @@ void CPU_RiemannPredict( const real Flu_Array_In[][ FLU_NXT*FLU_NXT*FLU_NXT ], c
 #endif
       
       // ### currently cooling only work for cylindrical coord
-      if (Cooling)   CoolingFunc(cool_rate, privar);
+      if (Cooling)   CoolingFunc(cool_rate, PriVar);
 
       for (int d=0; d<3; d++) {
       for (int v=0; v<NCOMP_TOTAL; v++) {    

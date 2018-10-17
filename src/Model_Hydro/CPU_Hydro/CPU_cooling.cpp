@@ -1,3 +1,5 @@
+#include "GAMER.h"
+
 extern void CoolingFunc(real cool_rate, const real PriVar);
 
 
