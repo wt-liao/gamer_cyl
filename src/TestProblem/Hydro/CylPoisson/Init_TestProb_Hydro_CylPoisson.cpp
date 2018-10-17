@@ -206,7 +206,7 @@ void SetGridIC( real fluid[], const double x, const double y, const double z, co
 // Description : 
 //-------------------------------------------------------------------------------------------------------
 void Output_L1Error_CylPoisson(){
-   
+#ifdef GRAVITY
    //double error[ NX0_TOT[2] ][ NX0_TOT[1] ][ NX0_TOT[0] ] ; 
    //double analytic_sol[ NX0_TOT[2] ][ NX0_TOT[1] ][ NX0_TOT[0] ] ; 
    double analytic_sum = 0.0, L1_error = 0.0, total_error = 0.0;
@@ -275,7 +275,7 @@ void Output_L1Error_CylPoisson(){
       Aux_Message( stdout, "[Cylindrical Poisson Solver] L1 error (old version) = %20.12f. \n", L1_error );
       Aux_Message( stdout, "[Cylindrical Poisson Solver] L1 error (new version) = %20.12f. \n", L1_global );
    }
-      
+#endif // GRAVITY     
 }
 
 
