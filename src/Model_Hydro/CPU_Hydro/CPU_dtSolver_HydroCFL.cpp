@@ -74,7 +74,16 @@ void CPU_dtSolver_HydroCFL( real dt_Array[], const real Flu_Array[][NCOMP_FLUID]
 #        elif ( FLU_SCHEME == MHM  ||  FLU_SCHEME == MHM_RP )
          CurrCFL = (Vx+Cs)*_dh[0] + (Vy+Cs)*_dh[1] + (Vz+Cs)*_dh[2];
          MaxCFL  = FMAX( CurrCFL, MaxCFL );
+         
+         //### may also need cool_dt_safty: _dt_cool * safty (safty > 1; probably 10)
+         if (CheckCool_dt) {
+            CoolingFunc(cool_rate, PriVar);
+            _dt_cool = cool_rate * (Gamma-1.0) / Pres ;
+            MaxCFL   = FMAX(_dt_cool, MaxCFL) ;
+         }
+         
 #        endif
+         
       } // for (int t=0; t<CUBE(PS1); t++)
 
       dt_Array[p] = Safety/MaxCFL;
