@@ -296,7 +296,7 @@ void Refine( const int lv, const UseLBFunc_t UseLBFunc )
 #                 endif
 
                   case BC_FLU_USER:
-                     Flu_BoundaryCondition_User        ( Flu_CData[0][0][0],                      NCOMP_TOTAL,
+                     Flu_BoundaryCondition_User        ( Flu_CData[0][0][0], BC_Face[BC_Sibling], NCOMP_TOTAL,
                                                          CSize_Flu, CSize_Flu, CSize_Flu, BC_Idx_Start, BC_Idx_End,
                                                          FluVarIdxList, Time[lv], amr->dh[lv], XYZ, _TOTAL, lv );
                   break;
@@ -365,7 +365,7 @@ void Refine( const int lv, const UseLBFunc_t UseLBFunc )
 
 //             extrapolate potential
                Poi_BoundaryCondition_Extrapolation( Pot_CData[0][0], BC_Face[BC_Sibling], 1, CGhost_Pot,
-                                                    CSize_Pot, CSize_Pot, CSize_Pot, BC_Idx_Start, BC_Idx_End );
+                                                    CSize_Pot, CSize_Pot, CSize_Pot, BC_Idx_Start, BC_Idx_End, amr->dh[lv], NULL );
             }
 
 
