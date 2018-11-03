@@ -1258,7 +1258,7 @@ void Prepare_PatchData( const int lv, const double PrepTime, real *h_Input_Array
                {
 //                extrapolate potential
                   Poi_BoundaryCondition_Extrapolation( Array_Ptr, BC_Face[BC_Sibling], 1, GhostSize,
-                                                       PGSize1D, PGSize1D, PGSize1D, BC_Idx_Start, BC_Idx_End, dh, NULL );
+                                                       PGSize1D, PGSize1D, PGSize1D, BC_Idx_Start, BC_Idx_End, dh, XYZ0 );
 
                   Array_Ptr += 1*PGSize3D;
                } // if ( PrepPot )

@@ -6,17 +6,23 @@
 
 
 static void BC_Extrapolation_xm( real *Array, const int NVar, const int GhostSize, const int ArraySizeX, const int ArraySizeY,
-                                 const int ArraySizeZ, const int Idx_Start[], const int Idx_End[], const real Coeff[][STENCIL] );
+                                 const int ArraySizeZ, const int Idx_Start[], const int Idx_End[], const real Coeff[][STENCIL],
+                                 const double dh[], const double *Corner );
 static void BC_Extrapolation_xp( real *Array, const int NVar, const int GhostSize, const int ArraySizeX, const int ArraySizeY,
-                                 const int ArraySizeZ, const int Idx_Start[], const int Idx_End[], const real Coeff[][STENCIL] );
+                                 const int ArraySizeZ, const int Idx_Start[], const int Idx_End[], const real Coeff[][STENCIL],
+                                 const double dh[], const double *Corner );
 static void BC_Extrapolation_ym( real *Array, const int NVar, const int GhostSize, const int ArraySizeX, const int ArraySizeY,
-                                 const int ArraySizeZ, const int Idx_Start[], const int Idx_End[], const real Coeff[][STENCIL] );
+                                 const int ArraySizeZ, const int Idx_Start[], const int Idx_End[], const real Coeff[][STENCIL],
+                                 const double dh[], const double *Corner );
 static void BC_Extrapolation_yp( real *Array, const int NVar, const int GhostSize, const int ArraySizeX, const int ArraySizeY,
-                                 const int ArraySizeZ, const int Idx_Start[], const int Idx_End[], const real Coeff[][STENCIL] );
+                                 const int ArraySizeZ, const int Idx_Start[], const int Idx_End[], const real Coeff[][STENCIL],
+                                 const double dh[], const double *Corner );
 static void BC_Extrapolation_zm( real *Array, const int NVar, const int GhostSize, const int ArraySizeX, const int ArraySizeY,
-                                 const int ArraySizeZ, const int Idx_Start[], const int Idx_End[], const real Coeff[][STENCIL] );
+                                 const int ArraySizeZ, const int Idx_Start[], const int Idx_End[], const real Coeff[][STENCIL],
+                                 const double dh[], const double *Corner );
 static void BC_Extrapolation_zp( real *Array, const int NVar, const int GhostSize, const int ArraySizeX, const int ArraySizeY,
-                                 const int ArraySizeZ, const int Idx_Start[], const int Idx_End[], const real Coeff[][STENCIL] );
+                                 const int ArraySizeZ, const int Idx_Start[], const int Idx_End[], const real Coeff[][STENCIL],
+                                 const double dh[], const double *Corner );
 
 
 
@@ -121,12 +127,12 @@ void Poi_BoundaryCondition_Extrapolation( real *Array, const int BC_Face, const 
 // set the boundary values at different boundary faces
    switch ( BC_Face )
    {
-      case 0:  BC_Extrapolation_xm( Array, NVar, GhostSize, ArraySizeX, ArraySizeY, ArraySizeZ, Idx_Start, Idx_End, Coeff );  break;
-      case 1:  BC_Extrapolation_xp( Array, NVar, GhostSize, ArraySizeX, ArraySizeY, ArraySizeZ, Idx_Start, Idx_End, Coeff );  break;
-      case 2:  BC_Extrapolation_ym( Array, NVar, GhostSize, ArraySizeX, ArraySizeY, ArraySizeZ, Idx_Start, Idx_End, Coeff );  break;
-      case 3:  BC_Extrapolation_yp( Array, NVar, GhostSize, ArraySizeX, ArraySizeY, ArraySizeZ, Idx_Start, Idx_End, Coeff );  break;
-      case 4:  BC_Extrapolation_zm( Array, NVar, GhostSize, ArraySizeX, ArraySizeY, ArraySizeZ, Idx_Start, Idx_End, Coeff );  break;
-      case 5:  BC_Extrapolation_zp( Array, NVar, GhostSize, ArraySizeX, ArraySizeY, ArraySizeZ, Idx_Start, Idx_End, Coeff );  break;
+      case 0:  BC_Extrapolation_xm( Array, NVar, GhostSize, ArraySizeX, ArraySizeY, ArraySizeZ, Idx_Start, Idx_End, Coeff, dh, Corner );  break;
+      case 1:  BC_Extrapolation_xp( Array, NVar, GhostSize, ArraySizeX, ArraySizeY, ArraySizeZ, Idx_Start, Idx_End, Coeff, dh, Corner );  break;
+      case 2:  BC_Extrapolation_ym( Array, NVar, GhostSize, ArraySizeX, ArraySizeY, ArraySizeZ, Idx_Start, Idx_End, Coeff, dh, Corner );  break;
+      case 3:  BC_Extrapolation_yp( Array, NVar, GhostSize, ArraySizeX, ArraySizeY, ArraySizeZ, Idx_Start, Idx_End, Coeff, dh, Corner );  break;
+      case 4:  BC_Extrapolation_zm( Array, NVar, GhostSize, ArraySizeX, ArraySizeY, ArraySizeZ, Idx_Start, Idx_End, Coeff, dh, Corner );  break;
+      case 5:  BC_Extrapolation_zp( Array, NVar, GhostSize, ArraySizeX, ArraySizeY, ArraySizeZ, Idx_Start, Idx_End, Coeff, dh, Corner );  break;
       default: Aux_Error( ERROR_INFO, "incorrect boundary face (%d) !!\n", BC_Face );
    }
 
@@ -155,7 +161,8 @@ void Poi_BoundaryCondition_Extrapolation( real *Array, const int BC_Face, const 
 // Return      :  Array
 //-------------------------------------------------------------------------------------------------------
 void BC_Extrapolation_xm( real *Array, const int NVar, const int GhostSize, const int ArraySizeX, const int ArraySizeY,
-                          const int ArraySizeZ, const int Idx_Start[], const int Idx_End[], const real Coeff[][STENCIL] )
+                          const int ArraySizeZ, const int Idx_Start[], const int Idx_End[], const real Coeff[][STENCIL],
+                          const double dh[], const double *Corner )
 {
 
    const int i_ref = GhostSize;  // reference i index
@@ -196,7 +203,8 @@ void BC_Extrapolation_xm( real *Array, const int NVar, const int GhostSize, cons
 // Return      :  Array
 //-------------------------------------------------------------------------------------------------------
 void BC_Extrapolation_xp( real *Array, const int NVar, const int GhostSize, const int ArraySizeX, const int ArraySizeY,
-                          const int ArraySizeZ, const int Idx_Start[], const int Idx_End[], const real Coeff[][STENCIL] )
+                          const int ArraySizeZ, const int Idx_Start[], const int Idx_End[], const real Coeff[][STENCIL],
+                          const double dh[], const double *Corner )
 {
 
    const int i_ref = ArraySizeX - GhostSize - 1;   // reference i index
@@ -237,7 +245,8 @@ void BC_Extrapolation_xp( real *Array, const int NVar, const int GhostSize, cons
 // Return      :  Array
 //-------------------------------------------------------------------------------------------------------
 void BC_Extrapolation_ym( real *Array, const int NVar, const int GhostSize, const int ArraySizeX, const int ArraySizeY,
-                          const int ArraySizeZ, const int Idx_Start[], const int Idx_End[], const real Coeff[][STENCIL] )
+                          const int ArraySizeZ, const int Idx_Start[], const int Idx_End[], const real Coeff[][STENCIL],
+                          const double dh[], const double *Corner )
 {
 
    const int j_ref = GhostSize;  // reference j index
@@ -279,7 +288,8 @@ void BC_Extrapolation_ym( real *Array, const int NVar, const int GhostSize, cons
 // Return      :  Array
 //-------------------------------------------------------------------------------------------------------
 void BC_Extrapolation_yp( real *Array, const int NVar, const int GhostSize, const int ArraySizeX, const int ArraySizeY,
-                          const int ArraySizeZ, const int Idx_Start[], const int Idx_End[], const real Coeff[][STENCIL] )
+                          const int ArraySizeZ, const int Idx_Start[], const int Idx_End[], const real Coeff[][STENCIL],
+                          const double dh[], const double *Corner )
 {
 
    const int j_ref = ArraySizeY - GhostSize - 1;   // reference j index
@@ -321,14 +331,15 @@ void BC_Extrapolation_yp( real *Array, const int NVar, const int GhostSize, cons
 // Return      :  Array
 //-------------------------------------------------------------------------------------------------------
 void BC_Extrapolation_zm( real *Array, const int NVar, const int GhostSize, const int ArraySizeX, const int ArraySizeY,
-                          const int ArraySizeZ, const int Idx_Start[], const int Idx_End[], const real Coeff[][STENCIL] )
+                          const int ArraySizeZ, const int Idx_Start[], const int Idx_End[], const real Coeff[][STENCIL],
+                          const double dh[], const double *Corner )
 {
 
    const int k_ref = GhostSize;  // reference k index
 
 // 1D array -> 3D array
    real (*Array3D)[ArraySizeZ][ArraySizeY][ArraySizeX] = ( real (*)[ArraySizeZ][ArraySizeY][ArraySizeX] )Array;
-
+   
 // set the boundary values
    for (int v=0; v<NVar; v++)
    for (int k=Idx_End[2], kk=0; k>=Idx_Start[2]; k--, kk++)
@@ -363,7 +374,8 @@ void BC_Extrapolation_zm( real *Array, const int NVar, const int GhostSize, cons
 // Return      :  Array
 //-------------------------------------------------------------------------------------------------------
 void BC_Extrapolation_zp( real *Array, const int NVar, const int GhostSize, const int ArraySizeX, const int ArraySizeY,
-                          const int ArraySizeZ, const int Idx_Start[], const int Idx_End[], const real Coeff[][STENCIL] )
+                          const int ArraySizeZ, const int Idx_Start[], const int Idx_End[], const real Coeff[][STENCIL],
+                          const double dh[], const double *Corner )
 {
 
    const int k_ref = ArraySizeZ - GhostSize - 1;   // reference k index
