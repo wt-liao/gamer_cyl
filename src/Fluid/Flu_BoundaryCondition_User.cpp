@@ -9,6 +9,29 @@ void (*BC_User_Ptr)( real fluid[], const double X, const double Y, const double 
                      const int lv, double AuxArray[] ) = BC_User;
 
 
+#if ( COORDINATE == CYLINDRICAL )
+#include "TestProb.h"
+                     
+// boundary condition using gradient field
+static void BC_User_xm( real *Array, real *PotArray, const int NVar_Flu, const int GhostSize, const int ArraySizeX, 
+                        const int ArraySizeY, const int ArraySizeZ, const int Idx_Start[], const int Idx_End[],
+                        const int TFluVarIdxList[], const double dh[], const double *Corner, const int TVar );
+static void BC_User_xp( real *Array, real *PotArray, const int NVar_Flu, const int GhostSize, const int ArraySizeX, 
+                        const int ArraySizeY, const int ArraySizeZ, const int Idx_Start[], const int Idx_End[],
+                        const int TFluVarIdxList[], const double dh[], const double *Corner, const int TVar );
+static void BC_User_ym( real *Array, real *PotArray, const int NVar_Flu, const int GhostSize, const int ArraySizeX, 
+                        const int ArraySizeY, const int ArraySizeZ, const int Idx_Start[], const int Idx_End[],
+                        const int TFluVarIdxList[], const double dh[], const double *Corner, const int TVar );
+static void BC_User_yp( real *Array, real *PotArray, const int NVar_Flu, const int GhostSize, const int ArraySizeX, 
+                        const int ArraySizeY, const int ArraySizeZ, const int Idx_Start[], const int Idx_End[],
+                        const int TFluVarIdxList[], const double dh[], const double *Corner, const int TVar );
+static void BC_User_zm( real *Array, real *PotArray, const int NVar_Flu, const int GhostSize, const int ArraySizeX, 
+                        const int ArraySizeY, const int ArraySizeZ, const int Idx_Start[], const int Idx_End[],
+                        const int TFluVarIdxList[], const double dh[], const double *Corner, const int TVar );
+static void BC_User_zp( real *Array, real *PotArray, const int NVar_Flu, const int GhostSize, const int ArraySizeX, 
+                        const int ArraySizeY, const int ArraySizeZ, const int Idx_Start[], const int Idx_End[],
+                        const int TFluVarIdxList[], const double dh[], const double *Corner, const int TVar );
+#endif
 
 
 //-------------------------------------------------------------------------------------------------------
@@ -85,15 +108,36 @@ void BC_User( real fluid[], const double X, const double Y, const double Z, cons
 //
 // Return      :  Array
 //-------------------------------------------------------------------------------------------------------
-void Flu_BoundaryCondition_User( real *Array, const int NVar_Flu, const int ArraySizeX, const int ArraySizeY,
-                                 const int ArraySizeZ, const int Idx_Start[], const int Idx_End[],
-                                 const int TFluVarIdxList[], const double Time, const double dh[], const double *Corner,
-                                 const int TVar, const int lv )
+void Flu_BoundaryCondition_User( real *Array, real *PotArray, const int BC_Face, const int NVar_Flu, const int GhostSize, 
+                                 const int ArraySizeX, const int ArraySizeY, const int ArraySizeZ, 
+                                 const int Idx_Start[], const int Idx_End[], const int TFluVarIdxList[], const double Time, 
+                                 const double dh[], const double *Corner, const int TVar, const int lv )
 {
 
+// customized USER_BC
+   switch ( BC_Face )
+   {
+      case 0:  BC_User_xm( Array, PotArray, NVar_Flu, GhostSize, ArraySizeX, ArraySizeY, ArraySizeZ, Idx_Start, Idx_End, 
+                           TFluVarIdxList, dh, Corner, TVar );  break;
+      case 1:  BC_User_xp( Array, PotArray, NVar_Flu, GhostSize, ArraySizeX, ArraySizeY, ArraySizeZ, Idx_Start, Idx_End, 
+                           TFluVarIdxList, dh, Corner, TVar );  break;
+      case 2:  BC_User_ym( Array, PotArray, NVar_Flu, GhostSize, ArraySizeX, ArraySizeY, ArraySizeZ, Idx_Start, Idx_End, 
+                           TFluVarIdxList, dh, Corner, TVar );  break;
+      case 3:  BC_User_yp( Array, PotArray, NVar_Flu, GhostSize, ArraySizeX, ArraySizeY, ArraySizeZ, Idx_Start, Idx_End, 
+                           TFluVarIdxList, dh, Corner, TVar );  break;
+      case 4:  BC_User_zm( Array, PotArray, NVar_Flu, GhostSize, ArraySizeX, ArraySizeY, ArraySizeZ, Idx_Start, Idx_End, 
+                           TFluVarIdxList, dh, Corner, TVar );  break;
+      case 5:  BC_User_zp( Array, PotArray, NVar_Flu, GhostSize, ArraySizeX, ArraySizeY, ArraySizeZ, Idx_Start, Idx_End, 
+                           TFluVarIdxList, dh, Corner, TVar );  break;
+      default: Aux_Error( ERROR_INFO, "incorrect boundary face (%d) !!\n", BC_Face );
+   }
+   
+// ### previous version of USER_BC
+   
+   /*
+   
 // check
-   if ( BC_User_Ptr == NULL )    Aux_Error( ERROR_INFO, "BC_User_Ptr == NULL !!\n" );
-
+   if ( BC_User_Ptr == NULL )    Aux_Error( ERROR_INFO, "BC_User_Ptr == NULL !!\n" );  
 
 // starting coordinates in the adopted coordinate system
    const double X0 = Corner[0] + (double)Idx_Start[0]*dh[0];
@@ -160,5 +204,445 @@ void Flu_BoundaryCondition_User( real *Array, const int NVar_Flu, const int Arra
 #     error : unsupported MODEL !!
 #     endif
    } // k,j,i
+   */
 
 } // FUNCTION : Flu_BoundaryCondition_User
+
+
+
+
+
+#if (COORDINATE == CYLINDRICAL)
+//-------------------------------------------------------------------------------------------------------
+// Function    :  BC_User_xm
+// Description :  User-specified boundary condition
+//
+// Note        :  1. Invoked by "Flu_BoundaryCondition_User" using the function pointer "BC_User_Ptr"
+//                   --> The function pointer may be reset by various test problem initializers, in which case
+//                       this funtion will become useless
+//                2. update Array 
+//                3. Enabled by the runtime options "OPT__BC_FLU_* == 4"
+//
+// Parameter   :  Array    : Fluid field to be set
+//
+//-------------------------------------------------------------------------------------------------------
+void BC_User_xm( real *Array, real *PotArray, const int NVar_Flu, const int GhostSize, const int ArraySizeX, const int ArraySizeY,
+                 const int ArraySizeZ, const int Idx_Start[], const int Idx_End[],
+                 const int TFluVarIdxList[], const double dh[], const double *Corner, const int TVar ) 
+{
+// 1D array -> 3D array
+   const int FACE = 0;
+   real (*Array3D)[ArraySizeZ][ArraySizeY][ArraySizeX] = ( real (*)[ArraySizeZ][ArraySizeY][ArraySizeX] )Array;
+   
+#  ifdef UserPotBC
+   if (PotArray != NULL) {
+      Poi_BoundaryCondition_Extrapolation( PotArray, FACE, 1, GhostSize, ArraySizeX, ArraySizeY, ArraySizeZ, 
+                                           Idx_Start, Idx_End, NULL, NULL );
+   }
+   real (*PotArray3D)[ArraySizeZ][ArraySizeY][ArraySizeX] = ( real (*)[ArraySizeZ][ArraySizeY][ArraySizeX] )PotArray;
+#  endif
+   
+   const double X0    = Corner[0] + (double)Idx_End[0]*dh[0];
+   const double Y0    = Corner[1] + (double)Idx_Start[1]*dh[1];
+   const double Z0    = Corner[2] + (double)Idx_Start[2]*dh[2];
+   const double GM    = ExtAcc_AuxArray[3] ;
+   const double X_ref = X0 + dh[0];
+   const double Y_ref = Y0;
+   const double Z_ref = Z0;
+
+   const int    i_ref = Idx_End[0]+1 ;
+   
+   double sph_rad, star_g, dens, pot_grad, pres_grad, vtheta_square, vtheta;
+   
+   double X, Y, Z;
+   int    i, j, k;
+
+#  ifdef UserPotBC   
+   for (k=Idx_Start[2], Z=Z0; k<=Idx_End[2];   k++, Z+=dh[2])
+   for (j=Idx_Start[1], Y=Y0; j<=Idx_End[1];   j++, Y+=dh[1])
+   for (i=Idx_End[0],   X=X0; i>=Idx_Start[0]; i--, X-=dh[0])
+   {
+      // outflow 
+      Array3D[DENS][k][j][i] = Array3D[DENS][k][j][i_ref] ;
+      Array3D[MOMX][k][j][i] = Array3D[MOMX][k][j][i_ref] ;
+      //Array3D[MOMY][k][j][i] = Array3D[MOMY][k][j][i_ref] ;
+      Array3D[MOMZ][k][j][i] = Array3D[MOMZ][k][j][i_ref] ;
+      //Array3D[ENGY][k][j][i] = Array3D[ENGY][k][j][i_ref] ;
+      
+      // derived other field
+      sph_rad  = SQRT( Z*Z + X*X );
+      star_g   = - GM * X / CUBE(sph_rad) ;
+      dens      = Array3D[DENS][k][j][i];
+      
+      if (i != Idx_Start[0]) {
+         pot_grad  = (PotArray3D[0][k][j][i+1] - PotArray3D[0][k][j][i-1])/(2.0*dh[0]) ;
+         //###
+         pres_grad = 0.0;
+      } 
+      else  {
+         pot_grad  = (PotArray3D[0][k][j][i+1] - PotArray3D[0][k][j][i]  )/(1.0*dh[0]) ;
+         //###
+         pres_grad = 0.0;
+      }               
+      
+      vtheta_square = (pres_grad + dens*pot_grad - dens*star_g)*(X/dens);
+      vtheta = (vtheta_square > 0.0)? SQRT(vtheta_square) : 0.0 ;
+      
+      Array3D[MOMY][k][j][i] = dens * vtheta ;
+      
+      // keep pressure the same, but modify K.E., since pres_grad = 0.0 currently
+      Array3D[ENGY][k][j][i] = Array3D[ENGY][k][j][i_ref] 
+                             - 0.5*SQR(Array3D[MOMY][k][j][i_ref])/dens + 0.5*dens*SQR(vtheta) ; 
+   } // k,j,i
+#  endif
+}
+                        
+                        
+//-------------------------------------------------------------------------------------------------------
+// Function    :  BC_User_xp
+// Description :  User-specified boundary condition
+//
+// Note        :  1. Invoked by "Flu_BoundaryCondition_User" using the function pointer "BC_User_Ptr"
+//                   --> The function pointer may be reset by various test problem initializers, in which case
+//                       this funtion will become useless
+//                2. update Array 
+//                3. Enabled by the runtime options "OPT__BC_FLU_* == 4"
+//
+// Parameter   :  Array    : Fluid field to be set
+//
+//-------------------------------------------------------------------------------------------------------                        
+void BC_User_xp( real *Array, real *PotArray, const int NVar_Flu, const int GhostSize, const int ArraySizeX, const int ArraySizeY,
+                 const int ArraySizeZ, const int Idx_Start[], const int Idx_End[],
+                 const int TFluVarIdxList[], const double dh[], const double *Corner, const int TVar )
+{
+// 1D array -> 3D array
+   const int FACE = 1;
+   real (*Array3D)[ArraySizeZ][ArraySizeY][ArraySizeX] = ( real (*)[ArraySizeZ][ArraySizeY][ArraySizeX] )Array;
+   
+#  ifdef UserPotBC
+   if (PotArray != NULL) {
+      Poi_BoundaryCondition_Extrapolation( PotArray, FACE, 1, GhostSize, ArraySizeX, ArraySizeY, ArraySizeZ, 
+                                           Idx_Start, Idx_End, NULL, NULL );
+   }
+   real (*PotArray3D)[ArraySizeZ][ArraySizeY][ArraySizeX] = ( real (*)[ArraySizeZ][ArraySizeY][ArraySizeX] )PotArray;
+#  endif
+   
+   const double X0    = Corner[0] + (double)Idx_Start[0]*dh[0];
+   const double Y0    = Corner[1] + (double)Idx_Start[1]*dh[1];
+   const double Z0    = Corner[2] + (double)Idx_Start[2]*dh[2];
+   const double GM    = ExtAcc_AuxArray[3] ;
+   const double X_ref = X0 - dh[0];
+   const double Y_ref = Y0;
+   const double Z_ref = Z0;
+   
+   const int    i_ref = Idx_Start[0]-1 ;
+   
+   double sph_rad, star_g, dens, pot_grad, pres_grad, vtheta_square, vtheta;
+   
+   double X, Y, Z;
+   int    i, j, k;
+   
+#  ifdef UserPotBC
+   
+   for (k=Idx_Start[2], Z=Z0; k<=Idx_End[2]; k++, Z+=dh[2])
+   for (j=Idx_Start[1], Y=Y0; j<=Idx_End[1]; j++, Y+=dh[1])
+   for (i=Idx_Start[0], X=X0; i<=Idx_End[0]; i++, X+=dh[0])
+   {
+      // outflow 
+      Array3D[DENS][k][j][i] = Array3D[DENS][k][j][i_ref] ;
+      Array3D[MOMX][k][j][i] = Array3D[MOMX][k][j][i_ref] ;
+      //Array3D[MOMY][k][j][i] = Array3D[MOMY][k][j][i_ref] ;
+      Array3D[MOMZ][k][j][i] = Array3D[MOMZ][k][j][i_ref] ;
+      //Array3D[ENGY][k][j][i] = Array3D[ENGY][k][j][i_ref] ;
+      
+      // derived other field
+      sph_rad  = SQRT( Z*Z + X*X );
+      star_g   = - GM * X / CUBE(sph_rad) ;
+      dens      = Array3D[DENS][k][j][i];
+      
+      if (i != Idx_End[0]) {
+         pot_grad  = (PotArray3D[0][k][j][i+1] - PotArray3D[0][k][j][i-1])/(2.0*dh[0]) ;
+         //###
+         pres_grad = 0.0;
+      } 
+      else  {
+         pot_grad  = (PotArray3D[0][k][j][i]   - PotArray3D[0][k][j][i-1])/(1.0*dh[0]) ;
+         //###
+         pres_grad = 0.0;
+      }               
+      
+      vtheta_square = (pres_grad + dens*pot_grad - dens*star_g)*(X/dens);
+      vtheta = (vtheta_square > 0.0)? SQRT(vtheta_square) : 0.0 ;
+      
+      Array3D[MOMY][k][j][i] = dens * vtheta ;
+      //Aux_Message(stdout, "MOMY ref and derived = %8.5f, %8.5f. \n", Array3D[MOMY][k][j][i_ref], dens * vtheta);
+      
+      // keep pressure the same, but modify K.E., since pres_grad = 0.0 currently
+      Array3D[ENGY][k][j][i] = Array3D[ENGY][k][j][i_ref] 
+                             - 0.5*SQR(Array3D[MOMY][k][j][i_ref])/dens + 0.5*dens*SQR(vtheta) ; 
+   }
+#  endif // UserPotBC
+}
+                        
+//-------------------------------------------------------------------------------------------------------
+// Function    :  BC_User_ym
+// Description :  User-specified boundary condition
+//
+// Note        :  1. Invoked by "Flu_BoundaryCondition_User" using the function pointer "BC_User_Ptr"
+//                   --> The function pointer may be reset by various test problem initializers, in which case
+//                       this funtion will become useless
+//                2. update Array 
+//                3. Enabled by the runtime options "OPT__BC_FLU_* == 4"
+//
+// Parameter   :  Array    : Fluid field to be set
+//
+//-------------------------------------------------------------------------------------------------------              
+void BC_User_ym( real *Array, real *PotArray, const int NVar_Flu, const int GhostSize, const int ArraySizeX, const int ArraySizeY,
+                 const int ArraySizeZ, const int Idx_Start[], const int Idx_End[],
+                 const int TFluVarIdxList[], const double dh[], const double *Corner, const int TVar )
+{
+// 1D array -> 3D array
+   const int FACE = 2;
+   real (*Array3D)[ArraySizeZ][ArraySizeY][ArraySizeX] = ( real (*)[ArraySizeZ][ArraySizeY][ArraySizeX] )Array;
+   
+   const double X0 = Corner[0] + (double)Idx_Start[0]*dh[0];
+   const double Y0 = Corner[1] + (double)Idx_End[1]*dh[1]  ;
+   const double Z0 = Corner[2] + (double)Idx_Start[2]*dh[2];
+   
+   const int    j_ref = Idx_End[1]+1 ;
+   
+   double X, Y, Z;
+   int    i, j, k;
+   
+   for (k=Idx_Start[2], Z=Z0; k<=Idx_End[2];   k++, Z+=dh[2])
+   for (j=Idx_End[1],   Y=Y0; j>=Idx_Start[1]; j--, Y-=dh[1])
+   for (i=Idx_Start[0], X=X0; i<=Idx_End[0];   i++, X+=dh[0])
+   {
+      // outflow 
+      Array3D[DENS][k][j][i] = Array3D[DENS][k][j_ref][i] ;
+      Array3D[MOMX][k][j][i] = Array3D[MOMX][k][j_ref][i] ;
+      Array3D[MOMY][k][j][i] = Array3D[MOMY][k][j_ref][i] ;
+      Array3D[MOMZ][k][j][i] = Array3D[MOMZ][k][j_ref][i] ;
+      Array3D[ENGY][k][j][i] = Array3D[ENGY][k][j_ref][i] ;
+   }            
+}
+
+//-------------------------------------------------------------------------------------------------------
+// Function    :  BC_User_yp
+// Description :  User-specified boundary condition
+//
+// Note        :  1. Invoked by "Flu_BoundaryCondition_User" using the function pointer "BC_User_Ptr"
+//                   --> The function pointer may be reset by various test problem initializers, in which case
+//                       this funtion will become useless
+//                2. update Array 
+//                3. Enabled by the runtime options "OPT__BC_FLU_* == 4"
+//
+// Parameter   :  Array    : Fluid field to be set
+//
+//-------------------------------------------------------------------------------------------------------        
+void BC_User_yp( real *Array, real *PotArray, const int NVar_Flu, const int GhostSize, const int ArraySizeX, const int ArraySizeY,
+                 const int ArraySizeZ, const int Idx_Start[], const int Idx_End[],
+                 const int TFluVarIdxList[], const double dh[], const double *Corner, const int TVar )
+{
+// 1D array -> 3D array
+   const int FACE = 3;
+   real (*Array3D)[ArraySizeZ][ArraySizeY][ArraySizeX] = ( real (*)[ArraySizeZ][ArraySizeY][ArraySizeX] )Array;
+   
+   const double X0 = Corner[0] + (double)Idx_Start[0]*dh[0];
+   const double Y0 = Corner[1] + (double)Idx_Start[1]*dh[1];
+   const double Z0 = Corner[2] + (double)Idx_Start[2]*dh[2];
+   
+   const int    j_ref = Idx_Start[1]-1 ;
+   
+   double X, Y, Z;
+   int    i, j, k;
+   
+   for (k=Idx_Start[2], Z=Z0; k<=Idx_End[2]; k++, Z+=dh[2])
+   for (j=Idx_Start[1], Y=Y0; j<=Idx_End[1]; j++, Y+=dh[1])
+   for (i=Idx_Start[0], X=X0; i<=Idx_End[0]; i++, X+=dh[0])
+   {
+      // outflow 
+      Array3D[DENS][k][j][i] = Array3D[DENS][k][j_ref][i] ;
+      Array3D[MOMX][k][j][i] = Array3D[MOMX][k][j_ref][i] ;
+      Array3D[MOMY][k][j][i] = Array3D[MOMY][k][j_ref][i] ;
+      Array3D[MOMZ][k][j][i] = Array3D[MOMZ][k][j_ref][i] ;
+      Array3D[ENGY][k][j][i] = Array3D[ENGY][k][j_ref][i] ;  
+   }
+}
+
+//-------------------------------------------------------------------------------------------------------
+// Function    :  BC_User_zm
+// Description :  User-specified boundary condition
+//
+// Note        :  1. Invoked by "Flu_BoundaryCondition_User" using the function pointer "BC_User_Ptr"
+//                   --> The function pointer may be reset by various test problem initializers, in which case
+//                       this funtion will become useless
+//                2. update Array 
+//                3. Enabled by the runtime options "OPT__BC_FLU_* == 4"
+//
+// Parameter   :  Array    : Fluid field to be set
+//
+//-------------------------------------------------------------------------------------------------------              
+void BC_User_zm( real *Array, real *PotArray, const int NVar_Flu, const int GhostSize, const int ArraySizeX, const int ArraySizeY,
+                 const int ArraySizeZ, const int Idx_Start[], const int Idx_End[],
+                 const int TFluVarIdxList[], const double dh[], const double *Corner, const int TVar )
+{
+// 1D array -> 3D array
+   const int FACE = 4;
+   real (*Array3D)[ArraySizeZ][ArraySizeY][ArraySizeX] = ( real (*)[ArraySizeZ][ArraySizeY][ArraySizeX] )Array;
+   
+   const double X0    = Corner[0] + (double)Idx_Start[0]*dh[0];
+   const double Y0    = Corner[1] + (double)Idx_Start[1]*dh[1];
+   const double Z0    = Corner[2] + (double)Idx_End[2]*dh[2];
+   const double GM    = ExtAcc_AuxArray[3] ;
+   const double X_ref = X0;
+   const double Y_ref = Y0;
+   const double Z_ref = Z0 + dh[2];
+   const int    k_ref = Idx_End[2]+1 ;
+   
+   const bool CheckMinPres_Yes = true;
+   const real Gamma_m1         = GAMMA - (real)1.0;
+   
+   double pres_bc, engy_bc, sph_rad, star_g, dens_p1, pres_p2, pot_grad;
+   double X, Y, Z, Z_p1;
+   int    i, j, k;
+   
+   
+#  ifdef UserPotBC
+   if (PotArray != NULL) {
+      Poi_BoundaryCondition_Extrapolation( PotArray, FACE, 1, GhostSize, ArraySizeX, ArraySizeY, ArraySizeZ, 
+                                           Idx_Start, Idx_End, NULL, NULL );
+   }
+   
+   real (*PotArray3D)[ArraySizeZ][ArraySizeY][ArraySizeX] = ( real (*)[ArraySizeZ][ArraySizeY][ArraySizeX] )PotArray;
+   
+   for (j=Idx_Start[1], Y=Y0; j<=Idx_End[1]; j++, Y+=dh[1])
+   for (i=Idx_Start[0], X=X0; i<=Idx_End[0]; i++, X+=dh[0])
+   {  
+      // fill in bc
+      for (k=Idx_End[2], Z=Z0; k>=Idx_Start[2]; k--, Z-=dh[2]) {
+         
+         // outflow 
+         Array3D[DENS][k][j][i] = Array3D[DENS][k_ref][j][i] ;
+         Array3D[MOMX][k][j][i] = Array3D[MOMX][k_ref][j][i] ;
+         Array3D[MOMY][k][j][i] = Array3D[MOMY][k_ref][j][i] ;
+         Array3D[MOMZ][k][j][i] = Array3D[MOMZ][k_ref][j][i] ;  
+         
+         
+         // calculate for BC value
+         Z_p1     = Z+dh[2];
+         sph_rad  = SQRT( Z_p1*Z_p1 + X*X );
+         star_g   = - GM * Z_p1 / CUBE(sph_rad) ;
+         
+         pres_p2  = CPU_GetPressure( Array3D[DENS][k+2][j][i], Array3D[MOMX][k+2][j][i], 
+                                     Array3D[MOMY][k+2][j][i], Array3D[MOMZ][k+2][j][i], 
+                                     Array3D[ENGY][k+2][j][i], Gamma_m1, CheckMinPres_Yes, MIN_PRES );
+                                 
+         dens_p1  = Array3D[DENS][k+1][j][i];
+         pot_grad = PotArray3D[0][k+2][j][i] - PotArray3D[0][k][j][i];
+         
+         pres_bc  = pres_p2 + dens_p1*pot_grad - dens_p1*star_g*(2.0*dh[2]) ;
+         pres_bc  = FMAX( pres_bc, MIN_PRES ) ;
+         
+         engy_bc  = pres_bc/Gamma_m1 + 0.5*( SQR(Array3D[MOMX][k][j][i]) + SQR(Array3D[MOMY][k][j][i]) + 
+                                             SQR(Array3D[MOMZ][k][j][i]) ) / Array3D[DENS][k][j][i] ;
+         
+         Array3D[ENGY][k][j][i] = engy_bc ;
+      }         
+   } // for (i, j)
+#  endif // UserPotBC
+   
+}
+
+//-------------------------------------------------------------------------------------------------------
+// Function    :  BC_User_zp
+// Description :  User-specified boundary condition
+//
+// Note        :  1. Invoked by "Flu_BoundaryCondition_User" using the function pointer "BC_User_Ptr"
+//                   --> The function pointer may be reset by various test problem initializers, in which case
+//                       this funtion will become useless
+//                2. update Array 
+//                3. Enabled by the runtime options "OPT__BC_FLU_* == 4"
+//
+// Parameter   :  Array    : Fluid field to be set
+//
+//-------------------------------------------------------------------------------------------------------              
+void BC_User_zp( real *Array, real *PotArray, const int NVar_Flu, const int GhostSize, const int ArraySizeX, const int ArraySizeY,
+                 const int ArraySizeZ, const int Idx_Start[], const int Idx_End[],
+                 const int TFluVarIdxList[], const double dh[], const double *Corner, const int TVar )
+{
+// 1D array -> 3D array
+   const int FACE = 5;
+   real (*Array3D)[ArraySizeZ][ArraySizeY][ArraySizeX]    = ( real (*)[ArraySizeZ][ArraySizeY][ArraySizeX] )Array;
+
+   
+   const double X0    = Corner[0] + (double)Idx_Start[0]*dh[0];
+   const double Y0    = Corner[1] + (double)Idx_Start[1]*dh[1];
+   const double Z0    = Corner[2] + (double)Idx_Start[2]*dh[2];
+   const double GM    = ExtAcc_AuxArray[3] ;
+   const double X_ref = X0;
+   const double Y_ref = Y0;
+   const double Z_ref = Z0 - dh[2];
+   const int    k_ref = Idx_Start[2]-1 ;
+   
+   const bool CheckMinPres_Yes = true;
+   const real Gamma_m1         = GAMMA - (real)1.0;
+   
+   double pres_bc, engy_bc, sph_rad, star_g, dens_m1, pres_m2, pot_grad;
+   double X, Y, Z, Z_m1;
+   int    i, j, k;
+   
+#  ifdef UserPotBC
+   if (PotArray != NULL) {
+      Poi_BoundaryCondition_Extrapolation( PotArray, FACE, 1, GhostSize, ArraySizeX, ArraySizeY, ArraySizeZ, 
+                                           Idx_Start, Idx_End, NULL, NULL );
+   }
+   
+   real (*PotArray3D)[ArraySizeZ][ArraySizeY][ArraySizeX] = ( real (*)[ArraySizeZ][ArraySizeY][ArraySizeX] )PotArray;
+   
+   for (j=Idx_Start[1], Y=Y0; j<=Idx_End[1]; j++, Y+=dh[1])
+   for (i=Idx_Start[0], X=X0; i<=Idx_End[0]; i++, X+=dh[0])
+   {  
+      // fill in bc
+      for (k=Idx_Start[2], Z=Z0; k<=Idx_End[2]; k++, Z+=dh[2]) {
+         //###
+         /*
+         if ( i==Idx_Start[0] && j==Idx_Start[1] && k==Idx_Start[2] && PotArray3D[0][k_ref][j][i] >= 0.0 )
+            Aux_Message(stdout, "Pot inside and in BC = (%8.5f, %8.5f) at (X, Y, Z) = (%8.5f, %8.5f, %8.5f). \n", 
+                        PotArray3D[0][k_ref][j][i], PotArray3D[0][k][j][i], X, Y, Z);
+         */
+         
+         // outflow 
+         Array3D[DENS][k][j][i] = Array3D[DENS][k_ref][j][i] ;
+         Array3D[MOMX][k][j][i] = Array3D[MOMX][k_ref][j][i] ;
+         Array3D[MOMY][k][j][i] = Array3D[MOMY][k_ref][j][i] ;
+         Array3D[MOMZ][k][j][i] = Array3D[MOMZ][k_ref][j][i] ;  
+         
+         
+         // calculate for BC value
+         Z_m1     = Z-dh[2];
+         sph_rad  = SQRT( Z_m1*Z_m1 + X*X );
+         star_g   = - GM * Z_m1 / CUBE(sph_rad) ;
+         
+         pres_m2  = CPU_GetPressure( Array3D[DENS][k-2][j][i], Array3D[MOMX][k-2][j][i], 
+                                     Array3D[MOMY][k-2][j][i], Array3D[MOMZ][k-2][j][i], 
+                                     Array3D[ENGY][k-2][j][i], Gamma_m1, CheckMinPres_Yes, MIN_PRES );
+                                 
+         dens_m1  = Array3D[DENS][k-1][j][i];
+         pot_grad = PotArray3D[0][k][j][i] - PotArray3D[0][k-2][j][i];
+         
+         pres_bc  = pres_m2 - dens_m1*pot_grad + dens_m1*star_g*(2.0*dh[2]) ;
+         pres_bc  = FMAX( pres_bc, MIN_PRES ) ;
+         
+         engy_bc  = pres_bc/Gamma_m1 + 0.5*( SQR(Array3D[MOMX][k][j][i]) + SQR(Array3D[MOMY][k][j][i]) + 
+                                             SQR(Array3D[MOMZ][k][j][i]) ) / Array3D[DENS][k][j][i] ;
+         
+         Array3D[ENGY][k][j][i] = engy_bc ;
+      }         
+   } // for (i, j)
+   
+#  endif // ifdef UserPotBC
+}
+
+#endif // COORDINATE == CYLINDRICAL
+
