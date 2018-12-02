@@ -296,7 +296,7 @@ void Refine( const int lv, const UseLBFunc_t UseLBFunc )
 #                 endif
 
                   case BC_FLU_USER:
-                     Flu_BoundaryCondition_User        ( Flu_CData[0][0][0], BC_Face[BC_Sibling], NCOMP_TOTAL,
+                     Flu_BoundaryCondition_User        ( Flu_CData[0][0][0], NULL, BC_Face[BC_Sibling], NCOMP_TOTAL, NULL,
                                                          CSize_Flu, CSize_Flu, CSize_Flu, BC_Idx_Start, BC_Idx_End,
                                                          FluVarIdxList, Time[lv], amr->dh[lv], XYZ, _TOTAL, lv );
                   break;

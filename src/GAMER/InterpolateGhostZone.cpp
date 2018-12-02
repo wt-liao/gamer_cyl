@@ -717,7 +717,7 @@ void InterpolateGhostZone( const int lv, const int PID, real IntData[], const in
 #              endif
 
                case BC_FLU_USER:
-                  Flu_BoundaryCondition_User        ( CData_Ptr, BC_Face[BC_Sibling], NVar_Flu,
+                  Flu_BoundaryCondition_User        ( CData_Ptr, NULL, BC_Face[BC_Sibling], NVar_Flu, NULL,
                                                       CSize[0], CSize[1], CSize[2], BC_Idx_Start, BC_Idx_End,
                                                       TFluVarIdxList, PrepTime, dh, XYZ, TVar, lv );
                break;
