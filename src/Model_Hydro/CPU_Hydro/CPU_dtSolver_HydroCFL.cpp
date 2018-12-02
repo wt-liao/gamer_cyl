@@ -2,7 +2,9 @@
 
 #if ( !defined GPU  &&  MODEL == HYDRO )
 
-
+#ifdef COOLING
+extern void CoolingFunc(real cool_rate, const real PriVar[], const real x_pos[]);
+#endif
 
 
 //-----------------------------------------------------------------------------------------
@@ -35,6 +37,9 @@ void CPU_dtSolver_HydroCFL( real dt_Array[], const real Flu_Array[][NCOMP_FLUID]
    const bool CheckMinPres_Yes = true;
    const int  NPatch           = 8*NPG;
    const real Gamma_m1         = Gamma - (real)1.0;
+#  ifdef COOLING
+   const real _safety_cool = 10.0;
+#  endif
 
    real fluid[NCOMP_FLUID], _Rho, Vx, Vy, Vz, Pres, Cs, CurrCFL, MaxCFL;
 
@@ -44,7 +49,11 @@ void CPU_dtSolver_HydroCFL( real dt_Array[], const real Flu_Array[][NCOMP_FLUID]
    {
       MaxCFL = (real)0.0;
       real _dh[3] = { (real)1.0/dh[0], (real)1.0/dh[1], (real)1.0/dh[2] };
+      real x_pos[3] ;
       int ID; 
+#     ifdef COOLING
+      real _dt_cool, cool_rate, PriVar[NCOMP_TOTAL];
+#     endif
 
       for (int k=0; k<PS1; k++)
       for (int j=0; j<PS1; j++)
@@ -54,6 +63,10 @@ void CPU_dtSolver_HydroCFL( real dt_Array[], const real Flu_Array[][NCOMP_FLUID]
          for (int v=0; v<NCOMP_FLUID; v++)   fluid[v] = Flu_Array[p][v][ID];
          
 #        if ( COORDINATE == CYLINDRICAL )
+         x_pos[0] = Corner_Array[p][0] + i*dh[0] ;
+         x_pos[1] = Corner_Array[p][1] + j*dh[1] ;
+         x_pos[2] = Corner_Array[p][2] + k*dh[2] ;
+         
          const real radius = Corner_Array[p][0] + i*dh[0] ;
          _dh[1] = (real)1.0/ ( dh[1]*radius ) ;
 #        endif
@@ -76,11 +89,17 @@ void CPU_dtSolver_HydroCFL( real dt_Array[], const real Flu_Array[][NCOMP_FLUID]
          MaxCFL  = FMAX( CurrCFL, MaxCFL );
          
          //### may also need cool_dt_safty: _dt_cool * safty (safty > 1; probably 10)
-         if (CheckCool_dt) {
-            CoolingFunc(cool_rate, PriVar);
-            _dt_cool = cool_rate * (Gamma-1.0) / Pres ;
-            MaxCFL   = FMAX(_dt_cool, MaxCFL) ;
-         }
+#        ifdef COOLING
+         PriVar[0] = fluid[DENS];
+         PriVar[1] = Vx;
+         PriVar[2] = Vy;
+         PriVar[3] = Vz;
+         PriVar[4] = Pres;
+         
+         CoolingFunc(cool_rate, PriVar, x_pos);
+         _dt_cool = cool_rate * (Gamma-1.0) / Pres ;
+         MaxCFL   = FMAX(_safety_cool*_dt_cool, MaxCFL) ;
+#        endif
          
 #        endif
          
