@@ -87,8 +87,8 @@ void CoolingFunc(real cool_rate, const real PriVar[], const real x_pos[]) {
    
    //### reduce the cool_rate by 0.2 in first outer orbit
    //### make sure this commented out after 3 orbit
-   H2_cool  *= 0.6;
-   //CIE_cool *= 0.2;
+   H2_cool  *= 0.2;
+   CIE_cool *= 0.2;
 
    
    // dimensionless cool rate
