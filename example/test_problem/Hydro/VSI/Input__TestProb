@@ -1,0 +1,7 @@
+# problem-specific runtime parameters
+GM                    1.0            # 
+R_0                   1.0            #
+slope_q               1.0            #
+slope_p               1.0            #
+T_0                   1.0            #
+rho_0                 1.0            #
