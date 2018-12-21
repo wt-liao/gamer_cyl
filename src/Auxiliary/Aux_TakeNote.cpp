@@ -72,6 +72,12 @@ void Aux_TakeNote()
 #     else
       fprintf( Note, "GRAVITY                         OFF\n" );
 #     endif
+      
+#     ifdef COOLING
+      fprintf( Note, "OPTICAL THIN COOLING            ON\n" );
+#     else
+      fprintf( Note, "OPTICAL THIN COOLING            OFF\n" );
+#     endif
 
 #     ifdef GRAVITY
 #     if   ( POT_SCHEME == SOR )
