@@ -38,7 +38,7 @@ void CPU_dtSolver_HydroCFL( real dt_Array[], const real Flu_Array[][NCOMP_FLUID]
    const int  NPatch           = 8*NPG;
    const real Gamma_m1         = Gamma - (real)1.0;
 #  ifdef COOLING
-   const real _safety_cool = 10.0;
+   const real _safety_cool = 2.0;
 #  endif
 
    real fluid[NCOMP_FLUID], _Rho, Vx, Vy, Vz, Pres, Cs, CurrCFL, MaxCFL;

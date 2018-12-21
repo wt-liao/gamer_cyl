@@ -175,13 +175,13 @@ void BC_Extrapolation_xm( real *Array, const int NVar, const int GhostSize, cons
    for (int k=Idx_Start[2]; k<=Idx_End[2]; k++)
    for (int j=Idx_Start[1]; j<=Idx_End[1]; j++)
    for (int i=Idx_End[0], ii=0; i>=Idx_Start[0]; i--, ii++)
-      // ### test boundary effect
-      /*
+   {  
       Array3D[v][k][j][i] = Coeff[ii][0]*Array3D[v][k][j][i_ref  ] +
                             Coeff[ii][1]*Array3D[v][k][j][i_ref+1] +
                             Coeff[ii][2]*Array3D[v][k][j][i_ref+2];
-      */
-      Array3D[v][k][j][i] = Array3D[v][k][j][i_ref  ] ;
+      
+      //Array3D[v][k][j][i] = Array3D[v][k][j][i_ref  ] ;
+   }
 } // FUNCTION : BC_Extrapolation_xm
 
 
@@ -217,13 +217,13 @@ void BC_Extrapolation_xp( real *Array, const int NVar, const int GhostSize, cons
    for (int k=Idx_Start[2]; k<=Idx_End[2]; k++)
    for (int j=Idx_Start[1]; j<=Idx_End[1]; j++)
    for (int i=Idx_Start[0], ii=0; i<=Idx_End[0]; i++, ii++)
-      // ### test boundary effect
-      /*
+   {   
       Array3D[v][k][j][i] = Coeff[ii][0]*Array3D[v][k][j][i_ref  ] +
                             Coeff[ii][1]*Array3D[v][k][j][i_ref-1] +
                             Coeff[ii][2]*Array3D[v][k][j][i_ref-2];
-      */
-      Array3D[v][k][j][i] = Array3D[v][k][j][i_ref  ] ;
+      
+      //Array3D[v][k][j][i] = Array3D[v][k][j][i_ref  ] ;
+   }
 } // FUNCTION : BC_Extrapolation_xp
 
 
@@ -248,7 +248,10 @@ void BC_Extrapolation_ym( real *Array, const int NVar, const int GhostSize, cons
                           const int ArraySizeZ, const int Idx_Start[], const int Idx_End[], const real Coeff[][STENCIL],
                           const double dh[], const double *Corner )
 {
-
+#  if (COORDINATE == CYLINDRICAL)
+   Aux_Message(stdout, "WARNING in <%s>: No extrapolation needed in cylindrical theta direction! \n", __FUNCTION__ );
+#  endif
+   
    const int j_ref = GhostSize;  // reference j index
 
 // 1D array -> 3D array
@@ -291,6 +294,9 @@ void BC_Extrapolation_yp( real *Array, const int NVar, const int GhostSize, cons
                           const int ArraySizeZ, const int Idx_Start[], const int Idx_End[], const real Coeff[][STENCIL],
                           const double dh[], const double *Corner )
 {
+#  if (COORDINATE == CYLINDRICAL)
+   Aux_Message(stdout, "WARNING in <%s>: No extrapolation needed in cylindrical theta direction! \n", __FUNCTION__ );
+#  endif
 
    const int j_ref = ArraySizeY - GhostSize - 1;   // reference j index
 
@@ -345,13 +351,12 @@ void BC_Extrapolation_zm( real *Array, const int NVar, const int GhostSize, cons
    for (int k=Idx_End[2], kk=0; k>=Idx_Start[2]; k--, kk++)
    for (int j=Idx_Start[1]; j<=Idx_End[1]; j++)
    for (int i=Idx_Start[0]; i<=Idx_End[0]; i++)
-      // ###
-      /*
+      
       Array3D[v][k][j][i] = Coeff[kk][0]*Array3D[v][k_ref  ][j][i] +
                             Coeff[kk][1]*Array3D[v][k_ref+1][j][i] +
                             Coeff[kk][2]*Array3D[v][k_ref+2][j][i];
-      */
-      Array3D[v][k][j][i] = Array3D[v][k_ref  ][j][i] ;
+      
+      //Array3D[v][k][j][i] = Array3D[v][k_ref  ][j][i] ;
 
 } // FUNCTION : BC_Extrapolation_zm
 
@@ -387,13 +392,14 @@ void BC_Extrapolation_zp( real *Array, const int NVar, const int GhostSize, cons
    for (int v=0; v<NVar; v++)
    for (int k=Idx_Start[2], kk=0; k<=Idx_End[2]; k++, kk++)
    for (int j=Idx_Start[1]; j<=Idx_End[1]; j++)
-   for (int i=Idx_Start[0]; i<=Idx_End[0]; i++)
-      // ###
-      /*
+   for (int i=Idx_Start[0]; i<=Idx_End[0]; i++){
+      
       Array3D[v][k][j][i] = Coeff[kk][0]*Array3D[v][k_ref  ][j][i] +
                             Coeff[kk][1]*Array3D[v][k_ref-1][j][i] +
                             Coeff[kk][2]*Array3D[v][k_ref-2][j][i];
-      */
-      Array3D[v][k][j][i] = Array3D[v][k_ref  ][j][i] ;
+      
+      //Array3D[v][k][j][i] = Array3D[v][k_ref  ][j][i] ;
+      
+   }
 
 } // FUNCTION : BC_Extrapolation_zp
