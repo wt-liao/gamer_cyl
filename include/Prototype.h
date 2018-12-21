@@ -118,10 +118,10 @@ void Flu_Prepare( const int lv, const double PrepTime, real h_Flu_Array_F_In[], 
                   double h_Corner_Array_F[][3], const int NPG, const int *PID0_List );
 void Flu_Restrict( const int FaLv, const int SonFluSg, const int FaFluSg, const int SonPotSg, const int FaPotSg,
                    const int TVar );
-void Flu_BoundaryCondition_User( real *Array, const int NVar_Flu, const int ArraySizeX, const int ArraySizeY,
-                                 const int ArraySizeZ, const int Idx_Start[], const int Idx_End[],
-                                 const int TFluVarIdxList[], const double Time, const double dh[], const double *Corner,
-                                 const int TVar, const int lv );
+void Flu_BoundaryCondition_User( real *Array, real *PotArray, const int BC_Face, const int NVar_Flu, const int GhostSize, 
+                                 const int ArraySizeX, const int ArraySizeY, const int ArraySizeZ, 
+                                 const int Idx_Start[], const int Idx_End[], const int TFluVarIdxList[], const double Time, 
+                                 const double dh[], const double *Corner, const int TVar, const int lv );
 void Flu_BoundaryCondition_Outflow( real *Array, const int BC_Face, const int NVar, const int GhostSize,
                                     const int ArraySizeX, const int ArraySizeY, const int ArraySizeZ,
                                     const int Idx_Start[], const int Idx_End[] );
@@ -347,7 +347,7 @@ void Poi_Close( const int lv, const int SaveSg, const real h_Pot_Array_P_Out[][G
                 const int NPG, const int *PID0_List );
 void Poi_BoundaryCondition_Extrapolation( real *Array, const int BC_Face, const int NVar, const int GhostSize,
                                           const int ArraySizeX, const int ArraySizeY, const int ArraySizeZ,
-                                          const int Idx_Start[], const int Idx_End[] );
+                                          const int Idx_Start[], const int Idx_End[], const double dh[], const double *Corner );
 void Poi_GetAverageDensity();
 void Poi_Prepare_Pot( const int lv, const double PrepTime, real h_Pot_Array_P_In[][POT_NXT][POT_NXT][POT_NXT],
                       const int NPG, const int *PID0_List );

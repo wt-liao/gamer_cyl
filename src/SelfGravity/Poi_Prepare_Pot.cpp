@@ -209,7 +209,7 @@ void Poi_Prepare_Pot( const int lv, const double PrepTime, real h_Pot_Array_P_In
 
 //             extrapolate potential (currently it's the only supported non-periodic BC for potential)
                Poi_BoundaryCondition_Extrapolation( CPot[0][0], BC_Face[BC_Sibling], 1, CGhost,
-                                                    CWidth, CWidth, CWidth, Idx_Start, Idx_End );
+                                                    CWidth, CWidth, CWidth, Idx_Start, Idx_End, amr->dh[FaLv], NULL );
             }
 
 

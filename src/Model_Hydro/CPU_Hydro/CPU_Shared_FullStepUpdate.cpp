@@ -17,7 +17,7 @@ extern void CPU_Con2Pri( const real In[], real Out[], const real Gamma_m1, const
                          const bool JeansMinPres, const real JeansMinPres_Coeff );
 // for cooling
 #ifdef COOLING
-extern void CoolingFunc(real cool_rate, const real PriVar[]);
+extern void CoolingFunc(real cool_rate, const real PriVar[], const real x_pos[]);
 #endif // COOLING
 #endif
 
@@ -278,7 +278,7 @@ void GetFullStepGeoSource( const real ConInput[][ FLU_NXT*FLU_NXT*FLU_NXT ], rea
 #ifdef COOLING   
    
    real cool_rate;
-   CoolingFunc(cool_rate, PriVar_Buffer);
+   CoolingFunc(cool_rate, PriVar_Buffer, x_pos);
    
    // ### note that GeoSource now includes both GeoSource and Cooling
    GeoSource[ENGY] -= cool_rate ; 
