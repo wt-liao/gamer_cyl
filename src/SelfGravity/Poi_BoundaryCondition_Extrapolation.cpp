@@ -175,7 +175,6 @@ void BC_Extrapolation_xm( real *Array, const int NVar, const int GhostSize, cons
    for (int k=Idx_Start[2]; k<=Idx_End[2]; k++)
    for (int j=Idx_Start[1]; j<=Idx_End[1]; j++)
    for (int i=Idx_End[0], ii=0; i>=Idx_Start[0]; i--, ii++)
-<<<<<<< HEAD
    {  
       Array3D[v][k][j][i] = Coeff[ii][0]*Array3D[v][k][j][i_ref  ] +
                             Coeff[ii][1]*Array3D[v][k][j][i_ref+1] +
@@ -183,15 +182,6 @@ void BC_Extrapolation_xm( real *Array, const int NVar, const int GhostSize, cons
       
       //Array3D[v][k][j][i] = Array3D[v][k][j][i_ref  ] ;
    }
-=======
-      // ### test boundary effect
-      /*
-      Array3D[v][k][j][i] = Coeff[ii][0]*Array3D[v][k][j][i_ref  ] +
-                            Coeff[ii][1]*Array3D[v][k][j][i_ref+1] +
-                            Coeff[ii][2]*Array3D[v][k][j][i_ref+2];
-      */
-      Array3D[v][k][j][i] = Array3D[v][k][j][i_ref  ] ;
->>>>>>> 69b2a34813d22819cdde697512c836a8e8df5ae3
 } // FUNCTION : BC_Extrapolation_xm
 
 
@@ -227,7 +217,6 @@ void BC_Extrapolation_xp( real *Array, const int NVar, const int GhostSize, cons
    for (int k=Idx_Start[2]; k<=Idx_End[2]; k++)
    for (int j=Idx_Start[1]; j<=Idx_End[1]; j++)
    for (int i=Idx_Start[0], ii=0; i<=Idx_End[0]; i++, ii++)
-<<<<<<< HEAD
    {   
       Array3D[v][k][j][i] = Coeff[ii][0]*Array3D[v][k][j][i_ref  ] +
                             Coeff[ii][1]*Array3D[v][k][j][i_ref-1] +
@@ -235,15 +224,6 @@ void BC_Extrapolation_xp( real *Array, const int NVar, const int GhostSize, cons
       
       //Array3D[v][k][j][i] = Array3D[v][k][j][i_ref  ] ;
    }
-=======
-      // ### test boundary effect
-      /*
-      Array3D[v][k][j][i] = Coeff[ii][0]*Array3D[v][k][j][i_ref  ] +
-                            Coeff[ii][1]*Array3D[v][k][j][i_ref-1] +
-                            Coeff[ii][2]*Array3D[v][k][j][i_ref-2];
-      */
-      Array3D[v][k][j][i] = Array3D[v][k][j][i_ref  ] ;
->>>>>>> 69b2a34813d22819cdde697512c836a8e8df5ae3
 } // FUNCTION : BC_Extrapolation_xp
 
 
