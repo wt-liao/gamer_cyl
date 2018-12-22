@@ -54,7 +54,7 @@ void CoolingFunc(real cool_rate, const real PriVar[], const real x_pos[]) {
    if (T>= 100)   cool_rate = ie / cool_time ;
    else           cool_rate = TINY_NUMBER ;
    
-   if (t_curr < t_relax) cool_rate *= ABS( 1.0 - (t_relax-t_curr)/t_relax ) ; 
+   if (t_curr < t_relax) cool_rate *= FABS( 1.0 - (t_relax-t_curr)/t_relax ) ; 
    
 
    
