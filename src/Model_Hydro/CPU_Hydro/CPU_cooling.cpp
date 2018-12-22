@@ -5,7 +5,8 @@
 #include <math.h>
 
 #ifdef COOLING
-extern void CoolingFunc(real cool_rate, const real PriVar[], const real x_pos[]);
+extern double  Time[NLEVEL];
+extern void    CoolingFunc(real cool_rate, const real PriVar[], const real x_pos[]);
 
 // for POPIII
 static double rate_k4_func(const real T);
@@ -28,81 +29,33 @@ static double Brem_cool_func(const real T, const real n_e, const double n_HII);
 //-------------------------------------------------------------------------------------------------------
 void CoolingFunc(real cool_rate, const real PriVar[], const real x_pos[]) {
    
-   // this is an example for const cooling time
-   /*
-   real cool_time = 0.002;
-   
-   real ie;
-   ie = PriVar[4]/(GAMMA-1.0) ; 
-   
-   cool_rate = ie / cool_time ;
-   */
-   
-   // POPIII
-   const double m_H         = 8.41743046550226e-52; // dimensionless
+   // Boltzmann R in the unit of popIII setting
+   const double t_orbit     = 0.79 ;                  // outer orbital time
    const double R           = 4.64952804093003e+0 ; 
-   const double GAMMA_1     = GAMMA - (real)1.0 ;
    
-   const double rho_unit    = 5.93924146044389e-13;
-   const double mass_unit   = 1.98841586000000e+27;
-   const double L_unit      = 1.49597870750767e+13;
-   const double time_unit   = 5.02280842159966e+09;
-   const double rate_unit   = mass_unit/L_unit/CUBE(time_unit); //erg cm^{-3} s^(-1) = g*cm2*s-2*cm-3*s-1 = g*cm-1*s-3
-      
+   const double t_curr      = Time[0];
+   const double t_relax     = 5*t_orbit ; 
+   
+   
    const double GM          = ExtAcc_AuxArray[3] ;
-   const double sph_rad     = SQRT( SQR(x_pos[0]) + SQR(x_pos[2]) );
-   const double tau_dyn     = SQRT( CUBE(sph_rad) / GM );
-   
    const double rho         = PriVar[DENS]; 
    const double pres        = PriVar[ENGY];
+   const double ie          = PriVar[4]/(GAMMA-1.0) ;
    const double T           = pres / ( rho * R ) ;
-   const double n           = rho/(2.0*m_H) ;
+   const double v_abs       = SQRT( SQR(PriVar[MOMX]) + SQR(PriVar[MOMY]) + SQR(PriVar[MOMZ]) ) ;
+   const double sph_rad     = SQRT( SQR(x_pos[0]) + SQR(x_pos[2]) );
    
-   // convert to cgs
-   const double rho_cgs     = rho*rho_unit ;
-   const double m_H_cgs     = m_H * mass_unit;
-   const double n_cgs       = n / CUBE(L_unit);
-   const double tau_dyn_cgs = tau_dyn * time_unit; 
+   //const double tau_dyn     = SQRT( CUBE(sph_rad) / GM );
+   const double tau_dyn     = sph_rad / v_abs ;
    
-   //###
-   const double X           = 1.0;
+   real cool_time = 1.0 * tau_dyn;
    
-   //double f_HI, f_HII, f_H2, n_HII, n_e, n_HI;
-   double H2_cool, CIE_cool, Ly_cool, brem_cool; // cooling rate
+   // check if temperature is smaller than 100K
+   if (T>= 100)   cool_rate = ie / cool_time ;
+   else           cool_rate = TINY_NUMBER ;
    
-   // composition
-   const double f_HII  = f_HII_func(n_cgs, T);
-   const double f_H2   = f_H2_func(n_cgs, T, tau_dyn_cgs) ;
-   const double f_HI   = 1.0 - f_HII - f_H2;
+   if (t_curr < t_relax) cool_rate *= ABS( 1.0 - (t_relax-t_curr)/t_relax ) ; 
    
-   const double n_HII  = n_cgs * f_HII ;
-   const double n_e    = n_HII;
-   const double n_HI   = n_cgs * f_HI;
-   
-   // cooling rate
-   H2_cool   = H2_cool_func(rho_cgs, T, f_H2, m_H_cgs, X);
-   CIE_cool  = CIE_cool_func(rho_cgs, T, f_H2, X);
-   Ly_cool   = Ly_cool_func(T, n_e, n_HI);
-   brem_cool = Brem_cool_func(T, n_e, n_HII) ;
-   
-   //### reduce the cool_rate by 0.2 in first outer orbit
-   //### make sure this commented out after 3 orbit
-   H2_cool  *= 0.2;
-   CIE_cool *= 0.2;
-
-   
-   // dimensionless cool rate
-   cool_rate = (H2_cool + CIE_cool + Ly_cool + brem_cool) / rate_unit ;
-   
-   // for debug
-   /*
-   double ie = PriVar[4]/(GAMMA-1.0) ;
-   double cool_time = ie / cool_rate ;
-   
-   if ( n_cgs>1e13 && T<4000 )
-      Aux_Message(stdout, "At (rho, n, T) = (%5.2e, %5.2e, %6.0f). Cooling time = %5.2e. (H2, CIE, Ly, Brem) = (%4.1e, %4.1e, %4.1e, %4.1e). \n", 
-                  rho_cgs, n_cgs, T, cool_time/tau_dyn, H2_cool, CIE_cool, Ly_cool, brem_cool);
-   */
 
    
 } // FUNCTION: CoolingFunc
