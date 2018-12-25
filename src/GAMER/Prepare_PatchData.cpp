@@ -124,6 +124,7 @@ void Prepare_PatchData( const int lv, const double PrepTime, real *h_Input_Array
 
 // nothing to do if there is no target patch group
    if ( NPG == 0 )   return;
+   //if (TVar != 1024) Aux_Message(stdout, "In Prepare_PatchData, TVar = %d other than 1024. \n", TVar);
 
 
 // check
@@ -265,6 +266,9 @@ void Prepare_PatchData( const int lv, const double PrepTime, real *h_Input_Array
 
 #  ifdef GRAVITY
    const bool PrepPot = ( TVar & _POTE ) ? true : false;
+#  ifdef UserPotBC
+   const bool PrepPotBC =  (! PrepPot && lv == 0 && (TVar & _TOTAL)) ? true : false;
+#  endif // UserPotBC
 #  endif
 
 #  ifdef PARTICLE
@@ -617,6 +621,11 @@ void Prepare_PatchData( const int lv, const double PrepTime, real *h_Input_Array
 //    --> for PrepUnit == UNIT_PATCHGROUP, this pointer points to h_Input_Array directly (which will be set later)
       real *Array     = ( PrepUnit == UNIT_PATCH ) ? new real [ NVar_Tot*PGSize3D ] : NULL;
       real *Array_Ptr = NULL;
+#     ifdef UserPotBC
+      real *PotArray = new real [PGSize3D] ;
+      if (PrepPotBC) for (int i =0; i<PGSize3D; i++) PotArray[i] = (real) 0.0;   //### init the PotArray to zero
+#     endif
+      real *PotArray_Ptr = NULL ;
 
 
 //    IntData: array to store the interpolation results (allocate with the maximum required size)
@@ -746,6 +755,11 @@ void Prepare_PatchData( const int lv, const double PrepTime, real *h_Input_Array
             const int Disp_i = TABLE_02( LocalID, 'x', GhostSize, GhostSize+PATCH_SIZE );
             const int Disp_j = TABLE_02( LocalID, 'y', GhostSize, GhostSize+PATCH_SIZE );
             const int Disp_k = TABLE_02( LocalID, 'z', GhostSize, GhostSize+PATCH_SIZE );
+#           ifdef UserPotBC
+            const int Disp_i_PotBC = TABLE_02( LocalID, 'x', 0, PATCH_SIZE );
+            const int Disp_j_PotBC = TABLE_02( LocalID, 'y', 0, PATCH_SIZE );
+            const int Disp_k_PotBC = TABLE_02( LocalID, 'z', 0, PATCH_SIZE );
+#           endif
 
             Array_Ptr = Array;
 
@@ -919,8 +933,29 @@ void Prepare_PatchData( const int lv, const double PrepTime, real *h_Input_Array
 
                Array_Ptr += PGSize3D;
             } // if ( PrepPot )
-#           endif // #ifdef GRAVITY
 
+#           ifdef UserPotBC
+//          (a4) potential array for UserBC
+            if ( PrepPotBC )
+            {
+               PotArray_Ptr = PotArray;
+               
+               for (int k=0; k<PATCH_SIZE; k++)    {  K    = k + Disp_k;
+               for (int j=0; j<PATCH_SIZE; j++)    {  J    = j + Disp_j;
+                                                      Idx1 = IDX321( Disp_i, J, K, PGSize1D, PGSize1D );
+               for (int i=0; i<PATCH_SIZE; i++)    {
+                  //###
+                  if (Idx1 >= PGSize3D) Aux_Message(stdout, "Idx1 is out of range in Func <%s>! Idx1 = %d. \n", __FUNCTION__, Idx1);
+                  PotArray_Ptr[Idx1] = amr->patch[ amr->PotSg[lv] ][lv][PID]->pot[k][j][i];
+                  Idx1 ++;
+                  
+               }}}
+
+            } // if ( PrepPotBC )
+#           endif // #ifdef UserPotBC
+            
+#           endif // #ifdef GRAVITY
+            
          } // for (int LocalID=0; LocalID<8; LocalID++ )
 
 
@@ -930,7 +965,7 @@ void Prepare_PatchData( const int lv, const double PrepTime, real *h_Input_Array
          {
 //          nothing to do if no ghost zone is required
             if ( GhostSize == 0 )   break;
-
+            PotArray_Ptr = NULL;
 
             const int SibPID0 = Table_02( lv, PID0, Side );    // the 0th patch of the sibling patch group
 
@@ -1124,6 +1159,23 @@ void Prepare_PatchData( const int lv, const double PrepTime, real *h_Input_Array
 
                      Array_Ptr += PGSize3D;
                   }
+                  
+#                 ifdef UserPotBC
+                  if (PrepPotBC) {
+                     PotArray_Ptr = PotArray;
+                     
+                     for (int k=0; k<Loop_k; k++)  {  K = k + Disp_k;   K2 = k + Disp_k2;
+                     for (int j=0; j<Loop_j; j++)  {  J = j + Disp_j;   J2 = j + Disp_j2;
+                                                      Idx1 = IDX321( Disp_i, J, K, PGSize1D, PGSize1D );
+                     for (I2=Disp_i2; I2<Disp_i2+Loop_i; I2++) {
+
+                        PotArray_Ptr[Idx1] = amr->patch[ amr->PotSg[lv] ][lv][SibPID]->pot[K2][J2][I2];
+                        Idx1 ++;
+                     }}}
+
+                  }
+#                 endif // UserPotBC
+                  
 #                 endif // #ifdef GRAVITY
                } // for (int Count=0; Count<TABLE_04( Side ); Count++)
             } // if ( SibPID0 >= 0 )
@@ -1199,6 +1251,10 @@ void Prepare_PatchData( const int lv, const double PrepTime, real *h_Input_Array
             else if ( SibPID0 <= SIB_OFFSET_NONPERIODIC )
             {
                Array_Ptr = Array;
+#              ifdef UserPotBC
+               if ( PrepPotBC ) PotArray_Ptr = PotArray;
+               else             PotArray_Ptr = NULL;
+#              endif
 
                for (int d=0; d<3; d++)
                {
@@ -1239,7 +1295,7 @@ void Prepare_PatchData( const int lv, const double PrepTime, real *h_Input_Array
 #                    endif
 
                      case BC_FLU_USER:
-                        Flu_BoundaryCondition_User        ( Array_Ptr,                      NVar_Flu,
+                        Flu_BoundaryCondition_User        ( Array_Ptr, PotArray_Ptr, BC_Face[BC_Sibling], NVar_Flu, GhostSize,
                                                             PGSize1D, PGSize1D, PGSize1D, BC_Idx_Start, BC_Idx_End,
                                                             TFluVarIdxList, PrepTime, dh, XYZ0, TVar, lv );
                      break;
@@ -1258,7 +1314,7 @@ void Prepare_PatchData( const int lv, const double PrepTime, real *h_Input_Array
                {
 //                extrapolate potential
                   Poi_BoundaryCondition_Extrapolation( Array_Ptr, BC_Face[BC_Sibling], 1, GhostSize,
-                                                       PGSize1D, PGSize1D, PGSize1D, BC_Idx_Start, BC_Idx_End );
+                                                       PGSize1D, PGSize1D, PGSize1D, BC_Idx_Start, BC_Idx_End, dh, XYZ0 );
 
                   Array_Ptr += 1*PGSize3D;
                } // if ( PrepPot )
@@ -1581,6 +1637,9 @@ void Prepare_PatchData( const int lv, const double PrepTime, real *h_Input_Array
 
       if ( PrepUnit == UNIT_PATCH )    delete [] Array;
       delete [] IntData;
+#     ifdef UserPotBC
+      delete [] PotArray;
+#     endif
 
    } // end of OpenMP parallel region
 

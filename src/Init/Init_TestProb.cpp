@@ -26,6 +26,8 @@ void Init_TestProb_Hydro_KuzminDisk();
 
 void Init_TestProb_Hydro_SGThinDisk();
 
+void Init_TestProb_Hydro_VSI();
+
 void Init_TestProb_ELBDM_ExtPot();
 
 
@@ -73,6 +75,7 @@ void Init_TestProb()
       case TESTPROB_HYDRO_KUZMIN_DISK :                  Init_TestProb_Hydro_KuzminDisk();                  break;
       
       case TESTPROB_HYDRO_SG_THIN_DISK :                 Init_TestProb_Hydro_SGThinDisk();                  break;
+      case TESTPROB_HYDRO_VSI :                          Init_TestProb_Hydro_VSI();                         break;
 
       case TESTPROB_ELBDM_EXTPOT :                       Init_TestProb_ELBDM_ExtPot();                      break;
 

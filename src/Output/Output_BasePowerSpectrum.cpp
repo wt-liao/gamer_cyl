@@ -1,5 +1,6 @@
 #include "GAMER.h"
 
+#if (COORDINATE == CARTESIAN)
 #ifdef GRAVITY
 
 //output the dimensionless power spectrum
@@ -298,3 +299,4 @@ void GetBasePowerSpectrum( real *RhoK, const int j_start, const int dj, double *
 
 
 #endif // #ifdef GRAVITY
+#endif // #if (COORDINATE == CARTESIAN)

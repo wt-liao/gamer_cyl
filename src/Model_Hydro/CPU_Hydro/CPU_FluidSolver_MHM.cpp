@@ -67,6 +67,9 @@ extern void HancockFluxGrad( real Flux[][NCOMP_TOTAL], real* const & dFlux, real
 extern void GetCoord( const double Corner[], const real dh[], const int loop_size, real x_pos[], real face_pos[][2], 
                       const int i, const int j, const int k );
 extern void GeometrySourceTerm( const real PriVar[], const real x_pos[], real GeoSource[] );
+#ifdef COOLING
+extern void CoolingFunc(real cool_rate, const real PriVar[], const real x_pos[]);
+#endif
 #endif
 
 
@@ -394,6 +397,9 @@ void CPU_RiemannPredict( const real Flu_Array_In[][ FLU_NXT*FLU_NXT*FLU_NXT ], c
    
 #  if (COORDINATE == CYLINDRICAL)
    real x_pos[3], face_pos[1][2], GeoSource[NCOMP_TOTAL], PriVar[NCOMP_TOTAL], ConVar[NCOMP_TOTAL] ; 
+#  ifdef COOLING
+   real cool_rate;
+#  endif
 #  endif
 
 
@@ -414,6 +420,11 @@ void CPU_RiemannPredict( const real Flu_Array_In[][ FLU_NXT*FLU_NXT*FLU_NXT ], c
       CPU_Con2Pri( ConVar, PriVar, Gamma_m1, MinPres, NormPassive_No, NULL_INT, NULL, JeansMinPres_No, NULL_REAL );
       GeometrySourceTerm( PriVar, x_pos, GeoSource );
 #endif
+      
+#     ifdef COOLING
+      // ### currently cooling only work for cylindrical coord
+      CoolingFunc(cool_rate, PriVar, x_pos);
+#     endif
 
       for (int d=0; d<3; d++) {
       for (int v=0; v<NCOMP_TOTAL; v++) {    
@@ -432,6 +443,9 @@ void CPU_RiemannPredict( const real Flu_Array_In[][ FLU_NXT*FLU_NXT*FLU_NXT ], c
 #        endif
       }
       
+#     ifdef COOLING
+      Half_Var[ID1][ENGY] -= cool_rate * dt_2 ;
+#     endif
 
 //    ensure positive density and pressure
       Half_Var[ID1][0] = FMAX( Half_Var[ID1][0], MinDens );

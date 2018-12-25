@@ -56,6 +56,8 @@ const TestProbID_t
    
    TESTPROB_HYDRO_SG_THIN_DISK                 =   25,
    
+   TESTPROB_HYDRO_VSI                          =   31,
+   
    
    TESTPROB_ELBDM_EXTPOT                       = 1000;
 

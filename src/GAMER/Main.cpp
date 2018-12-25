@@ -98,6 +98,7 @@ double               MIN_DENS, MIN_PRES;
 double               DUAL_ENERGY_SWITCH;
 #endif
 
+
 #elif ( MODEL == ELBDM )
 double               DT__PHASE, FlagTable_EngyDensity[NLEVEL-1][2];
 bool                 OPT__FLAG_ENGY_DENSITY, OPT__INT_PHASE;
