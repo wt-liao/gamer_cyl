@@ -526,15 +526,15 @@ void BC_User_zm( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
          Array3D[DENS][k][j][i] = Array3D[DENS][k_ref][j][i] ;
          Array3D[MOMX][k][j][i] = Array3D[MOMX][k_ref][j][i] ;
          Array3D[MOMY][k][j][i] = Array3D[MOMY][k_ref][j][i] ;
-         Array3D[MOMZ][k][j][i] = Array3D[MOMZ][k_ref][j][i] ;
+         //Array3D[MOMZ][k][j][i] = Array3D[MOMZ][k_ref][j][i] ;
          
          // only allow outflow in zm: vz <= 0.0
-         /*
+         
          if ( Array3D[MOMZ][k_ref][j][i] < 0.0)   
             Array3D[MOMZ][k][j][i] = Array3D[MOMZ][k_ref][j][i] ;  
          else
             Array3D[MOMZ][k][j][i] = 0.0;
-         */
+         
          
          
          // calculate for BC value
@@ -624,15 +624,15 @@ void BC_User_zp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
          Array3D[DENS][k][j][i] = Array3D[DENS][k_ref][j][i] ;
          Array3D[MOMX][k][j][i] = Array3D[MOMX][k_ref][j][i] ;
          Array3D[MOMY][k][j][i] = Array3D[MOMY][k_ref][j][i] ;
-         Array3D[MOMZ][k][j][i] = Array3D[MOMZ][k_ref][j][i] ;  
+         //Array3D[MOMZ][k][j][i] = Array3D[MOMZ][k_ref][j][i] ;  
          
          // only allow outflow in zp: vz > 0.0
-         /*
+         
          if ( Array3D[MOMZ][k_ref][j][i] > 0.0)   
             Array3D[MOMZ][k][j][i] = Array3D[MOMZ][k_ref][j][i] ;  
          else
             Array3D[MOMZ][k][j][i] = 0.0;
-         */
+         
          
          
          // calculate for BC value
