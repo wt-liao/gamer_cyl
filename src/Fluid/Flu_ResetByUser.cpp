@@ -102,7 +102,7 @@ void Flu_ResetByUser_API( const int lv, const int FluSg, const double TTime )
    double M_star = ExtAcc_AuxArray[3] / (real) NEWTON_G;
     
    // 1.0 MPI_AllReduce (or MPI_Reduce) to distribute d_mstar to d_mstar_sum
-   MPI_AllReduce(&d_MStar, &d_MStar_SUM, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+   MPI_Allreduce(&d_MStar, &d_MStar_SUM, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
    
    // 2.0 reset M_star and GM  // make sure this only haapen after 5th orbit
    M_star += d_MStar_SUM ;
