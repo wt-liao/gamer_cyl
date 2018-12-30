@@ -21,6 +21,8 @@ extern void CoolingFunc(real cool_rate, const real PriVar[], const real x_pos[])
 #endif // COOLING
 #endif
 
+//### add MODEL_MSTAR in FullStepUpdate; 
+//### -> this only works for CPU solver, since both d_MStar and Edge_x1_L are not passed into the solver
 
 //-------------------------------------------------------------------------------------------------------
 // Function    :  CPU_FullStepUpdate
@@ -66,8 +68,12 @@ void CPU_FullStepUpdate( const real Input[][ FLU_NXT*FLU_NXT*FLU_NXT ], real Out
    real x_pos[3], face_pos[1][2], GeoSource[NCOMP_TOTAL] ;
 #  ifndef DUAL_ENERGY
    const real  Gamma_m1 = Gamma - (real)1.0; //### this has already been declared in DUAL_ENERGY
-#  endif
-#  endif
+#  endif // #ifndef DUAL_ENERGY
+#  ifdef MODEL_MSTAR
+   const real Edge_x1_L = amr->BoxEdgeL[0];
+   real dist2center;
+#  endif // MODEL_MSTAR
+#  endif // COORDINATE == CYLINDRICAL
 
 #  if ( NCOMP_PASSIVE > 0 )
    real Passive[NCOMP_PASSIVE];
@@ -90,6 +96,15 @@ void CPU_FullStepUpdate( const real Input[][ FLU_NXT*FLU_NXT*FLU_NXT ], real Out
       GetCoord( Corner, dh, PS2, x_pos, face_pos, i1, j1, k1);
       CurviFluxGrad(dF, x_pos) ;
       GetFullStepGeoSource( Input, GeoSource, dF, x_pos, dt_dh2, dt_2, Gamma_m1, MinPres, ID3);
+      
+#     ifdef MODEL_MSTAR
+      // only account for the flux from the inner most r-grid; be carful about ghost zone 
+      if (x_pos[0] > Edge_x1_L && x_pos[0] < Edge_x1_L+dh[0] ) {
+         dist2center = SQRT( x_pos[0]*x_pos[0] + x_pos[2]*x_pos[2] ) ;
+         if (dist2center < ACCRETE_RADIUS)   d_MStar += FMAX( Flux[ID1][0][DENS]*dt, 0 ) ; 
+      } 
+#     endif // MODEL_MSTAR
+      
 #     endif // COORDINATE == CYLINDRICAL
 
       for (int v=0; v<NCOMP_TOTAL; v++) {

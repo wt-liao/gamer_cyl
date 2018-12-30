@@ -11,7 +11,9 @@ bool (*Flu_ResetByUser_Func_Ptr)( real fluid[], const double X, const double Y, 
 void (*Flu_ResetByUser_API_Ptr)( const int lv, const int FluSg, const double TTime ) = Flu_ResetByUser_API;
 
 
-
+#ifdef MODEL_MSTAR
+extern double M_star; 
+#endif
 
 //-------------------------------------------------------------------------------------------------------
 // Function    :  Flu_ResetByUser_Func
@@ -99,7 +101,22 @@ bool Flu_ResetByUser_Func( real fluid[], const double X, const double Y, const d
 //-------------------------------------------------------------------------------------------------------
 void Flu_ResetByUser_API( const int lv, const int FluSg, const double TTime )
 {
-
+#  ifdef MODEL_MSTAR
+    
+   // 1.0 MPI_AllReduce (or MPI_Reduce) to distribute d_mstar to d_mstar_sum
+   MPI_AllReduce(&d_MStar, &d_MStar_SUM, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+   
+   // 2.0 reset M_star and GM  // make sure this only haapen after 5th orbit
+   M_star += d_MStar_SUM ;
+   ExtAcc_AuxArray[3] = (real) NEWTON_G * M_star;
+   
+   // 3.0 set d_mstar to zero; set d_mstar_sum to zero in Aux_Record_User()
+   d_MStar = 0.0 ;
+      
+#  else // #ifdef MODEL_MSTAR
+   
+   
+   /*
 // check
    if ( Flu_ResetByUser_Func_Ptr == NULL )
    {
@@ -110,7 +127,6 @@ void Flu_ResetByUser_API( const int lv, const int FluSg, const double TTime )
 
       return;
    }
-
 
    const double *dh      = amr->dh[lv];
 #  if ( MODEL == HYDRO  ||  MODEL == MHD )
@@ -170,5 +186,6 @@ void Flu_ResetByUser_API( const int lv, const int FluSg, const double TTime )
 
       }}} // i,j,k
    } // for (int PID=0; PID<amr->NPatchComma[lv][1]; PID++)
-
+   */
+   
 } // FUNCTION : Flu_ResetByUser_API

@@ -23,6 +23,7 @@ void (*Aux_Record_User_Ptr)() = Aux_Record_User;
 //-------------------------------------------------------------------------------------------------------
 void Aux_Record_User()
 {
+   /*
 
    const char FileName[] = "Record__User";
    static bool FirstTime = true;
@@ -49,6 +50,7 @@ void Aux_Record_User()
       fprintf( File_User, "%14.7e%14ld%3s%14.7e\n", Time[0], Step, "", dTime_Base );
       fclose( File_User );
    }
+   */
 
 } // FUNCTION : Aux_Record_User
 

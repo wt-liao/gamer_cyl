@@ -144,7 +144,12 @@ extern long     *SendBuf_IDPlanYZ, *RecvBuf_IDPlanYZ, *SendBuf_PID, *RecvBuf_PID
 extern int       RANK_I, RANK_IP, global_nx_unit, global_nxp_unit, global_nx, global_nxp;
 //
 extern MPI_Comm rank_i_comm, rank_ip_comm;
-#endif
+#endif //  COORDINATE
+
+#ifdef MODEL_MSTAR
+extern double     d_MStar, d_MStar_SUM; 
+extern double     ACCRETE_RADIUS ;  // input from file
+#endif   // MODEL_MSTAR
 
 extern double     GFUNC_COEFF0;
 extern double     DT__GRAVITY;

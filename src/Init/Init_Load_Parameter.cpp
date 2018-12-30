@@ -247,6 +247,12 @@ void Init_Load_Parameter()
 #  elif ( MODEL == MHD )
 #  warning : WAIT MHD !!!
 #  endif // #if ( MODEL == HYDRO/MHD )
+   
+   
+// MODEL_MSTAR
+#  ifdef MODEL_MSTAR
+   ReadPara->Add( "ACCRETE_RADIUS",             &ACCRETE_RADIUS,                  0.5,             0.0,           NoMax_double   );
+#  endif
 
 
 // fluid solver in ELBDM

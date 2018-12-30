@@ -146,6 +146,11 @@ MPI_Comm             rank_i_comm      = MPI_COMM_NULL;
 MPI_Comm             rank_ip_comm     = MPI_COMM_NULL;
 #endif
 
+#ifdef MODEL_MSTAR
+double               d_MStar_SUM, d_MStar = 0.0; 
+double               ACCRETE_RADIUS ;
+#endif   // MODEL_MSTAR
+
 double               GFUNC_COEFF0;
 double               DT__GRAVITY;
 double               NEWTON_G;

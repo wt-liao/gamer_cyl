@@ -84,6 +84,12 @@ void Aux_TakeNote()
 #     else
       fprintf( Note, "UserPotBC                       OFF\n" );
 #     endif
+      
+#     ifdef MODEL_MSTAR
+      fprintf( Note, "MODEL_MSTAR                     ON\n" );
+#     else
+      fprintf( Note, "MODEL_MSTAR                     OFF\n" );
+#     endif
 
 #     ifdef GRAVITY
 #     if   ( POT_SCHEME == SOR )
