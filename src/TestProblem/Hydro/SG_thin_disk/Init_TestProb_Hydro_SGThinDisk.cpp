@@ -272,7 +272,7 @@ void Aux_Record_User()
    if ( MPI_Rank == 0 )
    {
       FILE *File_User = fopen( FileName, "a" );
-      fprintf( File_User, "%14.7e%14ld%3s%14.7e%14.7e%14.7e\n", Time[0], Step, "", dTime_Base, d_MStar_sum, ExtAcc_AuxArray[3] );
+      fprintf( File_User, "%14.7e%14ld%3s%14.7e%14.7e%14.7e\n", Time[0], Step, "", dTime_Base, d_MStar_SUM, ExtAcc_AuxArray[3] );
       fclose( File_User );
    }
    
