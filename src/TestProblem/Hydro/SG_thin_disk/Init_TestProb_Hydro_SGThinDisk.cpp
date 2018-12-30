@@ -205,7 +205,8 @@ bool Flu_ResetByUser( real fluid[], const double X, const double Y, const double
 {
    // for MODEL_MSTAR, reset updates the M_star. Thus, no need to loop through XYZ;  
    // Put the reset directly in Flu_ResetByUser_API; 
-
+   
+   return false;
 } // FUNCTION : Flu_ResetByUser_Func
 
 
