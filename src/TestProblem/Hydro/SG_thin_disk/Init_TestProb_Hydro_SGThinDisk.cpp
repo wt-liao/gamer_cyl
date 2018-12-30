@@ -9,7 +9,7 @@ static void Aux_Record_User() ;
 
 // problem-specific global variables
 // =======================================================================================
-extern double M_star;
+static double M_star;
 // =======================================================================================
 
 
@@ -261,7 +261,7 @@ void Aux_Record_User()
          if ( Aux_CheckFileExist(FileName) )    Aux_Message( stderr, "WARNING : file \"%s\" already exists !!\n", FileName );
 
          FILE *File_User = fopen( FileName, "a" );
-         fprintf( File_User, "#%13s%14s%3s%14s%14s%14s\n",  "Time", "Step", "", "dt", "d_MStar", "Mstar" );
+         fprintf( File_User, "#%13s%14s%3s%14s%14s%14s\n",  "Time", "Step", "", "dt", "d_MStar", "GM" );
          fclose( File_User );
       }
 
@@ -272,7 +272,7 @@ void Aux_Record_User()
    if ( MPI_Rank == 0 )
    {
       FILE *File_User = fopen( FileName, "a" );
-      fprintf( File_User, "%14.7e%14ld%3s%14.7e%14.7e%14.7e\n", Time[0], Step, "", dTime_Base, d_MStar_sum, M_star );
+      fprintf( File_User, "%14.7e%14ld%3s%14.7e%14.7e%14.7e\n", Time[0], Step, "", dTime_Base, d_MStar_sum, ExtAcc_AuxArray[3] );
       fclose( File_User );
    }
    

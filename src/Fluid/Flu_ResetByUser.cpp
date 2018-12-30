@@ -1,4 +1,5 @@
 #include "GAMER.h"
+#include "TestProb.h"   // for MODEL_MSTAR
 
 // declare as static so that other functions cannot invoke them directly and must use the function pointers
 static bool Flu_ResetByUser_Func( real fluid[], const double X, const double Y, const double Z, const double Time,
@@ -10,10 +11,6 @@ bool (*Flu_ResetByUser_Func_Ptr)( real fluid[], const double X, const double Y, 
                                   const int lv, double AuxArray[] ) = Flu_ResetByUser_Func;
 void (*Flu_ResetByUser_API_Ptr)( const int lv, const int FluSg, const double TTime ) = Flu_ResetByUser_API;
 
-
-#ifdef MODEL_MSTAR
-extern double M_star; 
-#endif
 
 //-------------------------------------------------------------------------------------------------------
 // Function    :  Flu_ResetByUser_Func
@@ -102,6 +99,7 @@ bool Flu_ResetByUser_Func( real fluid[], const double X, const double Y, const d
 void Flu_ResetByUser_API( const int lv, const int FluSg, const double TTime )
 {
 #  ifdef MODEL_MSTAR
+   double M_star = ExtAcc_AuxArray[3] / (real) NEWTON_G;
     
    // 1.0 MPI_AllReduce (or MPI_Reduce) to distribute d_mstar to d_mstar_sum
    MPI_AllReduce(&d_MStar, &d_MStar_SUM, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
