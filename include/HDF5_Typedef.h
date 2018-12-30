@@ -431,6 +431,13 @@ struct InputPara_t
    double ELBDM_Taylor3_Coeff;
    int    ELBDM_Taylor3_Auto;
 #  endif
+   
+// MODEL_MSTAR
+#  ifdef MODEL_MSTAR
+   double ACCRETE_RADIUS; 
+   double Time2Accrete;
+   double M_STAR ;
+#  endif
 
 // fluid solvers in both HYDRO/MHD/ELBDM
    int    Flu_GPU_NPGroup;

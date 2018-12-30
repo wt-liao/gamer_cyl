@@ -1845,6 +1845,13 @@ void FillIn_InputPara( InputPara_t &InputPara )
    InputPara.ELBDM_Taylor3_Coeff     = ELBDM_TAYLOR3_COEFF;
    InputPara.ELBDM_Taylor3_Auto      = ELBDM_TAYLOR3_AUTO;
 #  endif
+   
+// MODEL_MSTAR
+#  ifdef  MODEL_MSTAR
+   InputPara.ACCRETE_RADIUS          = ACCRETE_RADIUS;
+   InputPara.Time2Accrete            = Time2Accrete;
+   InputPara.M_STAR                  = M_STAR;
+#  endif
 
 // fluid solvers in both HYDRO/MHD/ELBDM
    InputPara.Flu_GPU_NPGroup         = FLU_GPU_NPGROUP;
@@ -2533,6 +2540,13 @@ void GetCompound_InputPara( hid_t &H5_TypeID )
 #  endif
    H5Tinsert( H5_TypeID, "ELBDM_Taylor3_Coeff",     HOFFSET(InputPara_t,ELBDM_Taylor3_Coeff    ), H5T_NATIVE_DOUBLE  );
    H5Tinsert( H5_TypeID, "ELBDM_Taylor3_Auto",      HOFFSET(InputPara_t,ELBDM_Taylor3_Auto     ), H5T_NATIVE_INT     );
+#  endif
+   
+// MODEL_MSTAR
+#  ifdef MODEL_MSTAR
+   H5Tinsert( H5_TypeID, "ACCRETE_RADIUS",          HOFFSET(InputPara_t,ACCRETE_RADIUS         ), H5T_NATIVE_DOUBLE  );
+   H5Tinsert( H5_TypeID, "Time2Accrete",            HOFFSET(InputPara_t,Time2Accrete           ), H5T_NATIVE_DOUBLE  );
+   H5Tinsert( H5_TypeID, "M_STAR",                  HOFFSET(InputPara_t,M_STAR                 ), H5T_NATIVE_DOUBLE  );
 #  endif
 
 // fluid solvers in both HYDRO/MHD/ELBDM
