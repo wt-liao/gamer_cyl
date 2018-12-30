@@ -148,7 +148,7 @@ MPI_Comm             rank_ip_comm     = MPI_COMM_NULL;
 
 #ifdef MODEL_MSTAR
 double               d_MStar_SUM, d_MStar = 0.0; 
-double               ACCRETE_RADIUS ;
+double               ACCRETE_RADIUS, Time2Accrete, M_STAR;
 #endif   // MODEL_MSTAR
 
 double               GFUNC_COEFF0;

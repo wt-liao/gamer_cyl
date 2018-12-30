@@ -148,7 +148,7 @@ extern MPI_Comm rank_i_comm, rank_ip_comm;
 
 #ifdef MODEL_MSTAR
 extern double     d_MStar, d_MStar_SUM; 
-extern double     ACCRETE_RADIUS ;  // input from file
+extern double     ACCRETE_RADIUS, Time2Accrete, M_STAR;  // input from file
 #endif   // MODEL_MSTAR
 
 extern double     GFUNC_COEFF0;

@@ -9,7 +9,7 @@ static void Aux_Record_User() ;
 
 // problem-specific global variables
 // =======================================================================================
-static double M_star;
+// static double M_star;
 // =======================================================================================
 
 
@@ -93,7 +93,7 @@ void SetParameter()
 // ********************************************************************************************************************************
 // ReadPara->Add( "KEY_IN_THE_FILE",   &VARIABLE_ADDRESS,      DEFAULT,       MIN,              MAX               );
 // ********************************************************************************************************************************
-   ReadPara->Add( "M_star",            &M_star,                2.0e9,         Eps_double,       NoMax_double      );
+//   ReadPara->Add( "M_star",            &M_star,                2.0e9,         Eps_double,       NoMax_double      );
 //   ReadPara->Add( "Sphere_Radius",     &Sphere_Radius,         -1.0,          Eps_double,       NoMax_double      );
 
 
@@ -135,7 +135,7 @@ void SetParameter()
    {
       Aux_Message( stdout, "=============================================================================\n" );
       Aux_Message( stdout, "  test problem ID           = %d\n",     TESTPROB_ID  );
-      Aux_Message( stdout, "  star mass                 = %13.7e\n", M_star       );
+      //Aux_Message( stdout, "  star mass                 = %13.7e\n", M_star       );
       Aux_Message( stdout, "=============================================================================\n" );
    }
 
@@ -227,7 +227,7 @@ void Init_ExternalAcc()
    ExtAcc_AuxArray[0] = (real) 0.0;
    ExtAcc_AuxArray[1] = (real) 0.0;
    ExtAcc_AuxArray[2] = (real) 0.0;
-   ExtAcc_AuxArray[3] = (real) NEWTON_G * M_star;
+   ExtAcc_AuxArray[3] = (real) NEWTON_G * M_STAR;
    ExtAcc_AuxArray[4] = (real) 0.0;
 
 } // FUNCTION : Init_ExternalAcc

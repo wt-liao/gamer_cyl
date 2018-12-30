@@ -252,6 +252,8 @@ void Init_Load_Parameter()
 // MODEL_MSTAR
 #  ifdef MODEL_MSTAR
    ReadPara->Add( "ACCRETE_RADIUS",             &ACCRETE_RADIUS,                  0.5,             0.0,           NoMax_double   );
+   ReadPara->Add( "Time2Accrete",               &Time2Accrete,                    0.0,             0.0,           NoMax_double   );
+   ReadPara->Add( "M_STAR",                     &M_STAR,                          2e5,             0.0,           NoMax_double   );
 #  endif
 
 

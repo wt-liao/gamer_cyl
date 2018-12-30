@@ -99,18 +99,18 @@ bool Flu_ResetByUser_Func( real fluid[], const double X, const double Y, const d
 void Flu_ResetByUser_API( const int lv, const int FluSg, const double TTime )
 {
 #  ifdef MODEL_MSTAR
-   double M_star = ExtAcc_AuxArray[3] / (real) NEWTON_G;
+   if (TTime > Time2Accrete) {
     
-   // 1.0 MPI_AllReduce (or MPI_Reduce) to distribute d_mstar to d_mstar_sum
-   MPI_Allreduce(&d_MStar, &d_MStar_SUM, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+      // 1.0 MPI_AllReduce (or MPI_Reduce) to distribute d_mstar to d_mstar_sum
+      MPI_Allreduce(&d_MStar, &d_MStar_SUM, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
    
-   // 2.0 reset M_star and GM  // make sure this only haapen after 5th orbit
-   M_star += d_MStar_SUM ;
-   ExtAcc_AuxArray[3] = (real) NEWTON_G * M_star;
+      // 2.0 reset M_star and GM  // make sure this only haapen after 5th orbit
+      M_STAR += d_MStar_SUM ;
+      ExtAcc_AuxArray[3] = (real) NEWTON_G * M_STAR;
    
-   // 3.0 set d_mstar to zero; set d_mstar_sum to zero in Aux_Record_User()
-   d_MStar = 0.0 ;
-      
+      // 3.0 set d_mstar to zero; set d_mstar_sum to zero in Aux_Record_User()
+      d_MStar = 0.0 ;
+   }
 #  endif // #ifdef MODEL_MSTAR
    
    
