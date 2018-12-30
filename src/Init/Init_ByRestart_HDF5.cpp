@@ -168,6 +168,9 @@ void Init_ByRestart_HDF5( const char *FileName )
    else
    LoadField( "Par_NAttStored", &KeyInfo.Par_NAttStored, H5_SetID_KeyInfo, H5_TypeID_KeyInfo, NonFatal, &Par_NAttStored,1, NonFatal );
 #  endif
+#  ifdef MODEL_MSTAR
+   LoadField( "M_STAR",         &KeyInfo.M_STAR,         H5_SetID_KeyInfo, H5_TypeID_KeyInfo, NonFatal,  NullPtr,      -1, NonFatal );
+#  endif
 
    LoadField( "BoxSize",         KeyInfo.BoxSize,        H5_SetID_KeyInfo, H5_TypeID_KeyInfo,    Fatal,  amr->BoxSize,  3,    Fatal );
 
@@ -1714,6 +1717,11 @@ void Check_InputPara( const char *FileName, const int FormatVersion )
 #  endif
    LoadField( "ELBDM_Taylor3_Coeff",     &RS.ELBDM_Taylor3_Coeff,     SID, TID, NonFatal, &RT.ELBDM_Taylor3_Coeff,      1, NonFatal );
    LoadField( "ELBDM_Taylor3_Auto",      &RS.ELBDM_Taylor3_Auto,      SID, TID, NonFatal, &RT.ELBDM_Taylor3_Auto,       1, NonFatal );
+#  endif
+   
+#  ifdef MODEL_MSTAR
+   LoadField( "ACCRETE_RADIUS",          &RS.ACCRETE_RADIUS,          SID, TID, NonFatal, &RT.ACCRETE_RADIUS,           1, NonFatal );
+   LoadField( "Time2Accrete",            &RS.Time2Accrete,            SID, TID, NonFatal, &RT.Time2Accrete,             1, NonFatal );
 #  endif
 
 // fluid solvers in both HYDRO/MHD/ELBDM

@@ -62,6 +62,10 @@ struct KeyInfo_t
    long   Par_NPar;                 // amr->Par->NPar_Active_AllRank
    int    Par_NAttStored;           // PAR_NATT_STORED
 #  endif
+   
+#  ifdef MODEL_MSTAR
+   double M_STAR ;
+#  endif
 
    double BoxSize [3];
    double BoxEdgeL[3];
@@ -436,7 +440,6 @@ struct InputPara_t
 #  ifdef MODEL_MSTAR
    double ACCRETE_RADIUS; 
    double Time2Accrete;
-   double M_STAR ;
 #  endif
 
 // fluid solvers in both HYDRO/MHD/ELBDM
