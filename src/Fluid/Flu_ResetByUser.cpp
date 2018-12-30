@@ -113,7 +113,7 @@ void Flu_ResetByUser_API( const int lv, const int FluSg, const double TTime )
    // 3.0 set d_mstar to zero; set d_mstar_sum to zero in Aux_Record_User()
    d_MStar = 0.0 ;
       
-#  else // #ifdef MODEL_MSTAR
+#  endif // #ifdef MODEL_MSTAR
    
    
    /*
