@@ -2042,7 +2042,7 @@ void ResetParameter( const char *FileName, double *EndT, long *EndStep )
 
    // 3.1 reset M_STAR; only when this field exists in the restart H5 file
 #  ifdef MODEL_MSTAR
-   MSTAR_FieldIdx = H5Tget_member_index( TID, "M_STAR" );
+   int MSTAR_FieldIdx = H5Tget_member_index( TID, "M_STAR" );
    if (MSTAR_FieldIdx >= 0) LoadField( "M_STAR",   &M_STAR, SID, TID, NonFatal, NullPtr, -1, NonFatal );
 #  endif 
 
