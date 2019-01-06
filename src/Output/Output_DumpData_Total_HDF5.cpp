@@ -1256,9 +1256,6 @@ void FillIn_KeyInfo( KeyInfo_t &KeyInfo )
    KeyInfo.Par_NPar       = amr->Par->NPar_Active_AllRank;
    KeyInfo.Par_NAttStored = PAR_NATT_STORED;
 #  endif
-#  ifdef  MODEL_MSTAR
-   KeyInfo.M_STAR         = M_STAR;
-#  endif
 
    for (int d=0; d<3; d++)
    {
@@ -1853,6 +1850,7 @@ void FillIn_InputPara( InputPara_t &InputPara )
 #  ifdef  MODEL_MSTAR
    InputPara.ACCRETE_RADIUS          = ACCRETE_RADIUS;
    InputPara.Time2Accrete            = Time2Accrete;
+   InputPara.M_STAR                  = M_STAR;
 #  endif
 
 // fluid solvers in both HYDRO/MHD/ELBDM
@@ -2110,11 +2108,6 @@ void GetCompound_KeyInfo( hid_t &H5_TypeID )
 #  ifdef PARTICLE
    H5Tinsert( H5_TypeID, "Par_NPar",           HOFFSET(KeyInfo_t,Par_NPar),           H5T_NATIVE_LONG          );
    H5Tinsert( H5_TypeID, "Par_NAttStored",     HOFFSET(KeyInfo_t,Par_NAttStored ),    H5T_NATIVE_INT           );
-#  endif
-   
-// MODEL_MSTAR
-#  ifdef MODEL_MSTAR
-   H5Tinsert( H5_TypeID, "M_STAR",             HOFFSET(KeyInfo_t,M_STAR         ),     H5T_NATIVE_DOUBLE       );
 #  endif
 
    H5Tinsert( H5_TypeID, "BoxSize",            HOFFSET(KeyInfo_t,BoxSize        ),    H5_TypeID_Arr_3Double    );
@@ -2553,6 +2546,7 @@ void GetCompound_InputPara( hid_t &H5_TypeID )
 #  ifdef MODEL_MSTAR
    H5Tinsert( H5_TypeID, "ACCRETE_RADIUS",          HOFFSET(InputPara_t,ACCRETE_RADIUS         ), H5T_NATIVE_DOUBLE  );
    H5Tinsert( H5_TypeID, "Time2Accrete",            HOFFSET(InputPara_t,Time2Accrete           ), H5T_NATIVE_DOUBLE  );
+   H5Tinsert( H5_TypeID, "M_STAR",                  HOFFSET(InputPara_t,M_STAR                 ), H5T_NATIVE_DOUBLE  );
 #  endif
 
 // fluid solvers in both HYDRO/MHD/ELBDM

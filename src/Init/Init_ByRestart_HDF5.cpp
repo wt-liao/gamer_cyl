@@ -168,9 +168,6 @@ void Init_ByRestart_HDF5( const char *FileName )
    else
    LoadField( "Par_NAttStored", &KeyInfo.Par_NAttStored, H5_SetID_KeyInfo, H5_TypeID_KeyInfo, NonFatal, &Par_NAttStored,1, NonFatal );
 #  endif
-#  ifdef MODEL_MSTAR
-   LoadField( "M_STAR",         &KeyInfo.M_STAR,         H5_SetID_KeyInfo, H5_TypeID_KeyInfo, NonFatal,  NullPtr,      -1, NonFatal );
-#  endif
 
    LoadField( "BoxSize",         KeyInfo.BoxSize,        H5_SetID_KeyInfo, H5_TypeID_KeyInfo,    Fatal,  amr->BoxSize,  3,    Fatal );
 
@@ -1722,6 +1719,7 @@ void Check_InputPara( const char *FileName, const int FormatVersion )
 #  ifdef MODEL_MSTAR
    LoadField( "ACCRETE_RADIUS",          &RS.ACCRETE_RADIUS,          SID, TID, NonFatal, &RT.ACCRETE_RADIUS,           1, NonFatal );
    LoadField( "Time2Accrete",            &RS.Time2Accrete,            SID, TID, NonFatal, &RT.Time2Accrete,             1, NonFatal );
+   LoadField( "M_STAR",                  &RS.M_STAR,                  SID, TID, NonFatal, &RT.M_STAR,                   1, NonFatal );
 #  endif
 
 // fluid solvers in both HYDRO/MHD/ELBDM
@@ -2041,6 +2039,12 @@ void ResetParameter( const char *FileName, double *EndT, long *EndStep )
 
       if ( MPI_Rank == 0 )    Aux_Message( stdout, "      NOTE : parameter %s is reset to %ld\n", "END_STEP", *EndStep );
    }
+
+   // 3.1 reset M_STAR; only when this field exists in the restart H5 file
+#  ifdef MODEL_MSTAR
+   MSTAR_FieldIdx = H5Tget_member_index( TID, "M_STAR" );
+   if (MSTAR_FieldIdx >= 0) LoadField( "M_STAR",   &M_STAR, SID, TID, NonFatal, NullPtr, -1, NonFatal );
+#  endif 
 
 // 4. close all objects
    Status = H5Tclose( TID );
