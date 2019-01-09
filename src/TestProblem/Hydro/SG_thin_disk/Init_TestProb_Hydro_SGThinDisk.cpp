@@ -96,7 +96,7 @@ void SetParameter()
 // ReadPara->Add( "KEY_IN_THE_FILE",   &VARIABLE_ADDRESS,      DEFAULT,       MIN,              MAX               );
 // ********************************************************************************************************************************
 #  ifndef MODEL_MSTAR
-   ReadPara->Add( "M_star",            &M_star,                2.0e9,         Eps_double,       NoMax_double      );
+   ReadPara->Add( "M_STAR",            &M_STAR,                2.0e9,         Eps_double,       NoMax_double      );
 #  endif
 //   ReadPara->Add( "Sphere_Radius",     &Sphere_Radius,         -1.0,          Eps_double,       NoMax_double      );
 
@@ -140,7 +140,7 @@ void SetParameter()
       Aux_Message( stdout, "=============================================================================\n" );
       Aux_Message( stdout, "  test problem ID           = %d\n",     TESTPROB_ID  );
 #     ifndef MODEL_MSTAR
-      Aux_Message( stdout, "  star mass                 = %13.7e\n", M_star       );
+      Aux_Message( stdout, "  star mass                 = %13.7e\n", M_STAR       );
 #     endif
       Aux_Message( stdout, "=============================================================================\n" );
    }
