@@ -9,7 +9,9 @@ static void Aux_Record_User() ;
 
 // problem-specific global variables
 // =======================================================================================
-// static double M_star;
+#ifndef MODEL_MSTAR
+static double M_STAR;
+#endif
 // =======================================================================================
 
 
@@ -93,7 +95,9 @@ void SetParameter()
 // ********************************************************************************************************************************
 // ReadPara->Add( "KEY_IN_THE_FILE",   &VARIABLE_ADDRESS,      DEFAULT,       MIN,              MAX               );
 // ********************************************************************************************************************************
-//   ReadPara->Add( "M_star",            &M_star,                2.0e9,         Eps_double,       NoMax_double      );
+#  ifndef MODEL_MSTAR
+   ReadPara->Add( "M_star",            &M_star,                2.0e9,         Eps_double,       NoMax_double      );
+#  endif
 //   ReadPara->Add( "Sphere_Radius",     &Sphere_Radius,         -1.0,          Eps_double,       NoMax_double      );
 
 
@@ -135,7 +139,9 @@ void SetParameter()
    {
       Aux_Message( stdout, "=============================================================================\n" );
       Aux_Message( stdout, "  test problem ID           = %d\n",     TESTPROB_ID  );
-      //Aux_Message( stdout, "  star mass                 = %13.7e\n", M_star       );
+#     ifndef MODEL_MSTAR
+      Aux_Message( stdout, "  star mass                 = %13.7e\n", M_star       );
+#     endif
       Aux_Message( stdout, "=============================================================================\n" );
    }
 
