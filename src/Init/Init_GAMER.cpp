@@ -182,6 +182,11 @@ void Init_GAMER( int *argc, char ***argv )
 
       default : Aux_Error( ERROR_INFO, "incorrect parameter %s = %d !!\n", "OPT__INIT", OPT__INIT );
    }
+   
+// reset M_STAR 
+#  ifdef MODEL_MSTAR
+   Init_ExternalAccPot();
+#  endif
 
 
 // record the initial weighted load-imbalance factor
