@@ -48,7 +48,9 @@ void CoolingFunc(real cool_rate, const real PriVar[], const real x_pos[]) {
    //const double tau_dyn     = SQRT( CUBE(sph_rad) / GM );
    const double tau_dyn     = sph_rad / v_abs ;
    
-   real cool_time = 1.0 * tau_dyn;
+   // cooling parameter: cooling time = beta * (dynamical time)
+   const double beta        = 3.5;
+   const double cool_time   = beta * tau_dyn;
    
    // check if temperature is smaller than 100K
    if (T>= 100)   cool_rate = ie / cool_time ;
