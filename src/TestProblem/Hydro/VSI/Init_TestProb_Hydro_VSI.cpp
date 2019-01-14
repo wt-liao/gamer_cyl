@@ -289,7 +289,7 @@ void Init_TestProb_Hydro_VSI()
    Flag_User_Ptr            = NULL;
    Mis_GetTimeStep_User_Ptr = NULL;
    Aux_Record_User_Ptr      = NULL;
-   BC_User_Ptr              = NULL;
+   BC_User_Ptr              = BC  ;
    Flu_ResetByUser_Func_Ptr = NULL;
    End_User_Ptr             = NULL;
 #ifdef GRAVITY
