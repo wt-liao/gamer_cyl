@@ -139,9 +139,7 @@ void SetParameter()
    {
       Aux_Message( stdout, "=============================================================================\n" );
       Aux_Message( stdout, "  test problem ID           = %d\n",     TESTPROB_ID  );
-#     ifndef MODEL_MSTAR
       Aux_Message( stdout, "  star mass                 = %13.7e\n", M_STAR       );
-#     endif
       Aux_Message( stdout, "=============================================================================\n" );
    }
 
