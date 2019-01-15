@@ -234,14 +234,6 @@ void BC_User_xm( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
    const int FACE = 0;
    real (*Array3D)[ArraySizeZ][ArraySizeY][ArraySizeX] = ( real (*)[ArraySizeZ][ArraySizeY][ArraySizeX] )Array;
    
-#  ifdef UserPotBC
-   if (PotArray != NULL) {
-      Poi_BoundaryCondition_Extrapolation( PotArray, FACE, 1, GhostSize, ArraySizeX, ArraySizeY, ArraySizeZ, 
-                                           Idx_Start, Idx_End, NULL, NULL );
-   }
-   real (*PotArray3D)[ArraySizeZ][ArraySizeY][ArraySizeX] = ( real (*)[ArraySizeZ][ArraySizeY][ArraySizeX] )PotArray;
-#  endif
-   
    const double X0    = Corner[0] + (double)Idx_End[0]*dh[0];
    const double Y0    = Corner[1] + (double)Idx_Start[1]*dh[1];
    const double Z0    = Corner[2] + (double)Idx_Start[2]*dh[2];
@@ -257,7 +249,9 @@ void BC_User_xm( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
    double X, Y, Z;
    int    i, j, k;
 
-#  ifdef UserPotBC   
+   // for non-self-grvitating test
+   pot_grad = 0.0;
+
    for (k=Idx_Start[2], Z=Z0; k<=Idx_End[2];   k++, Z+=dh[2])
    for (j=Idx_Start[1], Y=Y0; j<=Idx_End[1];   j++, Y+=dh[1])
    for (i=Idx_End[0],   X=X0; i>=Idx_Start[0]; i--, X-=dh[0])
@@ -274,6 +268,7 @@ void BC_User_xm( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
       star_g   = - GM * X / CUBE(sph_rad) ;
       dens      = Array3D[DENS][k][j][i];
       
+      /*
       if (i != Idx_Start[0]) {
          pot_grad  = (PotArray3D[0][k][j][i+1] - PotArray3D[0][k][j][i-1])/(2.0*dh[0]) ;
          //###
@@ -283,7 +278,8 @@ void BC_User_xm( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
          pot_grad  = (PotArray3D[0][k][j][i+1] - PotArray3D[0][k][j][i]  )/(1.0*dh[0]) ;
          //###
          pres_grad = 0.0;
-      }               
+      } 
+      */              
       
       vtheta_square = (pres_grad + dens*pot_grad - dens*star_g)*(X/dens);
       vtheta = (vtheta_square > 0.0)? SQRT(vtheta_square) : 0.0 ;
@@ -294,7 +290,6 @@ void BC_User_xm( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
       Array3D[ENGY][k][j][i] = Array3D[ENGY][k][j][i_ref] 
                              - 0.5*SQR(Array3D[MOMY][k][j][i_ref])/dens + 0.5*dens*SQR(vtheta) ; 
    } // k,j,i
-#  endif
 }
                         
                         
@@ -319,14 +314,6 @@ void BC_User_xp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
    const int FACE = 1;
    real (*Array3D)[ArraySizeZ][ArraySizeY][ArraySizeX] = ( real (*)[ArraySizeZ][ArraySizeY][ArraySizeX] )Array;
    
-#  ifdef UserPotBC
-   if (PotArray != NULL) {
-      Poi_BoundaryCondition_Extrapolation( PotArray, FACE, 1, GhostSize, ArraySizeX, ArraySizeY, ArraySizeZ, 
-                                           Idx_Start, Idx_End, NULL, NULL );
-   }
-   real (*PotArray3D)[ArraySizeZ][ArraySizeY][ArraySizeX] = ( real (*)[ArraySizeZ][ArraySizeY][ArraySizeX] )PotArray;
-#  endif
-   
    const double X0    = Corner[0] + (double)Idx_Start[0]*dh[0];
    const double Y0    = Corner[1] + (double)Idx_Start[1]*dh[1];
    const double Z0    = Corner[2] + (double)Idx_Start[2]*dh[2];
@@ -342,7 +329,9 @@ void BC_User_xp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
    double X, Y, Z;
    int    i, j, k;
    
-#  ifdef UserPotBC
+   // for non-self-grvitating test
+   pot_grad = 0.0;
+ 
    
    for (k=Idx_Start[2], Z=Z0; k<=Idx_End[2]; k++, Z+=dh[2])
    for (j=Idx_Start[1], Y=Y0; j<=Idx_End[1]; j++, Y+=dh[1])
@@ -360,6 +349,7 @@ void BC_User_xp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
       star_g   = - GM * X / CUBE(sph_rad) ;
       dens      = Array3D[DENS][k][j][i];
       
+      /* 
       if (i != Idx_End[0]) {
          pot_grad  = (PotArray3D[0][k][j][i+1] - PotArray3D[0][k][j][i-1])/(2.0*dh[0]) ;
          //###
@@ -369,7 +359,8 @@ void BC_User_xp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
          pot_grad  = (PotArray3D[0][k][j][i]   - PotArray3D[0][k][j][i-1])/(1.0*dh[0]) ;
          //###
          pres_grad = 0.0;
-      }               
+      } 
+      */              
       
       vtheta_square = (pres_grad + dens*pot_grad - dens*star_g)*(X/dens);
       vtheta = (vtheta_square > 0.0)? SQRT(vtheta_square) : 0.0 ;
@@ -381,7 +372,6 @@ void BC_User_xp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
       Array3D[ENGY][k][j][i] = Array3D[ENGY][k][j][i_ref] 
                              - 0.5*SQR(Array3D[MOMY][k][j][i_ref])/dens + 0.5*dens*SQR(vtheta) ; 
    }
-#  endif // UserPotBC
 }
                         
 //-------------------------------------------------------------------------------------------------------
@@ -507,14 +497,8 @@ void BC_User_zm( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
    double X, Y, Z, Z_p1;
    int    i, j, k;
    
-   
-#  ifdef UserPotBC
-   if (PotArray != NULL) {
-      Poi_BoundaryCondition_Extrapolation( PotArray, FACE, 1, GhostSize, ArraySizeX, ArraySizeY, ArraySizeZ, 
-                                           Idx_Start, Idx_End, NULL, NULL );
-   }
-   
-   real (*PotArray3D)[ArraySizeZ][ArraySizeY][ArraySizeX] = ( real (*)[ArraySizeZ][ArraySizeY][ArraySizeX] )PotArray;
+   // for non-self-grvitating test
+   pot_grad = 0.0;
    
    for (j=Idx_Start[1], Y=Y0; j<=Idx_End[1]; j++, Y+=dh[1])
    for (i=Idx_Start[0], X=X0; i<=Idx_End[0]; i++, X+=dh[0])
@@ -526,7 +510,15 @@ void BC_User_zm( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
          Array3D[DENS][k][j][i] = Array3D[DENS][k_ref][j][i] ;
          Array3D[MOMX][k][j][i] = Array3D[MOMX][k_ref][j][i] ;
          Array3D[MOMY][k][j][i] = Array3D[MOMY][k_ref][j][i] ;
-         Array3D[MOMZ][k][j][i] = Array3D[MOMZ][k_ref][j][i] ;  
+         Array3D[MOMZ][k][j][i] = Array3D[MOMZ][k_ref][j][i] ;
+         
+         // only allow outflow in zm: vz <= 0.0
+         /*
+         if ( Array3D[MOMZ][k_ref][j][i] < 0.0)   
+            Array3D[MOMZ][k][j][i] = Array3D[MOMZ][k_ref][j][i] ;  
+         else
+            Array3D[MOMZ][k][j][i] = 0.0;
+         */
          
          
          // calculate for BC value
@@ -539,7 +531,7 @@ void BC_User_zm( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
                                      Array3D[ENGY][k+2][j][i], Gamma_m1, CheckMinPres_Yes, MIN_PRES );
                                  
          dens_p1  = Array3D[DENS][k+1][j][i];
-         pot_grad = PotArray3D[0][k+2][j][i] - PotArray3D[0][k][j][i];
+         //pot_grad = PotArray3D[0][k+2][j][i] - PotArray3D[0][k][j][i];
          
          pres_bc  = pres_p2 + dens_p1*pot_grad - dens_p1*star_g*(2.0*dh[2]) ;
          pres_bc  = FMAX( pres_bc, MIN_PRES ) ;
@@ -550,7 +542,6 @@ void BC_User_zm( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
          Array3D[ENGY][k][j][i] = engy_bc ;
       }         
    } // for (i, j)
-#  endif // UserPotBC
    
 }
 
@@ -592,31 +583,28 @@ void BC_User_zp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
    double X, Y, Z, Z_m1;
    int    i, j, k;
    
-#  ifdef UserPotBC
-   if (PotArray != NULL) {
-      Poi_BoundaryCondition_Extrapolation( PotArray, FACE, 1, GhostSize, ArraySizeX, ArraySizeY, ArraySizeZ, 
-                                           Idx_Start, Idx_End, NULL, NULL );
-   }
-   
-   real (*PotArray3D)[ArraySizeZ][ArraySizeY][ArraySizeX] = ( real (*)[ArraySizeZ][ArraySizeY][ArraySizeX] )PotArray;
+   // for non-self-grvitating test
+   pot_grad = 0.0;
    
    for (j=Idx_Start[1], Y=Y0; j<=Idx_End[1]; j++, Y+=dh[1])
    for (i=Idx_Start[0], X=X0; i<=Idx_End[0]; i++, X+=dh[0])
    {  
       // fill in bc
       for (k=Idx_Start[2], Z=Z0; k<=Idx_End[2]; k++, Z+=dh[2]) {
-         //###
-         /*
-         if ( i==Idx_Start[0] && j==Idx_Start[1] && k==Idx_Start[2] && PotArray3D[0][k_ref][j][i] >= 0.0 )
-            Aux_Message(stdout, "Pot inside and in BC = (%8.5f, %8.5f) at (X, Y, Z) = (%8.5f, %8.5f, %8.5f). \n", 
-                        PotArray3D[0][k_ref][j][i], PotArray3D[0][k][j][i], X, Y, Z);
-         */
          
          // outflow 
          Array3D[DENS][k][j][i] = Array3D[DENS][k_ref][j][i] ;
          Array3D[MOMX][k][j][i] = Array3D[MOMX][k_ref][j][i] ;
          Array3D[MOMY][k][j][i] = Array3D[MOMY][k_ref][j][i] ;
          Array3D[MOMZ][k][j][i] = Array3D[MOMZ][k_ref][j][i] ;  
+         
+         // only allow outflow in zp: vz > 0.0
+         /*
+         if ( Array3D[MOMZ][k_ref][j][i] > 0.0)   
+            Array3D[MOMZ][k][j][i] = Array3D[MOMZ][k_ref][j][i] ;  
+         else
+            Array3D[MOMZ][k][j][i] = 0.0;
+         */
          
          
          // calculate for BC value
@@ -629,7 +617,7 @@ void BC_User_zp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
                                      Array3D[ENGY][k-2][j][i], Gamma_m1, CheckMinPres_Yes, MIN_PRES );
                                  
          dens_m1  = Array3D[DENS][k-1][j][i];
-         pot_grad = PotArray3D[0][k][j][i] - PotArray3D[0][k-2][j][i];
+         //pot_grad = PotArray3D[0][k][j][i] - PotArray3D[0][k-2][j][i];
          
          pres_bc  = pres_m2 - dens_m1*pot_grad + dens_m1*star_g*(2.0*dh[2]) ;
          pres_bc  = FMAX( pres_bc, MIN_PRES ) ;
@@ -641,7 +629,6 @@ void BC_User_zp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
       }         
    } // for (i, j)
    
-#  endif // ifdef UserPotBC
 }
 
 #endif // COORDINATE == CYLINDRICAL
