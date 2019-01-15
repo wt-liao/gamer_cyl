@@ -174,16 +174,18 @@ void SetParameter()
 void SetGridIC( real fluid[], const double x, const double y, const double z, const double Time,
                 const int lv, double AuxArray[] )
 {
-
    const real R_norm      = x / R_0; 
    const real rho_mid     = rho_0 * POW(R_norm, slope_p) ;
    const real temperature = T_0 * POW(R_norm, slope_q) ;
    const real cs_square   = const_R * temperature ; 
    const real _sph_r      = 1.0 / SQRT(x*x + z*z);
    const real _R_norm     = 1.0 / R_norm ;
-   const real rho         = rho_mid * EXP( GM/cs_square * (_sph_r - _R_norm) );
    const real omega_kep   = SQRT(GM*CUBE(_sph_r));
    const real H           = SQRT(cs_square)/omega_kep;
+   
+   const real rho         = rho_mid * EXP( GM/cs_square * (_sph_r - _R_norm) );
+   const real omega       = omega_kep * SQRT(1.0 + (slope_q+slope_p)*SQR(H/x) + slope_q*(1.0-x*_sph_r) ) ;
+   const real pressure    = rho*const_R*temperature ;
    
    // set up random number gen
    /*
@@ -194,11 +196,10 @@ void SetGridIC( real fluid[], const double x, const double y, const double z, co
 
    fluid[DENS] = rho;
    fluid[MOMX] = 0.0;
-   fluid[MOMY] = rho* x*omega_kep * SQRT(1.0 + (slope_q+slope_p)*SQR(H/x) + slope_q*(1.0-x*_sph_r) ) ;
+   fluid[MOMY] = rho* (x*omega) ;
    fluid[MOMZ] = 0.0;
+   fluid[ENGY] = 0.5*SQR(fluid[MOMY])/rho + pressure/(GAMMA-1.0) ;
    
-   //fluid[MOMY] +=  RanVel ;
-
 } // FUNCTION : SetGridIC
 
 
@@ -239,15 +240,19 @@ void BC( real fluid[], const double x, const double y, const double z, const dou
    const real cs_square   = const_R * temperature ; 
    const real _sph_r      = 1.0 / SQRT(x*x + z*z);
    const real _R_norm     = 1.0 / R_norm ;
-   const real rho         = rho_mid * EXP( GM/cs_square * (_sph_r - _R_norm) );
-   const real omega_kep   = SQRT(GM*_sph_r);
+   const real omega_kep   = SQRT(GM*CUBE(_sph_r));
    const real H           = SQRT(cs_square)/omega_kep;
-
+   
+   const real rho         = rho_mid * EXP( GM/cs_square * (_sph_r - _R_norm) );
+   const real omega       = omega_kep * SQRT(1.0 + (slope_q+slope_p)*SQR(H/x) + slope_q*(1.0-x*_sph_r) ) ;
+   const real pressure    = rho*const_R*temperature ;
+   
    fluid[DENS] = rho;
    fluid[MOMX] = 0.0;
-   fluid[MOMY] = rho* x*omega_kep * SQRT(1.0 + (slope_q+slope_p)*SQR(H/x) + slope_q*(1.0-x*_sph_r) ) ;
+   fluid[MOMY] = rho* (x*omega) ;
    fluid[MOMZ] = 0.0;
-
+   fluid[ENGY] = 0.5*SQR(fluid[MOMY])/rho + pressure/(GAMMA-1.0) ;
+   
 } // FUNCTION : BC
 
 
