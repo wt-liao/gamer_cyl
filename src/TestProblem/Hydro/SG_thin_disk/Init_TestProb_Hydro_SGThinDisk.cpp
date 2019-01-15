@@ -324,7 +324,7 @@ void Init_TestProb_Hydro_SGThinDisk()
    Mis_GetTimeStep_User_Ptr = NULL;
    Aux_Record_User_Ptr      = Aux_Record_User;
    BC_User_Ptr              = NULL;
-   Flu_ResetByUser_Func_Ptr = Flu_ResetByUser;
+   Flu_ResetByUser_Func_Ptr = NULL;
    End_User_Ptr             = NULL;
 #ifdef GRAVITY
    Init_ExternalAcc_Ptr     = Init_ExternalAcc;       // option: OPT__GRAVITY_TYPE=2/3; example: SelfGravity/Init_ExternalAcc.cpp

@@ -99,9 +99,9 @@ void CPU_FullStepUpdate( const real Input[][ FLU_NXT*FLU_NXT*FLU_NXT ], real Out
       
 #     ifdef MODEL_MSTAR
       // only account for the flux from the inner most r-grid; be carful about ghost zone 
-      if (x_pos[0] > Edge_x1_L && x_pos[0] < Edge_x1_L+dh[0] ) {
-         dist2center = SQRT( SQR(x_pos[0]-0.5*dh[0]) + SQR(x_pos[2]) ) ;
-         if (dist2center < ACCRETE_RADIUS)   d_MStar += FMAX( Flux[ID1][0][DENS]*dt, 0 ) ; 
+      dist2center = SQRT( SQR(x_pos[0]-0.5*dh[0]) + SQR(x_pos[2]) ) ;
+      if (x_pos[0] > Edge_x1_L && x_pos[0] < Edge_x1_L+dh[0] && dist2center < ACCRETE_RADIUS ) {
+         d_MStar += FMAX( Flux[ID1][0][DENS]*dt, 0 ) ; 
       } 
 #     endif // MODEL_MSTAR
       
