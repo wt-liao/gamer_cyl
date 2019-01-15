@@ -40,7 +40,7 @@ void CoolingFunc(real cool_rate, const real PriVar[], const real x_pos[]) {
    const double GM          = ExtAcc_AuxArray[3] ;
    const double rho         = PriVar[DENS]; 
    const double pres        = PriVar[ENGY];
-   const double ie          = PriVar[4]/(GAMMA-1.0) ;
+   const double ie          = PriVar[ENGY]/(GAMMA-1.0) ;
    const double T           = pres / ( rho * R ) ;
    const double v_abs       = SQRT( SQR(PriVar[MOMX]) + SQR(PriVar[MOMY]) + SQR(PriVar[MOMZ]) ) ;
    const double sph_rad     = SQRT( SQR(x_pos[0]) + SQR(x_pos[2]) );
@@ -49,6 +49,7 @@ void CoolingFunc(real cool_rate, const real PriVar[], const real x_pos[]) {
    //const double tau_dyn     = sph_rad / v_abs ;
    
    // cooling parameter: cooling time = beta * (dynamical time)
+   // relax: use beta = 15
    const double beta        = 3.5;
    const double cool_time   = beta * tau_dyn;
    
@@ -56,7 +57,8 @@ void CoolingFunc(real cool_rate, const real PriVar[], const real x_pos[]) {
    if (T>= 100)   cool_rate = ie / cool_time ;
    else           cool_rate = TINY_NUMBER ;
    
-   if (t_curr < t_relax) cool_rate *= FABS( 1.0 - (t_relax-t_curr)/t_relax ) ; 
+   // ramp down cooling? 
+   //if (t_curr < t_relax) cool_rate *= FABS( 1.0 - (t_relax-t_curr)/t_relax ) ; 
    
 
    
