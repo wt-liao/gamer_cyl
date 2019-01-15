@@ -182,7 +182,7 @@ void SetGridIC( real fluid[], const double x, const double y, const double z, co
    const real _sph_r      = 1.0 / SQRT(x*x + z*z);
    const real _R_norm     = 1.0 / R_norm ;
    const real rho         = rho_mid * EXP( GM/cs_square * (_sph_r - _R_norm) );
-   const real omega_kep   = SQRT(GM*_sph_r);
+   const real omega_kep   = SQRT(GM*CUBE(_sph_r));
    const real H           = SQRT(cs_square)/omega_kep;
    
    // set up random number gen
