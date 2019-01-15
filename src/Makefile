@@ -36,7 +36,16 @@ COMPILE_VERBOSE := 0
 SIMU_OPTION += -DMODEL=HYDRO
 
 # enable gravity
-#SIMU_OPTION += -DGRAVITY
+SIMU_OPTION += -DGRAVITY
+
+# enable radiative thin cooling
+SIMU_OPTION += -DCOOLING
+
+# enable UserBC to use gravitataional pot
+SIMU_OPTION += -DUserPotBC
+
+# enable MODEL_MSTAR
+SIMU_OPTION += -DMODEL_MSTAR
 
 # enable particles
 # --> must enable GRAVITY
@@ -48,7 +57,7 @@ SIMU_OPTION += -DMODEL=HYDRO
 #SIMU_OPTION += -DSUPPORT_GRACKLE
 
 # coordinate system: CARTESIAN/CYLINDRICAL/SPHERICAL (experimental)
-SIMU_OPTION += -DCOORDINATE=CARTESIAN
+SIMU_OPTION += -DCOORDINATE=CYLINDRICAL
 
 
 # (b) options of different physical modules
@@ -57,19 +66,19 @@ SIMU_OPTION += -DCOORDINATE=CARTESIAN
 ifeq "$(filter -DMODEL=HYDRO, $(SIMU_OPTION))" "-DMODEL=HYDRO"
 # hydrodynamic scheme: RTVD/WAF/MHM/MHM_RP/CTU
 # --> must be set when MODEL=HYDRO; WAF is deprecated
-SIMU_OPTION += -DFLU_SCHEME=CTU
+SIMU_OPTION += -DFLU_SCHEME=MHM_RP
 
 # scheme of spatial data reconstruction: PLM/PPM (piecewise-linear/piecewise-parabolic)
 # --> useless for RTVD/WAF
-SIMU_OPTION += -DLR_SCHEME=PPM
+SIMU_OPTION += -DLR_SCHEME=PLM
 
 # Riemann solver: EXACT/ROE/HLLE/HLLC
 # --> all are useless for RTVD; HLLE/HLLC are useless for WAF
-SIMU_OPTION += -DRSOLVER=ROE
+SIMU_OPTION += -DRSOLVER=HLLC
 
 # dual energy formalism: DE_ENPY/DE_EINT (evolve entropy or internal energy)
 # --> DE_EINT is not supported yet; useless for RTVD/WAF
-#SIMU_OPTION += -DDUAL_ENERGY=DE_ENPY
+SIMU_OPTION += -DDUAL_ENERGY=DE_ENPY
 
 # number of user-defined passively advected scalars
 # --> set it to 0 or comment it out if none is required
@@ -144,11 +153,11 @@ endif # PARTICLE
 # ------------------------------------------------------------------------------------
 # maximum number of AMR levels including the root level (level id = 0 ... NLEVEL-1)
 # --> must be set in any cases
-SIMU_OPTION += -DNLEVEL=10
+SIMU_OPTION += -DNLEVEL=1
 
 # maximum number of patches on each AMR level
 # --> must be set in any cases
-SIMU_OPTION += -DMAX_PATCH=1000000
+SIMU_OPTION += -DMAX_PATCH=100000
 
 # GPU acceleration
 # --> must set GPU_ARCH as well
@@ -171,15 +180,15 @@ SIMU_OPTION += -DTIMING
 #SIMU_OPTION += -DTIMING_SOLVER
 
 # double precision
-#SIMU_OPTION += -DFLOAT8
+SIMU_OPTION += -DFLOAT8
 
 # serial mode (in which no MPI libraries are required)
 # --> must disable LOAD_BALANCE
-SIMU_OPTION += -DSERIAL
+#SIMU_OPTION += -DSERIAL
 
 # load-balance parallelization: HILBERT
 # --> must disable SERIAL
-#SIMU_OPTION += -DLOAD_BALANCE=HILBERT
+SIMU_OPTION += -DLOAD_BALANCE=HILBERT
 
 # overlap MPI communication with computation
 # --> NOT supported yet; must enable LOAD_BALANCE
@@ -192,7 +201,7 @@ SIMU_OPTION += -DOPENMP
 #SIMU_OPTION += -DLAOHU
 
 # support HDF5 format
-#SIMU_OPTION += -DSUPPORT_HDF5
+SIMU_OPTION += -DSUPPORT_HDF5
 
 # support GNU scientific library
 #SIMU_OPTION += -DSUPPORT_GSL
@@ -216,13 +225,13 @@ SIMU_OPTION += -DRANDOM_NUMBER=RNG_GNU_EXT
 # -------------------------------------------------------------------------------
 # CXX         = icpc                                      # serial compiler
 ##CXX         = $(MPI_PATH)/bin/mpicxx                    # MPI compiler
-##CXX         = CC                                        # cray wrapper script
-# CXXFLAG     = -g -O3                                    # general flags
+  CXX         = CC                                        # cray wrapper script
+  CXXFLAG     = -g -O3                                    # general flags
 ##CXXFLAG     = -g -O3 -std=c++11 #-gxx-name=YOUR_G++
 ##CXXFLAG     = -g -fast
-# CXXFLAG    += -w1                                       # warning flags
-# OPENMPFLAG  = -fopenmp                                  # openmp flag
-# LIB         = -limf                                     # libraries and linker flags
+  CXXFLAG    += -w1                                       # warning flags
+  OPENMPFLAG  = -fopenmp                                  # openmp flag
+  LIB         = -limf                                     # libraries and linker flags
 #
 ## for debug only
 #ifeq "$(filter -DGAMER_DEBUG, $(SIMU_OPTION))" "-DGAMER_DEBUG"
@@ -232,34 +241,34 @@ SIMU_OPTION += -DRANDOM_NUMBER=RNG_GNU_EXT
 #
 ## suppress warning when OpenMP is disabled
 #ifeq "$(filter -DOPENMP, $(SIMU_OPTION))" ""
-# CXXFLAG    += -Wno-unknown-pragmas -diag-disable 3180
+  CXXFLAG    += -Wno-unknown-pragmas -diag-disable 3180
 #endif
 
 
 # gnu
 # -------------------------------------------------------------------------------
- CXX         = g++                                       # serial compiler
+#CXX         = g++                                       # serial compiler
 #CXX         = $(MPI_PATH)/bin/mpicxx                    # MPI compiler
 #CXX         = CC                                        # cray wrapper script
- CXXFLAG     = -g -O3                                    # general flags
+#CXXFLAG     = -g -O3                                    # general flags
 #CXXFLAG     = -g -O3 -std=c++11
 #CXXFLAG     = -g -Ofast
- CXXFLAG    += -Wall -Wextra                             # warning flags
- CXXFLAG    += -Wno-unused-variable -Wno-unused-parameter \
+#CXXFLAG    += -Wall -Wextra                             # warning flags
+#CXXFLAG    += -Wno-unused-variable -Wno-unused-parameter \
                -Wno-maybe-uninitialized -Wno-unused-but-set-variable \
                -Wno-unused-result -Wno-unused-function
- OPENMPFLAG  = -fopenmp                                  # openmp flag
- LIB         =                                           # libraries and linker flags
+#OPENMPFLAG  = -fopenmp                                  # openmp flag
+#LIB         =                                           # libraries and linker flags
 
 # for debug only
-ifeq "$(filter -DGAMER_DEBUG, $(SIMU_OPTION))" "-DGAMER_DEBUG"
+#ifeq "$(filter -DGAMER_DEBUG, $(SIMU_OPTION))" "-DGAMER_DEBUG"
 #CXXFLAG    += -fstack-protector-all
-endif
+#endif
 
 # suppress warning when OpenMP is disabled
-ifeq "$(filter -DOPENMP, $(SIMU_OPTION))" ""
- CXXFLAG    += -Wno-unknown-pragmas
-endif
+#ifeq "$(filter -DOPENMP, $(SIMU_OPTION))" ""
+# CXXFLAG    += -Wno-unknown-pragmas
+#endif
 
 
 # CUDA
@@ -429,7 +438,7 @@ CC_FILE     += CPU_FluidSolver_RTVD.cpp  CPU_FluidSolver_WAF.cpp  CPU_FluidSolve
                CPU_Shared_DataReconstruction.cpp  CPU_Shared_FluUtility.cpp  CPU_Shared_ComputeFlux.cpp \
                CPU_Shared_FullStepUpdate.cpp  CPU_Shared_RiemannSolver_Exact.cpp  CPU_Shared_RiemannSolver_Roe.cpp \
                CPU_Shared_RiemannSolver_HLLE.cpp  CPU_Shared_RiemannSolver_HLLC.cpp  CPU_Shared_DualEnergy.cpp \
-               CPU_dtSolver_HydroCFL.cpp
+               CPU_dtSolver_HydroCFL.cpp  CPU_cooling.cpp
 
 CC_FILE     += Hydro_Init_ByFunction_AssignData.cpp  Hydro_Aux_Check_Negative.cpp \
                Hydro_BoundaryCondition_Reflecting.cpp  Hydro_Flag_Vorticity.cpp
@@ -495,7 +504,7 @@ CUDA_FILE   += CUPOT_PoissonSolver_SOR_10to14cube.cu  CUPOT_PoissonSolver_SOR_16
                CUPOT_PoissonSolver_MG.cu
 
 CC_FILE     += CPU_PoissonGravitySolver.cpp  CPU_PoissonSolver_SOR.cpp  CPU_PoissonSolver_FFT.cpp \
-               CPU_PoissonSolver_MG.cpp
+               CPU_PoissonSolver_MG.cpp  CPU_CylPoissonSolver.cpp
 
 CC_FILE     += Init_FFTW.cpp  Gra_Close.cpp  Gra_Prepare_Flu.cpp  Gra_Prepare_Pot.cpp  Gra_Prepare_Corner.cpp \
                Gra_AdvanceDt.cpp  Poi_Close.cpp  Poi_Prepare_Pot.cpp  Poi_Prepare_Rho.cpp \
@@ -503,7 +512,9 @@ CC_FILE     += Init_FFTW.cpp  Gra_Close.cpp  Gra_Prepare_Flu.cpp  Gra_Prepare_Po
                End_MemFree_PoissonGravity.cpp  Init_Set_Default_SOR_Parameter.cpp \
                Init_Set_Default_MG_Parameter.cpp  Poi_GetAverageDensity.cpp  Init_GreenFuncK.cpp \
                Init_ExternalPot.cpp  Poi_BoundaryCondition_Extrapolation.cpp  CPU_ExternalAcc.cpp \
-               Gra_Prepare_USG.cpp  Init_ExternalAcc.cpp  Poi_StorePotWithGhostZone.cpp  Init_ExternalAccPot.cpp
+               Gra_Prepare_USG.cpp  Init_ExternalAcc.cpp  Poi_StorePotWithGhostZone.cpp  Init_ExternalAccPot.cpp \
+               Init_CylKernel.cpp
+
 
 vpath %.cu     SelfGravity/GPU_Poisson  SelfGravity/GPU_Gravity
 vpath %.cpp    SelfGravity/CPU_Poisson  SelfGravity/CPU_Gravity  SelfGravity
