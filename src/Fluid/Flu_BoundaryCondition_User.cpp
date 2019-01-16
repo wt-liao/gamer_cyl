@@ -301,7 +301,7 @@ void BC_User_xm( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
       Array3D[MOMX][k][j][i] = 0.0;
       Array3D[MOMY][k][j][i] = rho* (X*omega) ;
       Array3D[MOMZ][k][j][i] = 0.0;
-      Array3D[ENGY][k][j][i] = 0.5*SQR(fluid[MOMY])/rho + pressure/(GAMMA-1.0) ;
+      Array3D[ENGY][k][j][i] = 0.5*rho*SQR(X*omega) + pressure/(GAMMA-1.0) ;
       
    } // k,j,i
 }
@@ -395,7 +395,7 @@ void BC_User_xp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
       Array3D[MOMX][k][j][i] = 0.0;
       Array3D[MOMY][k][j][i] = rho* (X*omega) ;
       Array3D[MOMZ][k][j][i] = 0.0;
-      Array3D[ENGY][k][j][i] = 0.5*SQR(fluid[MOMY])/rho + pressure/(GAMMA-1.0) ;
+      Array3D[ENGY][k][j][i] = 0.5*rho*SQR(X*omega) + pressure/(GAMMA-1.0) ;
       
    }
 }
