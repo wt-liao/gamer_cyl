@@ -105,6 +105,7 @@ void Hydro_Init_ByFunction_AssignData( const int lv )
 
    real   fluid[NCOMP_TOTAL], fluid_sub[NCOMP_TOTAL];
    double X, Y, Z, X0, Y0, Z0;
+   double geo_sub=1.0, _geo=1.0;
 
 
    if ( NSub > 1 )   // with sub-sampling
@@ -114,24 +115,31 @@ void Hydro_Init_ByFunction_AssignData( const int lv )
       for (int k=0; k<PS1; k++)  {  Z0 = amr->patch[0][lv][PID]->EdgeL[2] + k*dh[2] + 0.5*dh_sub[2];
       for (int j=0; j<PS1; j++)  {  Y0 = amr->patch[0][lv][PID]->EdgeL[1] + j*dh[1] + 0.5*dh_sub[1];
       for (int i=0; i<PS1; i++)  {  X0 = amr->patch[0][lv][PID]->EdgeL[0] + i*dh[0] + 0.5*dh_sub[0];
+         
+#if ( COORDINATE == CYLINDRICAL )
+         _geo = 1.0 / ( amr->patch[0][lv][PID]->EdgeL[0] + i*dh[0] + 0.5*dh[0] );   // _geo = 1/radius
+#endif
 
          for (int v=0; v<NCOMP_TOTAL; v++)   fluid[v] = 0.0;
 
          for (int kk=0; kk<NSub; kk++)    {  Z = Z0 + kk*dh_sub[2];
          for (int jj=0; jj<NSub; jj++)    {  Y = Y0 + jj*dh_sub[1];
          for (int ii=0; ii<NSub; ii++)    {  X = X0 + ii*dh_sub[0];
-
+            
+#if ( COORDINATE == CYLINDRICAL )
+            geo_sub = X;
+#endif
             Init_Function_User_Ptr( fluid_sub, X, Y, Z, Time[lv], lv, NULL );
 
 //          modify the initial condition if required
             if ( OPT__RESET_FLUID  &&  Flu_ResetByUser_Func_Ptr != NULL )
                Flu_ResetByUser_Func_Ptr( fluid_sub, X, Y, Z, Time[lv], lv, NULL );
 
-            for (int v=0; v<NCOMP_TOTAL; v++)   fluid[v] += fluid_sub[v];
+            for (int v=0; v<NCOMP_TOTAL; v++)   fluid[v] += fluid_sub[v]* geo_sub;
 
          }}}
 
-         for (int v=0; v<NCOMP_TOTAL; v++)   fluid[v] *= _NSub3;
+         for (int v=0; v<NCOMP_TOTAL; v++)   fluid[v] *= (_geo * _NSub3) ;
 
 //       check minimum density and pressure
          fluid[DENS] = FMAX( fluid[DENS], (real)MIN_DENS );
