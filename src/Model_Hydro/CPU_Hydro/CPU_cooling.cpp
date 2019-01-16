@@ -34,7 +34,7 @@ void CoolingFunc(real cool_rate, const real PriVar[], const real x_pos[]) {
    const double R           = 4.64952804093003e+0 ;   // needed for converting to T (temperature)
    
    const double t_curr      = Time[0];
-   const double t_relax     = 5*t_orbit ; 
+   const double t_relax     = 1*t_orbit ; 
    
    
    const double GM          = ExtAcc_AuxArray[3] ;
@@ -50,7 +50,7 @@ void CoolingFunc(real cool_rate, const real PriVar[], const real x_pos[]) {
    
    // cooling parameter: cooling time = beta * (dynamical time)
    // relax the system w/ cooling time = 10 dyn_tau
-   const double beta        = 10.0;
+   const double beta        = 15.0;
    const double cool_time   = beta * tau_dyn;
    
    // check if temperature is smaller than 100K
@@ -58,7 +58,7 @@ void CoolingFunc(real cool_rate, const real PriVar[], const real x_pos[]) {
    else           cool_rate = TINY_NUMBER ;
    
    // ramp down cooling? 
-   //if (t_curr < t_relax) cool_rate *= FABS( 1.0 - (t_relax-t_curr)/t_relax ) ; 
+   if (t_curr < t_relax) cool_rate *= FABS( 1.0 - (t_relax-t_curr)/t_relax ) ; 
    
 
    
