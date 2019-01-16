@@ -251,12 +251,16 @@ void BC_User_xm( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
 
    // for non-self-grvitating test
    pot_grad  = 0.0;
-   pres_grad = 0.0 ;
+   pres_grad = 0.0;
+   
+   const double rho_0=1, T_0=1, R_0=1, const_R=1, GM=1;
+   const double slope_p=0, slope_q=0;
 
    for (k=Idx_Start[2], Z=Z0; k<=Idx_End[2];   k++, Z+=dh[2])
    for (j=Idx_Start[1], Y=Y0; j<=Idx_End[1];   j++, Y+=dh[1])
    for (i=Idx_End[0],   X=X0; i>=Idx_Start[0]; i--, X-=dh[0])
    {
+      /*
       // outflow 
       Array3D[DENS][k][j][i] = Array3D[DENS][k][j][i_ref] ;
       Array3D[MOMX][k][j][i] = Array3D[MOMX][k][j][i_ref] ;
@@ -267,20 +271,7 @@ void BC_User_xm( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
       // derived other field
       sph_rad  = SQRT( Z*Z + X*X );
       star_g   = - GM * X / CUBE(sph_rad) ;
-      dens      = Array3D[DENS][k][j][i];
-      
-      /*
-      if (i != Idx_Start[0]) {
-         pot_grad  = (PotArray3D[0][k][j][i+1] - PotArray3D[0][k][j][i-1])/(2.0*dh[0]) ;
-         //###
-         pres_grad = 0.0;
-      } 
-      else  {
-         pot_grad  = (PotArray3D[0][k][j][i+1] - PotArray3D[0][k][j][i]  )/(1.0*dh[0]) ;
-         //###
-         pres_grad = 0.0;
-      } 
-      */              
+      dens      = Array3D[DENS][k][j][i]; 
       
       vtheta_square = (pres_grad + dens*pot_grad - dens*star_g)*(X/dens);
       vtheta = (vtheta_square > 0.0)? SQRT(vtheta_square) : 0.0 ;
@@ -290,6 +281,28 @@ void BC_User_xm( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
       // keep pressure the same, but modify K.E., since pres_grad = 0.0 currently
       Array3D[ENGY][k][j][i] = Array3D[ENGY][k][j][i_ref] 
                              - 0.5*SQR(Array3D[MOMY][k][j][i_ref])/dens + 0.5*dens*SQR(vtheta) ; 
+      
+      */
+      
+      real R_norm      = X / R_0; 
+      real rho_mid     = rho_0 * POW(R_norm, slope_p) ;
+      real temperature = T_0 * POW(R_norm, slope_q) ;
+      real cs_square   = const_R * temperature ; 
+      real _sph_r      = 1.0 / SQRT(X*X + Z*Z);
+      real _R_norm     = 1.0 / R_norm ;
+      real omega_kep   = SQRT(GM*CUBE(_sph_r));
+      real H           = SQRT(cs_square)/omega_kep;
+   
+      const real rho         = rho_mid * EXP( GM/cs_square * (_sph_r - _R_norm) );
+      const real omega       = omega_kep * SQRT(1.0 + (slope_q+slope_p)*SQR(H/x) + slope_q*(1.0-x*_sph_r) ) ;
+      const real pressure    = rho*const_R*temperature ;
+   
+      fluid[DENS] = rho;
+      fluid[MOMX] = 0.0;
+      fluid[MOMY] = rho* (X*omega) ;
+      fluid[MOMZ] = 0.0;
+      fluid[ENGY] = 0.5*SQR(fluid[MOMY])/rho + pressure/(GAMMA-1.0) ;
+      
    } // k,j,i
 }
                         
@@ -333,12 +346,15 @@ void BC_User_xp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
    // for non-self-grvitating test
    pot_grad  = 0.0;
    pres_grad = 0.0;
- 
+   
+   const double rho_0=1, T_0=1, R_0=1, const_R=1, GM=1;
+   const double slope_p=0, slope_q=0;
    
    for (k=Idx_Start[2], Z=Z0; k<=Idx_End[2]; k++, Z+=dh[2])
    for (j=Idx_Start[1], Y=Y0; j<=Idx_End[1]; j++, Y+=dh[1])
    for (i=Idx_Start[0], X=X0; i<=Idx_End[0]; i++, X+=dh[0])
    {
+      /*
       // outflow 
       Array3D[DENS][k][j][i] = Array3D[DENS][k][j][i_ref] ;
       Array3D[MOMX][k][j][i] = Array3D[MOMX][k][j][i_ref] ;
@@ -349,20 +365,7 @@ void BC_User_xp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
       // derived other field
       sph_rad  = SQRT( Z*Z + X*X );
       star_g   = - GM * X / CUBE(sph_rad) ;
-      dens      = Array3D[DENS][k][j][i];
-      
-      /* 
-      if (i != Idx_End[0]) {
-         pot_grad  = (PotArray3D[0][k][j][i+1] - PotArray3D[0][k][j][i-1])/(2.0*dh[0]) ;
-         //###
-         pres_grad = 0.0;
-      } 
-      else  {
-         pot_grad  = (PotArray3D[0][k][j][i]   - PotArray3D[0][k][j][i-1])/(1.0*dh[0]) ;
-         //###
-         pres_grad = 0.0;
-      } 
-      */              
+      dens      = Array3D[DENS][k][j][i];    
       
       vtheta_square = (pres_grad + dens*pot_grad - dens*star_g)*(X/dens);
       vtheta = (vtheta_square > 0.0)? SQRT(vtheta_square) : 0.0 ;
@@ -373,6 +376,27 @@ void BC_User_xp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
       // keep pressure the same, but modify K.E., since pres_grad = 0.0 currently
       Array3D[ENGY][k][j][i] = Array3D[ENGY][k][j][i_ref] 
                              - 0.5*SQR(Array3D[MOMY][k][j][i_ref])/dens + 0.5*dens*SQR(vtheta) ; 
+      */
+      
+      real R_norm      = X / R_0; 
+      real rho_mid     = rho_0 * POW(R_norm, slope_p) ;
+      real temperature = T_0 * POW(R_norm, slope_q) ;
+      real cs_square   = const_R * temperature ; 
+      real _sph_r      = 1.0 / SQRT(X*X + Z*Z);
+      real _R_norm     = 1.0 / R_norm ;
+      real omega_kep   = SQRT(GM*CUBE(_sph_r));
+      real H           = SQRT(cs_square)/omega_kep;
+   
+      const real rho         = rho_mid * EXP( GM/cs_square * (_sph_r - _R_norm) );
+      const real omega       = omega_kep * SQRT(1.0 + (slope_q+slope_p)*SQR(H/x) + slope_q*(1.0-x*_sph_r) ) ;
+      const real pressure    = rho*const_R*temperature ;
+   
+      fluid[DENS] = rho;
+      fluid[MOMX] = 0.0;
+      fluid[MOMY] = rho* (X*omega) ;
+      fluid[MOMZ] = 0.0;
+      fluid[ENGY] = 0.5*SQR(fluid[MOMY])/rho + pressure/(GAMMA-1.0) ;
+      
    }
 }
                         
