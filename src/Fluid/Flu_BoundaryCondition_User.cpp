@@ -250,7 +250,8 @@ void BC_User_xm( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
    int    i, j, k;
 
    // for non-self-grvitating test
-   pot_grad = 0.0;
+   pot_grad  = 0.0;
+   pres_grad = 0.0 ;
 
    for (k=Idx_Start[2], Z=Z0; k<=Idx_End[2];   k++, Z+=dh[2])
    for (j=Idx_Start[1], Y=Y0; j<=Idx_End[1];   j++, Y+=dh[1])
@@ -330,7 +331,8 @@ void BC_User_xp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
    int    i, j, k;
    
    // for non-self-grvitating test
-   pot_grad = 0.0;
+   pot_grad  = 0.0;
+   pres_grad = 0.0;
  
    
    for (k=Idx_Start[2], Z=Z0; k<=Idx_End[2]; k++, Z+=dh[2])
