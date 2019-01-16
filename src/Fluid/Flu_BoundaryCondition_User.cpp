@@ -253,7 +253,7 @@ void BC_User_xm( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
    pot_grad  = 0.0;
    pres_grad = 0.0;
    
-   const double rho_0=1, T_0=1, R_0=1, const_R=1, GM=1;
+   const double rho_0=1, T_0=1, R_0=1, const_R=1;
    const double slope_p=0, slope_q=0;
 
    for (k=Idx_Start[2], Z=Z0; k<=Idx_End[2];   k++, Z+=dh[2])
@@ -294,14 +294,14 @@ void BC_User_xm( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
       real H           = SQRT(cs_square)/omega_kep;
    
       const real rho         = rho_mid * EXP( GM/cs_square * (_sph_r - _R_norm) );
-      const real omega       = omega_kep * SQRT(1.0 + (slope_q+slope_p)*SQR(H/x) + slope_q*(1.0-x*_sph_r) ) ;
+      const real omega       = omega_kep * SQRT(1.0 + (slope_q+slope_p)*SQR(H/X) + slope_q*(1.0-X*_sph_r) ) ;
       const real pressure    = rho*const_R*temperature ;
    
-      fluid[DENS] = rho;
-      fluid[MOMX] = 0.0;
-      fluid[MOMY] = rho* (X*omega) ;
-      fluid[MOMZ] = 0.0;
-      fluid[ENGY] = 0.5*SQR(fluid[MOMY])/rho + pressure/(GAMMA-1.0) ;
+      Array3D[DENS][k][j][i] = rho;
+      Array3D[MOMX][k][j][i] = 0.0;
+      Array3D[MOMY][k][j][i] = rho* (X*omega) ;
+      Array3D[MOMZ][k][j][i] = 0.0;
+      Array3D[ENGY][k][j][i] = 0.5*SQR(fluid[MOMY])/rho + pressure/(GAMMA-1.0) ;
       
    } // k,j,i
 }
@@ -347,7 +347,7 @@ void BC_User_xp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
    pot_grad  = 0.0;
    pres_grad = 0.0;
    
-   const double rho_0=1, T_0=1, R_0=1, const_R=1, GM=1;
+   const double rho_0=1, T_0=1, R_0=1, const_R=1;
    const double slope_p=0, slope_q=0;
    
    for (k=Idx_Start[2], Z=Z0; k<=Idx_End[2]; k++, Z+=dh[2])
@@ -388,14 +388,14 @@ void BC_User_xp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
       real H           = SQRT(cs_square)/omega_kep;
    
       const real rho         = rho_mid * EXP( GM/cs_square * (_sph_r - _R_norm) );
-      const real omega       = omega_kep * SQRT(1.0 + (slope_q+slope_p)*SQR(H/x) + slope_q*(1.0-x*_sph_r) ) ;
+      const real omega       = omega_kep * SQRT(1.0 + (slope_q+slope_p)*SQR(H/X) + slope_q*(1.0-X*_sph_r) ) ;
       const real pressure    = rho*const_R*temperature ;
    
-      fluid[DENS] = rho;
-      fluid[MOMX] = 0.0;
-      fluid[MOMY] = rho* (X*omega) ;
-      fluid[MOMZ] = 0.0;
-      fluid[ENGY] = 0.5*SQR(fluid[MOMY])/rho + pressure/(GAMMA-1.0) ;
+      Array3D[DENS][k][j][i] = rho;
+      Array3D[MOMX][k][j][i] = 0.0;
+      Array3D[MOMY][k][j][i] = rho* (X*omega) ;
+      Array3D[MOMZ][k][j][i] = 0.0;
+      Array3D[ENGY][k][j][i] = 0.5*SQR(fluid[MOMY])/rho + pressure/(GAMMA-1.0) ;
       
    }
 }
