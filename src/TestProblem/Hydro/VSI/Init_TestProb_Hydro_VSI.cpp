@@ -179,11 +179,10 @@ void SetGridIC( real fluid[], const double x, const double y, const double z, co
    const real temperature = T_0 * POW(R_norm, slope_q) ;
    const real cs_square   = const_R * temperature ; 
    const real _sph_r      = 1.0 / SQRT(x*x + z*z);
-   const real _R_norm     = 1.0 / R_norm ;
-   const real omega_kep   = SQRT(GM*CUBE(_sph_r));
+   const real omega_kep   = SQRT(GM/CUBE(x));
    const real H           = SQRT(cs_square)/omega_kep;
    
-   const real rho         = rho_mid * EXP( GM/cs_square * (_sph_r - _R_norm) );
+   const real rho         = rho_mid * EXP( GM/cs_square * (_sph_r - 1/x) );
    const real omega       = omega_kep * SQRT(1.0 + (slope_q+slope_p)*SQR(H/x) + slope_q*(1.0-x*_sph_r) ) ;
    const real pressure    = rho*const_R*temperature ;
    
@@ -239,11 +238,10 @@ void BC( real fluid[], const double x, const double y, const double z, const dou
    const real temperature = T_0 * POW(R_norm, slope_q) ;
    const real cs_square   = const_R * temperature ; 
    const real _sph_r      = 1.0 / SQRT(x*x + z*z);
-   const real _R_norm     = 1.0 / R_norm ;
-   const real omega_kep   = SQRT(GM*CUBE(_sph_r));
+   const real omega_kep   = SQRT(GM/CUBE(x));
    const real H           = SQRT(cs_square)/omega_kep;
    
-   const real rho         = rho_mid * EXP( GM/cs_square * (_sph_r - _R_norm) );
+   const real rho         = rho_mid * EXP( GM/cs_square * (_sph_r - 1/x) );
    const real omega       = omega_kep * SQRT(1.0 + (slope_q+slope_p)*SQR(H/x) + slope_q*(1.0-x*_sph_r) ) ;
    const real pressure    = rho*const_R*temperature ;
    
