@@ -274,12 +274,13 @@ void BC_User_xm( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
       star_g   = - GM * X / CUBE(sph_rad) ;
       dens      = Array3D[DENS][k][j][i]; 
       
-      vtheta_square = (pres_grad + dens*pot_grad - dens*star_g)*(X/dens);
-      vtheta = (vtheta_square > 0.0)? SQRT(vtheta_square) : 0.0 ;
-      
+      //### BC3: force balance for vtheta
+      //vtheta_square = (pres_grad + dens*pot_grad - dens*star_g)*(X/dens); // <- only useful when self-g is active
+      //vtheta_square = -star_g*X;
+      //vtheta = (vtheta_square > 0.0)? SQRT(vtheta_square) : 0.0 ;
       //Array3D[MOMY][k][j][i] = dens * vtheta ;
       
-      // no-shear BC
+      //### BC2: no-shear BC
       Array3D[MOMY][k][j][i] = Array3D[MOMY][k][j][i_ref] * (X_ref/X) ;
       
       // keep pressure the same, but modify K.E., since pres_grad = 0.0 currently
@@ -287,6 +288,7 @@ void BC_User_xm( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
                              - 0.5*SQR(Array3D[MOMY][k][j][i_ref])/dens + 0.5*SQR(Array3D[MOMY][k][j][i])/dens ; 
       
       
+      //### unperturbed BC
       /*
       real R_norm      = X / R_0; 
       real rho_mid     = rho_0 * POW(R_norm, slope_p) ;
