@@ -58,7 +58,7 @@ void CoolingFunc(real cool_rate, const real PriVar[], const real x_pos[]) {
    else           cool_rate = TINY_NUMBER ;
    
    // ramp down cooling? 
-   //if (t_curr < t_relax) cool_rate *= FABS( 1.0 - (t_relax-t_curr)/t_relax ) ; 
+   if (t_curr < t_relax) cool_rate *= FABS( 1.0 - (t_relax-t_curr)/t_relax ) ; 
    
 
    
