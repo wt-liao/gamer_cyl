@@ -103,7 +103,7 @@ void SetParameter()
    ReadPara->Add( "const_R",           &const_R,               1.0,         Eps_double,        NoMax_double      );
    ReadPara->Add( "slope_q",           &slope_q,               -2.0,        NoMin_double,      NoMax_double      );
    ReadPara->Add( "slope_p",           &slope_p,               -1.5,        NoMin_double,      NoMax_double      );
-   ReadPara->Add( "T_0",               &T_0,                   4e-2,        Eps_double,        NoMax_double      );
+   ReadPara->Add( "T_0",               &T_0,                   4e-4,        Eps_double,        NoMax_double      );
    ReadPara->Add( "rho_0",             &rho_0,                 1.0,         Eps_double,        NoMax_double      );
 
    ReadPara->Read( FileName );
@@ -186,18 +186,27 @@ void SetGridIC( real fluid[], const double x, const double y, const double z, co
    const real omega       = omega_kep * SQRT(1.0 + (slope_q+slope_p)*SQR(H/x) + slope_q*(1.0-x*_sph_r) ) ;
    const real pressure    = rho*const_R*temperature ;
    
+   const real cs_0        = SQRT(const_R *T_0);
+   const real purb_amp    = 1e-2*cs_0;
+   double vx=0, vy=0, vz=0; 
+   
    // set up random number gen
-   /*
    RandomNumber_t *RNG = NULL;
    RNG = new RandomNumber_t( 1 );
-   double RanVel = RNG->GetValue( 0, -1.0*vel_amp, vel_amp ) ;
-   */
+   // make sure a different random seed is used; 
+   // this random seed ensures axisymmetric perturbation ?
+   const long VSI_Seed = long(rho*1.0e6); 
+   RNG->SetSeed( VSI_Seed, 0 );
+   
+   vx = RNG->GetValue( 0, -1.0*purb_amp, purb_amp ) ;
+   //vy = RNG->GetValue( 0, -1.0*purb_amp, purb_amp ) ;
+   vz = RNG->GetValue( 0, -1.0*purb_amp, purb_amp ) ;
 
    fluid[DENS] = rho;
-   fluid[MOMX] = 0.0;
-   fluid[MOMY] = rho* (x*omega) ;
-   fluid[MOMZ] = 0.0;
-   fluid[ENGY] = 0.5*SQR(fluid[MOMY])/rho + pressure/(GAMMA-1.0) ;
+   fluid[MOMX] = 0.0 + rho*vx;
+   fluid[MOMY] = rho* (x*omega) + rho*vy;
+   fluid[MOMZ] = 0.0 + rho*vz;
+   fluid[ENGY] = 0.5*SQR(fluid[MOMY])/rho + pressure/(GAMMA-1.0) + 0.5*rho*(vx*vx + vy*vy + vz*vz);
    
 } // FUNCTION : SetGridIC
 
