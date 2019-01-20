@@ -23,7 +23,7 @@ void CoolingFunc(real cool_rate, const real PriVar[], const real x_pos[]) {
    const double GM          = 1.0;
    const double const_R     = 1.0; 
    const double T_0         = 1.0;
-   const double R_0         = 1.0.;
+   const double R_0         = 1.0;
    
    const double tau_dyn     = 1.0; // <= SQRT(GM/R_0^3)
    
