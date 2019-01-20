@@ -216,8 +216,11 @@ void SetGridIC( real fluid[], const double x, const double y, const double z, co
 // Function    :  Init_ExternalAcc
 //-------------------------------------------------------------------------------------------------------
 void Init_ExternalAcc() {
-   
-   ExtAcc_AuxArray[0] = GM ;
+   ExtAcc_AuxArray[0] = (real) 0.0;
+   ExtAcc_AuxArray[1] = (real) 0.0;
+   ExtAcc_AuxArray[2] = (real) 0.0;
+   ExtAcc_AuxArray[3] = (real) GM;
+   ExtAcc_AuxArray[4] = (real) 0.0;
 
 } // FUNCTION : Init_ExternalAcc
 #endif
