@@ -235,6 +235,10 @@ void BC_User_xm( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
    const int FACE = 0;
    real (*Array3D)[ArraySizeZ][ArraySizeY][ArraySizeX] = ( real (*)[ArraySizeZ][ArraySizeY][ArraySizeX] )Array;
    
+   // extrapolate density
+   Poi_BoundaryCondition_Extrapolation( Array, FACE, 1, GhostSize, ArraySizeX, ArraySizeY, ArraySizeZ, 
+                                        Idx_Start, Idx_End, NULL, NULL );
+   
    const double X0    = Corner[0] + (double)Idx_End[0]*dh[0];
    const double Y0    = Corner[1] + (double)Idx_Start[1]*dh[1];
    const double Z0    = Corner[2] + (double)Idx_Start[2]*dh[2];
@@ -263,7 +267,7 @@ void BC_User_xm( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
    {
       
       // outflow 
-      Array3D[DENS][k][j][i] = Array3D[DENS][k][j][i_ref] ;
+      //Array3D[DENS][k][j][i] = Array3D[DENS][k][j][i_ref] ;
       Array3D[MOMX][k][j][i] = Array3D[MOMX][k][j][i_ref] ;
       //Array3D[MOMY][k][j][i] = Array3D[MOMY][k][j][i_ref] ;
       Array3D[MOMZ][k][j][i] = Array3D[MOMZ][k][j][i_ref] ;
@@ -335,6 +339,10 @@ void BC_User_xp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
    const int FACE = 1;
    real (*Array3D)[ArraySizeZ][ArraySizeY][ArraySizeX] = ( real (*)[ArraySizeZ][ArraySizeY][ArraySizeX] )Array;
    
+   // extrapolate density
+   Poi_BoundaryCondition_Extrapolation( Array, FACE, 1, GhostSize, ArraySizeX, ArraySizeY, ArraySizeZ, 
+                                        Idx_Start, Idx_End, NULL, NULL );
+   
    const double X0    = Corner[0] + (double)Idx_Start[0]*dh[0];
    const double Y0    = Corner[1] + (double)Idx_Start[1]*dh[1];
    const double Z0    = Corner[2] + (double)Idx_Start[2]*dh[2];
@@ -363,7 +371,7 @@ void BC_User_xp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
    {
       
       // outflow 
-      Array3D[DENS][k][j][i] = Array3D[DENS][k][j][i_ref] ;
+      //Array3D[DENS][k][j][i] = Array3D[DENS][k][j][i_ref] ;
       Array3D[MOMX][k][j][i] = Array3D[MOMX][k][j][i_ref] ;
       //Array3D[MOMY][k][j][i] = Array3D[MOMY][k][j][i_ref] ;
       Array3D[MOMZ][k][j][i] = Array3D[MOMZ][k][j][i_ref] ;
