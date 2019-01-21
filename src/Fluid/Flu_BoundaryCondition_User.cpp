@@ -276,12 +276,12 @@ void BC_User_xm( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
       
       //### BC3: force balance for vtheta
       //vtheta_square = (pres_grad + dens*pot_grad - dens*star_g)*(X/dens); // <- only useful when self-g is active
-      //vtheta_square = -star_g*X;
-      //vtheta = (vtheta_square > 0.0)? SQRT(vtheta_square) : 0.0 ;
-      //Array3D[MOMY][k][j][i] = dens * vtheta ;
+      vtheta_square = -star_g*X;
+      vtheta = (vtheta_square > 0.0)? SQRT(vtheta_square) : 0.0 ;
+      Array3D[MOMY][k][j][i] = dens * vtheta ;
       
       //### BC2: no-shear BC
-      Array3D[MOMY][k][j][i] = Array3D[MOMY][k][j][i_ref] * (X_ref/X) ;
+      //Array3D[MOMY][k][j][i] = Array3D[MOMY][k][j][i_ref] * (X_ref/X) ;
       
       // keep pressure the same, but modify K.E., since pres_grad = 0.0 currently
       Array3D[ENGY][k][j][i] = Array3D[ENGY][k][j][i_ref] 
@@ -374,8 +374,10 @@ void BC_User_xp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
       star_g   = - GM * X / CUBE(sph_rad) ;
       dens      = Array3D[DENS][k][j][i];    
       
-      vtheta_square = (pres_grad + dens*pot_grad - dens*star_g)*(X/dens);
+      //vtheta_square = (pres_grad + dens*pot_grad - dens*star_g)*(X/dens);
+      vtheta_square = -star_g*X;
       vtheta = (vtheta_square > 0.0)? SQRT(vtheta_square) : 0.0 ;
+      Array3D[MOMY][k][j][i] = dens * vtheta ;
       
       //Array3D[MOMY][k][j][i] = dens * vtheta ;
       
@@ -517,6 +519,10 @@ void BC_User_zm( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
    const int FACE = 4;
    real (*Array3D)[ArraySizeZ][ArraySizeY][ArraySizeX] = ( real (*)[ArraySizeZ][ArraySizeY][ArraySizeX] )Array;
    
+   // extrapolate density
+   Poi_BoundaryCondition_Extrapolation( Array, FACE, 1, GhostSize, ArraySizeX, ArraySizeY, ArraySizeZ, 
+                                        Idx_Start, Idx_End, NULL, NULL );
+   
    const double X0    = Corner[0] + (double)Idx_Start[0]*dh[0];
    const double Y0    = Corner[1] + (double)Idx_Start[1]*dh[1];
    const double Z0    = Corner[2] + (double)Idx_End[2]*dh[2];
@@ -543,7 +549,7 @@ void BC_User_zm( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
       for (k=Idx_End[2], Z=Z0; k>=Idx_Start[2]; k--, Z-=dh[2]) {
          
          // outflow 
-         Array3D[DENS][k][j][i] = Array3D[DENS][k_ref][j][i] ;
+         //Array3D[DENS][k][j][i] = Array3D[DENS][k_ref][j][i] ;
          Array3D[MOMX][k][j][i] = Array3D[MOMX][k_ref][j][i] ;
          Array3D[MOMY][k][j][i] = Array3D[MOMY][k_ref][j][i] ;
          Array3D[MOMZ][k][j][i] = Array3D[MOMZ][k_ref][j][i] ;
@@ -601,6 +607,10 @@ void BC_User_zp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
 // 1D array -> 3D array
    const int FACE = 5;
    real (*Array3D)[ArraySizeZ][ArraySizeY][ArraySizeX]    = ( real (*)[ArraySizeZ][ArraySizeY][ArraySizeX] )Array;
+   
+   // extrapolate density
+   Poi_BoundaryCondition_Extrapolation( Array, FACE, 1, GhostSize, ArraySizeX, ArraySizeY, ArraySizeZ, 
+                                        Idx_Start, Idx_End, NULL, NULL );
 
    
    const double X0    = Corner[0] + (double)Idx_Start[0]*dh[0];
@@ -629,7 +639,7 @@ void BC_User_zp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
       for (k=Idx_Start[2], Z=Z0; k<=Idx_End[2]; k++, Z+=dh[2]) {
          
          // outflow 
-         Array3D[DENS][k][j][i] = Array3D[DENS][k_ref][j][i] ;
+         //Array3D[DENS][k][j][i] = Array3D[DENS][k_ref][j][i] ;
          Array3D[MOMX][k][j][i] = Array3D[MOMX][k_ref][j][i] ;
          Array3D[MOMY][k][j][i] = Array3D[MOMY][k_ref][j][i] ;
          Array3D[MOMZ][k][j][i] = Array3D[MOMZ][k_ref][j][i] ;  
