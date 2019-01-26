@@ -236,8 +236,8 @@ void BC_User_xm( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
    real (*Array3D)[ArraySizeZ][ArraySizeY][ArraySizeX] = ( real (*)[ArraySizeZ][ArraySizeY][ArraySizeX] )Array;
    
    // extrapolate density
-   Poi_BoundaryCondition_Extrapolation( Array, FACE, 1, GhostSize, ArraySizeX, ArraySizeY, ArraySizeZ, 
-                                        Idx_Start, Idx_End, NULL, NULL );
+   //Poi_BoundaryCondition_Extrapolation( Array, FACE, 1, GhostSize, ArraySizeX, ArraySizeY, ArraySizeZ, 
+   //                                     Idx_Start, Idx_End, NULL, NULL );
    
    const double X0    = Corner[0] + (double)Idx_End[0]*dh[0];
    const double Y0    = Corner[1] + (double)Idx_Start[1]*dh[1];
@@ -249,7 +249,11 @@ void BC_User_xm( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
 
    const int    i_ref = Idx_End[0]+1 ;
    
-   double sph_rad, star_g, dens, pot_grad, pres_grad, vtheta_square, vtheta;
+   const bool CheckMinPres_Yes = true;
+   const real Gamma_m1         = GAMMA - (real)1.0;
+   
+   double sph_rad, star_g, dens, pot_grad, pres_grad, vtheta_square, vtheta, pres;
+   double rho_ref, pres_ref;
    
    double X, Y, Z;
    int    i, j, k;
@@ -263,58 +267,69 @@ void BC_User_xm( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
 
    for (k=Idx_Start[2], Z=Z0; k<=Idx_End[2];   k++, Z+=dh[2])
    for (j=Idx_Start[1], Y=Y0; j<=Idx_End[1];   j++, Y+=dh[1])
-   for (i=Idx_End[0],   X=X0; i>=Idx_Start[0]; i--, X-=dh[0])
    {
+      // fill in bc
+      rho_ref   = Array3D[DENS][k][j][i_ref] ;
+      pres_ref  = CPU_GetPressure( Array3D[DENS][k][j][i_ref], Array3D[MOMX][k][j][i_ref], 
+                                   Array3D[MOMY][k][j][i_ref], Array3D[MOMZ][k][j][i_ref], 
+                                   Array3D[ENGY][k][j][i_ref], Gamma_m1, CheckMinPres_Yes, MIN_PRES );
+                                   
+      for (i=Idx_End[0],   X=X0; i>=Idx_Start[0]; i--, X-=dh[0])
+      {
       
-      // outflow 
-      //Array3D[DENS][k][j][i] = Array3D[DENS][k][j][i_ref] ;
-      Array3D[MOMX][k][j][i] = Array3D[MOMX][k][j][i_ref] ;
-      //Array3D[MOMY][k][j][i] = Array3D[MOMY][k][j][i_ref] ;
-      Array3D[MOMZ][k][j][i] = Array3D[MOMZ][k][j][i_ref] ;
-      //Array3D[ENGY][k][j][i] = Array3D[ENGY][k][j][i_ref] ;
+         // outflow 
+         Array3D[DENS][k][j][i] = Array3D[DENS][k][j][i_ref] ;
+         Array3D[MOMX][k][j][i] = 0; // Array3D[MOMX][k][j][i_ref] ;
+         //Array3D[MOMY][k][j][i] = Array3D[MOMY][k][j][i_ref] ;
+         Array3D[MOMZ][k][j][i] = 0; //Array3D[MOMZ][k][j][i_ref] ;
+         //Array3D[ENGY][k][j][i] = Array3D[ENGY][k][j][i_ref] ;
       
-      // derived other field
-      sph_rad  = SQRT( Z*Z + X*X );
-      star_g   = - GM * X / CUBE(sph_rad) ;
-      dens      = Array3D[DENS][k][j][i]; 
+         // derived other field
+         sph_rad  = SQRT( Z*Z + X*X );
+         star_g   = - GM * X / CUBE(sph_rad) ;
+         dens     = Array3D[DENS][k][j][i]; 
       
-      //### BC3: force balance for vtheta
-      //vtheta_square = (pres_grad + dens*pot_grad - dens*star_g)*(X/dens); // <- only useful when self-g is active
-      vtheta_square = -star_g*X;
-      vtheta = (vtheta_square > 0.0)? SQRT(vtheta_square) : 0.0 ;
-      Array3D[MOMY][k][j][i] = dens * vtheta ;
+         //### BC3: force balance for vtheta
+         //vtheta_square = (pres_grad + dens*pot_grad - dens*star_g)*(X/dens); // <- only useful when self-g is active
+         vtheta_square = -star_g*X;
+         vtheta = (vtheta_square > 0.0)? SQRT(vtheta_square) : 0.0 ;
+         Array3D[MOMY][k][j][i] = dens * vtheta ;
       
-      //### BC2: no-shear BC
-      //Array3D[MOMY][k][j][i] = Array3D[MOMY][k][j][i_ref] * (X_ref/X) ;
+         //### BC2: no-shear BC
+         //Array3D[MOMY][k][j][i] = Array3D[MOMY][k][j][i_ref] * (X_ref/X) ;
       
-      // keep pressure the same, but modify K.E., since pres_grad = 0.0 currently
-      Array3D[ENGY][k][j][i] = Array3D[ENGY][k][j][i_ref] 
-                             - 0.5*SQR(Array3D[MOMY][k][j][i_ref])/dens + 0.5*SQR(Array3D[MOMY][k][j][i])/dens ; 
+         // keep pressure the same, but modify K.E., since pres_grad = 0.0 currently
+         pres = pres_ref; 
+         Array3D[ENGY][k][j][i] = (pres/Gamma_m1) 
+                                + 0.5*(SQR(Array3D[MOMX][k][j][i])+SQR(Array3D[MOMY][k][j][i])+SQR(Array3D[MOMZ][k][j][i])) /dens ; 
       
       
-      //### unperturbed BC
-      /*
-      real R_norm      = X / R_0; 
-      real rho_mid     = rho_0 * POW(R_norm, slope_p) ;
-      real temperature = T_0 * POW(R_norm, slope_q) ;
-      real cs_square   = const_R * temperature ; 
-      real _sph_r      = 1.0 / SQRT(X*X + Z*Z);
-      real _R_norm     = 1.0 / R_norm ;
-      real omega_kep   = SQRT(GM/CUBE(X));
-      real H           = SQRT(cs_square)/omega_kep;
+         //### unperturbed BC
+         /*
+         real R_norm      = X / R_0; 
+         real rho_mid     = rho_0 * POW(R_norm, slope_p) ;
+         real temperature = T_0 * POW(R_norm, slope_q) ;
+         real cs_square   = const_R * temperature ; 
+         real _sph_r      = 1.0 / SQRT(X*X + Z*Z);
+         real _R_norm     = 1.0 / R_norm ;
+         real omega_kep   = SQRT(GM/CUBE(X));
+         real H           = SQRT(cs_square)/omega_kep;
    
-      const real rho         = rho_mid * EXP( GM/cs_square * (_sph_r - 1/X) );
-      const real omega       = omega_kep * SQRT(1.0 + (slope_q+slope_p)*SQR(H/X) + slope_q*(1.0-X*_sph_r) ) ;
-      const real pressure    = rho*const_R*temperature ;
+         const real rho         = rho_mid * EXP( GM/cs_square * (_sph_r - 1/X) );
+         const real omega       = omega_kep * SQRT(1.0 + (slope_q+slope_p)*SQR(H/X) + slope_q*(1.0-X*_sph_r) ) ;
+         const real pressure    = rho*const_R*temperature ;
    
-      Array3D[DENS][k][j][i] = rho;
-      Array3D[MOMX][k][j][i] = 0.0;
-      Array3D[MOMY][k][j][i] = rho* (X*omega) ;
-      Array3D[MOMZ][k][j][i] = 0.0;
-      Array3D[ENGY][k][j][i] = 0.5*rho*SQR(X*omega) + pressure/(GAMMA-1.0) ;
-      */
+         Array3D[DENS][k][j][i] = rho;
+         Array3D[MOMX][k][j][i] = 0.0;
+         Array3D[MOMY][k][j][i] = rho* (X*omega) ;
+         Array3D[MOMZ][k][j][i] = 0.0;
+         Array3D[ENGY][k][j][i] = 0.5*rho*SQR(X*omega) + pressure/(GAMMA-1.0) ;
+         */
       
-   } // k,j,i
+      } // for i
+      
+   } // for k, j
+
 }
                         
                         
@@ -340,8 +355,8 @@ void BC_User_xp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
    real (*Array3D)[ArraySizeZ][ArraySizeY][ArraySizeX] = ( real (*)[ArraySizeZ][ArraySizeY][ArraySizeX] )Array;
    
    // extrapolate density
-   Poi_BoundaryCondition_Extrapolation( Array, FACE, 1, GhostSize, ArraySizeX, ArraySizeY, ArraySizeZ, 
-                                        Idx_Start, Idx_End, NULL, NULL );
+   //Poi_BoundaryCondition_Extrapolation( Array, FACE, 1, GhostSize, ArraySizeX, ArraySizeY, ArraySizeZ, 
+   //                                     Idx_Start, Idx_End, NULL, NULL );
    
    const double X0    = Corner[0] + (double)Idx_Start[0]*dh[0];
    const double Y0    = Corner[1] + (double)Idx_Start[1]*dh[1];
@@ -353,7 +368,11 @@ void BC_User_xp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
    
    const int    i_ref = Idx_Start[0]-1 ;
    
-   double sph_rad, star_g, dens, pot_grad, pres_grad, vtheta_square, vtheta;
+   const bool CheckMinPres_Yes = true;
+   const real Gamma_m1         = GAMMA - (real)1.0;
+   
+   double sph_rad, star_g, dens, pot_grad, pres_grad, vtheta_square, vtheta, pres;
+   double rho_ref, pres_ref ;
    
    double X, Y, Z;
    int    i, j, k;
@@ -367,57 +386,68 @@ void BC_User_xp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
    
    for (k=Idx_Start[2], Z=Z0; k<=Idx_End[2]; k++, Z+=dh[2])
    for (j=Idx_Start[1], Y=Y0; j<=Idx_End[1]; j++, Y+=dh[1])
-   for (i=Idx_Start[0], X=X0; i<=Idx_End[0]; i++, X+=dh[0])
    {
+      // fill in bc
+      rho_ref   = Array3D[DENS][k][j][i_ref] ;
+      pres_ref  = CPU_GetPressure( Array3D[DENS][k][j][i_ref], Array3D[MOMX][k][j][i_ref], 
+                                   Array3D[MOMY][k][j][i_ref], Array3D[MOMZ][k][j][i_ref], 
+                                   Array3D[ENGY][k][j][i_ref], Gamma_m1, CheckMinPres_Yes, MIN_PRES );
       
-      // outflow 
-      //Array3D[DENS][k][j][i] = Array3D[DENS][k][j][i_ref] ;
-      Array3D[MOMX][k][j][i] = Array3D[MOMX][k][j][i_ref] ;
-      //Array3D[MOMY][k][j][i] = Array3D[MOMY][k][j][i_ref] ;
-      Array3D[MOMZ][k][j][i] = Array3D[MOMZ][k][j][i_ref] ;
-      //Array3D[ENGY][k][j][i] = Array3D[ENGY][k][j][i_ref] ;
+      for (i=Idx_Start[0], X=X0; i<=Idx_End[0]; i++, X+=dh[0])
+      {
       
-      // derived other field
-      sph_rad  = SQRT( Z*Z + X*X );
-      star_g   = - GM * X / CUBE(sph_rad) ;
-      dens      = Array3D[DENS][k][j][i];    
+         // outflow 
+         Array3D[DENS][k][j][i] = Array3D[DENS][k][j][i_ref] ;
+         Array3D[MOMX][k][j][i] = 0; // Array3D[MOMX][k][j][i_ref] ;
+         //Array3D[MOMY][k][j][i] = Array3D[MOMY][k][j][i_ref] ;
+         Array3D[MOMZ][k][j][i] = 0; // Array3D[MOMZ][k][j][i_ref] ;
+         //Array3D[ENGY][k][j][i] = Array3D[ENGY][k][j][i_ref] ;
       
-      //vtheta_square = (pres_grad + dens*pot_grad - dens*star_g)*(X/dens);
-      vtheta_square = -star_g*X;
-      vtheta = (vtheta_square > 0.0)? SQRT(vtheta_square) : 0.0 ;
-      Array3D[MOMY][k][j][i] = dens * vtheta ;
+         // derived other field
+         sph_rad  = SQRT( Z*Z + X*X );
+         star_g   = - GM * X / CUBE(sph_rad) ;
+         dens      = Array3D[DENS][k][j][i];    
       
-      //Array3D[MOMY][k][j][i] = dens * vtheta ;
+         //vtheta_square = (pres_grad + dens*pot_grad - dens*star_g)*(X/dens);
+         vtheta_square = -star_g*X;
+         vtheta = (vtheta_square > 0.0)? SQRT(vtheta_square) : 0.0 ;
+         Array3D[MOMY][k][j][i] = dens * vtheta ;
       
-      // no shear BC
-      Array3D[MOMY][k][j][i] = Array3D[MOMY][k][j][i_ref] * (X_ref/X) ;
+         //Array3D[MOMY][k][j][i] = dens * vtheta ;
       
-      // keep pressure the same, but modify K.E., since pres_grad = 0.0 currently
-      Array3D[ENGY][k][j][i] = Array3D[ENGY][k][j][i_ref] 
-                             - 0.5*SQR(Array3D[MOMY][k][j][i_ref])/dens + 0.5*SQR(Array3D[MOMY][k][j][i])/dens ; 
+         // no shear BC
+         //Array3D[MOMY][k][j][i] = Array3D[MOMY][k][j][i_ref] * (X_ref/X) ;
       
-      /*
-      real R_norm      = X / R_0; 
-      real rho_mid     = rho_0 * POW(R_norm, slope_p) ;
-      real temperature = T_0 * POW(R_norm, slope_q) ;
-      real cs_square   = const_R * temperature ; 
-      real _sph_r      = 1.0 / SQRT(X*X + Z*Z);
-      real _R_norm     = 1.0 / R_norm ;
-      real omega_kep   = SQRT(GM/CUBE(X));
-      real H           = SQRT(cs_square)/omega_kep;
+         // keep pressure the same, but modify K.E., since pres_grad = 0.0 currently
+         pres = pres_ref; 
+         Array3D[ENGY][k][j][i] = (pres/Gamma_m1) 
+                                + 0.5*(SQR(Array3D[MOMX][k][j][i])+SQR(Array3D[MOMY][k][j][i])+SQR(Array3D[MOMZ][k][j][i]))/dens ; 
+      
+         /*
+         real R_norm      = X / R_0; 
+         real rho_mid     = rho_0 * POW(R_norm, slope_p) ;
+         real temperature = T_0 * POW(R_norm, slope_q) ;
+         real cs_square   = const_R * temperature ; 
+         real _sph_r      = 1.0 / SQRT(X*X + Z*Z);
+         real _R_norm     = 1.0 / R_norm ;
+         real omega_kep   = SQRT(GM/CUBE(X));
+         real H           = SQRT(cs_square)/omega_kep;
    
-      const real rho         = rho_mid * EXP( GM/cs_square * (_sph_r - 1/X) );
-      const real omega       = omega_kep * SQRT(1.0 + (slope_q+slope_p)*SQR(H/X) + slope_q*(1.0-X*_sph_r) ) ;
-      const real pressure    = rho*const_R*temperature ;
+         const real rho         = rho_mid * EXP( GM/cs_square * (_sph_r - 1/X) );
+         const real omega       = omega_kep * SQRT(1.0 + (slope_q+slope_p)*SQR(H/X) + slope_q*(1.0-X*_sph_r) ) ;
+         const real pressure    = rho*const_R*temperature ;
    
-      Array3D[DENS][k][j][i] = rho;
-      Array3D[MOMX][k][j][i] = 0.0;
-      Array3D[MOMY][k][j][i] = rho* (X*omega) ;
-      Array3D[MOMZ][k][j][i] = 0.0;
-      Array3D[ENGY][k][j][i] = 0.5*rho*SQR(X*omega) + pressure/(GAMMA-1.0) ;
-      */
+         Array3D[DENS][k][j][i] = rho;
+         Array3D[MOMX][k][j][i] = 0.0;
+         Array3D[MOMY][k][j][i] = rho* (X*omega) ;
+         Array3D[MOMZ][k][j][i] = 0.0;
+         Array3D[ENGY][k][j][i] = 0.5*rho*SQR(X*omega) + pressure/(GAMMA-1.0) ;
+         */
       
-   }
+      } // for i
+      
+   } // for k, j   
+
 }
                         
 //-------------------------------------------------------------------------------------------------------
@@ -528,8 +558,8 @@ void BC_User_zm( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
    real (*Array3D)[ArraySizeZ][ArraySizeY][ArraySizeX] = ( real (*)[ArraySizeZ][ArraySizeY][ArraySizeX] )Array;
    
    // extrapolate density
-   Poi_BoundaryCondition_Extrapolation( Array, FACE, 1, GhostSize, ArraySizeX, ArraySizeY, ArraySizeZ, 
-                                        Idx_Start, Idx_End, NULL, NULL );
+   //Poi_BoundaryCondition_Extrapolation( Array, FACE, 1, GhostSize, ArraySizeX, ArraySizeY, ArraySizeZ, 
+   //                                     Idx_Start, Idx_End, NULL, NULL );
    
    const double X0    = Corner[0] + (double)Idx_Start[0]*dh[0];
    const double Y0    = Corner[1] + (double)Idx_Start[1]*dh[1];
@@ -544,6 +574,7 @@ void BC_User_zm( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
    const real Gamma_m1         = GAMMA - (real)1.0;
    
    double pres_bc, engy_bc, sph_rad, star_g, dens_p1, pres_p2, pot_grad;
+   double rho_ref, pres_ref;
    double X, Y, Z, Z_p1;
    int    i, j, k;
    
@@ -554,13 +585,20 @@ void BC_User_zm( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
    for (i=Idx_Start[0], X=X0; i<=Idx_End[0]; i++, X+=dh[0])
    {  
       // fill in bc
+      /*
+      rho_ref   = Array3D[DENS][k_ref][j][i] ;
+      pres_ref  = CPU_GetPressure( Array3D[DENS][k_ref][j][i], Array3D[MOMX][k_ref][j][i], 
+                                   Array3D[MOMY][k_ref][j][i], Array3D[MOMZ][k_ref][j][i], 
+                                   Array3D[ENGY][k_ref][j][i], Gamma_m1, CheckMinPres_Yes, MIN_PRES );
+      */
+                                   
       for (k=Idx_End[2], Z=Z0; k>=Idx_Start[2]; k--, Z-=dh[2]) {
          
          // outflow 
-         //Array3D[DENS][k][j][i] = Array3D[DENS][k_ref][j][i] ;
-         Array3D[MOMX][k][j][i] = Array3D[MOMX][k_ref][j][i] ;
+         Array3D[DENS][k][j][i] = Array3D[DENS][k_ref][j][i] ;
+         Array3D[MOMX][k][j][i] = 0; //Array3D[MOMX][k_ref][j][i] ;
          Array3D[MOMY][k][j][i] = Array3D[MOMY][k_ref][j][i] ;
-         Array3D[MOMZ][k][j][i] = Array3D[MOMZ][k_ref][j][i] ;
+         Array3D[MOMZ][k][j][i] = 0; //Array3D[MOMZ][k_ref][j][i] ;
          
          // only allow outflow in zm: vz <= 0.0
          /*
@@ -585,6 +623,10 @@ void BC_User_zm( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
          
          pres_bc  = pres_p2 + dens_p1*pot_grad - dens_p1*star_g*(2.0*dh[2]) ;
          pres_bc  = FMAX( pres_bc, MIN_PRES ) ;
+         
+         
+         // isothermal bc
+         //pres_bc  = pres_ref * (Array3D[DENS][k][j][i]/rho_ref);
          
          engy_bc  = pres_bc/Gamma_m1 + 0.5*( SQR(Array3D[MOMX][k][j][i]) + SQR(Array3D[MOMY][k][j][i]) + 
                                              SQR(Array3D[MOMZ][k][j][i]) ) / Array3D[DENS][k][j][i] ;
@@ -617,8 +659,8 @@ void BC_User_zp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
    real (*Array3D)[ArraySizeZ][ArraySizeY][ArraySizeX]    = ( real (*)[ArraySizeZ][ArraySizeY][ArraySizeX] )Array;
    
    // extrapolate density
-   Poi_BoundaryCondition_Extrapolation( Array, FACE, 1, GhostSize, ArraySizeX, ArraySizeY, ArraySizeZ, 
-                                        Idx_Start, Idx_End, NULL, NULL );
+   //Poi_BoundaryCondition_Extrapolation( Array, FACE, 1, GhostSize, ArraySizeX, ArraySizeY, ArraySizeZ, 
+   //                                     Idx_Start, Idx_End, NULL, NULL );
 
    
    const double X0    = Corner[0] + (double)Idx_Start[0]*dh[0];
@@ -633,7 +675,8 @@ void BC_User_zp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
    const bool CheckMinPres_Yes = true;
    const real Gamma_m1         = GAMMA - (real)1.0;
    
-   double pres_bc, engy_bc, sph_rad, star_g, dens_m1, pres_m2, pot_grad;
+   double pres_bc, engy_bc, sph_rad, star_g, dens_m1, pres_m2, pot_grad ;
+   double pres_ref, rho_ref;
    double X, Y, Z, Z_m1;
    int    i, j, k;
    
@@ -644,13 +687,20 @@ void BC_User_zp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
    for (i=Idx_Start[0], X=X0; i<=Idx_End[0]; i++, X+=dh[0])
    {  
       // fill in bc
+      /*
+      rho_ref   = Array3D[DENS][k_ref][j][i] ;
+      pres_ref  = CPU_GetPressure( Array3D[DENS][k_ref][j][i], Array3D[MOMX][k_ref][j][i], 
+                                   Array3D[MOMY][k_ref][j][i], Array3D[MOMZ][k_ref][j][i], 
+                                   Array3D[ENGY][k_ref][j][i], Gamma_m1, CheckMinPres_Yes, MIN_PRES );
+      */
+      
       for (k=Idx_Start[2], Z=Z0; k<=Idx_End[2]; k++, Z+=dh[2]) {
          
          // outflow 
-         //Array3D[DENS][k][j][i] = Array3D[DENS][k_ref][j][i] ;
-         Array3D[MOMX][k][j][i] = Array3D[MOMX][k_ref][j][i] ;
+         Array3D[DENS][k][j][i] = Array3D[DENS][k_ref][j][i] ;
+         Array3D[MOMX][k][j][i] = 0; // Array3D[MOMX][k_ref][j][i] ;
          Array3D[MOMY][k][j][i] = Array3D[MOMY][k_ref][j][i] ;
-         Array3D[MOMZ][k][j][i] = Array3D[MOMZ][k_ref][j][i] ;  
+         Array3D[MOMZ][k][j][i] = 0; // Array3D[MOMZ][k_ref][j][i] ;  
          
          // only allow outflow in zp: vz > 0.0
          /*
@@ -660,8 +710,7 @@ void BC_User_zp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
             Array3D[MOMZ][k][j][i] = 0.0;
          */
          
-         
-         // calculate for BC value
+         // calculate for force balance BC value
          Z_m1     = Z-dh[2];
          sph_rad  = SQRT( Z_m1*Z_m1 + X*X );
          star_g   = - GM * Z_m1 / CUBE(sph_rad) ;
@@ -672,9 +721,12 @@ void BC_User_zp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
                                  
          dens_m1  = Array3D[DENS][k-1][j][i];
          //pot_grad = PotArray3D[0][k][j][i] - PotArray3D[0][k-2][j][i];
-         
          pres_bc  = pres_m2 - dens_m1*pot_grad + dens_m1*star_g*(2.0*dh[2]) ;
          pres_bc  = FMAX( pres_bc, MIN_PRES ) ;
+         
+         
+         // isothermal bc
+         //pres_bc  = pres_ref * (Array3D[DENS][k][j][i]/rho_ref);
          
          engy_bc  = pres_bc/Gamma_m1 + 0.5*( SQR(Array3D[MOMX][k][j][i]) + SQR(Array3D[MOMY][k][j][i]) + 
                                              SQR(Array3D[MOMZ][k][j][i]) ) / Array3D[DENS][k][j][i] ;
