@@ -195,12 +195,14 @@ void SetGridIC( real fluid[], const double x, const double y, const double z, co
    RNG = new RandomNumber_t( 1 );
    // make sure a different random seed is used; 
    // this random seed ensures axisymmetric perturbation ?
-   const long VSI_Seed = long(rho*1.0e6); 
+   const long VSI_Seed = long(rho*1e6 + SQRT(x*x + z*z)*1e6 ); 
    RNG->SetSeed( 0, VSI_Seed );
    
+   /*
    vx = RNG->GetValue( 0, -1.0*purb_amp, purb_amp ) ;
    //vy = RNG->GetValue( 0, -1.0*purb_amp, purb_amp ) ;
    vz = RNG->GetValue( 0, -1.0*purb_amp, purb_amp ) ;
+   */
 
    fluid[DENS] = rho;
    fluid[MOMX] = 0.0 + rho*vx;
