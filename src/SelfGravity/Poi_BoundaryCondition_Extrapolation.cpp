@@ -346,12 +346,10 @@ void BC_Extrapolation_zm( real *Array, const int NVar, const int GhostSize, cons
    for (int j=Idx_Start[1]; j<=Idx_End[1]; j++)
    for (int i=Idx_Start[0]; i<=Idx_End[0]; i++)
       // ###
-      /*
       Array3D[v][k][j][i] = Coeff[kk][0]*Array3D[v][k_ref  ][j][i] +
                             Coeff[kk][1]*Array3D[v][k_ref+1][j][i] +
                             Coeff[kk][2]*Array3D[v][k_ref+2][j][i];
-      */
-      Array3D[v][k][j][i] = Array3D[v][k_ref  ][j][i] ;
+      //Array3D[v][k][j][i] = Array3D[v][k_ref  ][j][i] ;
 
 } // FUNCTION : BC_Extrapolation_zm
 
@@ -389,11 +387,10 @@ void BC_Extrapolation_zp( real *Array, const int NVar, const int GhostSize, cons
    for (int j=Idx_Start[1]; j<=Idx_End[1]; j++)
    for (int i=Idx_Start[0]; i<=Idx_End[0]; i++)
       // ###
-      /*
       Array3D[v][k][j][i] = Coeff[kk][0]*Array3D[v][k_ref  ][j][i] +
                             Coeff[kk][1]*Array3D[v][k_ref-1][j][i] +
                             Coeff[kk][2]*Array3D[v][k_ref-2][j][i];
-      */
-      Array3D[v][k][j][i] = Array3D[v][k_ref  ][j][i] ;
+      
+      //Array3D[v][k][j][i] = Array3D[v][k_ref  ][j][i] ;
 
 } // FUNCTION : BC_Extrapolation_zp
