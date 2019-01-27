@@ -39,13 +39,13 @@ SIMU_OPTION += -DMODEL=HYDRO
 SIMU_OPTION += -DGRAVITY
 
 # enable radiative thin cooling
-SIMU_OPTION += -DCOOLING
+#SIMU_OPTION += -DCOOLING
 
 # enable UserBC to use gravitataional pot
-SIMU_OPTION += -DUserPotBC
+#SIMU_OPTION += -DUserPotBC
 
 # enable MODEL_MSTAR
-SIMU_OPTION += -DMODEL_MSTAR
+#SIMU_OPTION += -DMODEL_MSTAR
 
 # enable particles
 # --> must enable GRAVITY
@@ -78,7 +78,7 @@ SIMU_OPTION += -DRSOLVER=HLLC
 
 # dual energy formalism: DE_ENPY/DE_EINT (evolve entropy or internal energy)
 # --> DE_EINT is not supported yet; useless for RTVD/WAF
-SIMU_OPTION += -DDUAL_ENERGY=DE_ENPY
+#SIMU_OPTION += -DDUAL_ENERGY=DE_ENPY
 
 # number of user-defined passively advected scalars
 # --> set it to 0 or comment it out if none is required
@@ -285,13 +285,13 @@ SIMU_OPTION += -DRANDOM_NUMBER=RNG_GNU_EXT
 #######################################################################################################
 
 # template
-CUDA_PATH    :=
-FFTW_PATH    :=
-MPI_PATH     :=
-HDF5_PATH    :=
-GRACKLE_PATH :=
-GSL_PATH     :=
-LIBYT_PATH   :=
+#CUDA_PATH    :=
+#FFTW_PATH    :=
+#MPI_PATH     :=
+#HDF5_PATH    :=
+#GRACKLE_PATH :=
+#GSL_PATH     :=
+#LIBYT_PATH   :=
 
 # NCSA-bluewaters (only need to specify the path of user-installed packages)
 #GRACKLE_PATH :=
@@ -681,7 +681,8 @@ LIB += -L$(HDF5_PATH)/lib -lhdf5
 endif
 
 ifeq "$(filter -DSUPPORT_GSL, $(SIMU_OPTION))" "-DSUPPORT_GSL"
-LIB += -L$(GSL_PATH)/lib -lgsl -lgslcblas
+#LIB += -L$(GSL_PATH)/lib -lgsl -lgslcblas
+LIB += -I$(GSL_INCLUDE_PATH) -L$(GSL_LIBRARY_PATH) -lgsl -lgslcblas
 endif
 
 ifeq "$(filter -DSUPPORT_LIBYT, $(SIMU_OPTION))" "-DSUPPORT_LIBYT"
