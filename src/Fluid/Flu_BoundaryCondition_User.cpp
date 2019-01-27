@@ -549,6 +549,11 @@ void BC_User_zm( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
          dens_p1  = Array3D[DENS][k+1][j][i];
          pot_grad = PotArray3D[0][k+2][j][i] - PotArray3D[0][k][j][i];
          
+         if (pot_grad > 0) {
+            pot_grad = 0;
+            Aux_Message(stdout, "Weird Potential BC at (X, Y, Z) = (%8.4f, %8.4f, %8.4f) in User_BC. Reset pot_grad=0. \n", X, Y, Z);
+         }
+         
          pres_bc  = pres_p2 + dens_p1*pot_grad - dens_p1*star_g*(2.0*dh[2]) ;
          pres_bc  = FMAX( pres_bc, MIN_PRES ) ;
          
@@ -613,12 +618,6 @@ void BC_User_zp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
    {  
       // fill in bc
       for (k=Idx_Start[2], Z=Z0; k<=Idx_End[2]; k++, Z+=dh[2]) {
-         //###
-         /*
-         if ( i==Idx_Start[0] && j==Idx_Start[1] && k==Idx_Start[2] && PotArray3D[0][k_ref][j][i] >= 0.0 )
-            Aux_Message(stdout, "Pot inside and in BC = (%8.5f, %8.5f) at (X, Y, Z) = (%8.5f, %8.5f, %8.5f). \n", 
-                        PotArray3D[0][k_ref][j][i], PotArray3D[0][k][j][i], X, Y, Z);
-         */
          
          // outflow 
          Array3D[DENS][k][j][i] = Array3D[DENS][k_ref][j][i] ;
@@ -646,6 +645,11 @@ void BC_User_zp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
                                  
          dens_m1  = Array3D[DENS][k-1][j][i];
          pot_grad = PotArray3D[0][k][j][i] - PotArray3D[0][k-2][j][i];
+         
+         if (pot_grad < 0) {
+            pot_grad = 0;
+            Aux_Message(stdout, "Weird Potential BC at (X, Y, Z) = (%8.4f, %8.4f, %8.4f) in User_BC. Reset pot_grad=0. \n", X, Y, Z);
+         }
          
          pres_bc  = pres_m2 - dens_m1*pot_grad + dens_m1*star_g*(2.0*dh[2]) ;
          pres_bc  = FMAX( pres_bc, MIN_PRES ) ;
