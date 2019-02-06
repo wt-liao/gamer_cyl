@@ -71,7 +71,7 @@ void CPU_FullStepUpdate( const real Input[][ FLU_NXT*FLU_NXT*FLU_NXT ], real Out
 #  endif // #ifndef DUAL_ENERGY
 #  ifdef MODEL_MSTAR
    const real Edge_x1_L = amr->BoxEdgeL[0];
-   real dist2center;
+   real dist2center, r_i;
 #  endif // MODEL_MSTAR
 #  endif // COORDINATE == CYLINDRICAL
 
@@ -98,10 +98,12 @@ void CPU_FullStepUpdate( const real Input[][ FLU_NXT*FLU_NXT*FLU_NXT ], real Out
       GetFullStepGeoSource( Input, GeoSource, dF, x_pos, dt_dh2, dt_2, Gamma_m1, MinPres, ID3);
       
 #     ifdef MODEL_MSTAR
-      // only account for the flux from the inner most r-grid; be carful about ghost zone 
-      dist2center = SQRT( SQR(x_pos[0]-0.5*dh[0]) + SQR(x_pos[2]) ) ;
+      // only account for the flux from the inner most r-grid; be carful about ghost zone
+      r_i         = x_pos[0]-0.5*dh[0] ;
+      dist2center = SQRT( SQR(r_i) + SQR(x_pos[2]) ) ;
       if (x_pos[0] > Edge_x1_L && x_pos[0] < Edge_x1_L+dh[0] && dist2center < ACCRETE_RADIUS ) {
-         d_MStar += FMAX( Flux[ID1][0][DENS]*dt, 0 ) ; 
+         //### Note that FLUX = physical_flux*r_i
+         d_MStar += FMAX( Flux[ID1][0][DENS], 0 ) * dt * (dh[1]*dh[2]) ; 
       } 
 #     endif // MODEL_MSTAR
       
