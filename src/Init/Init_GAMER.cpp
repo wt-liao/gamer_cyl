@@ -183,7 +183,7 @@ void Init_GAMER( int *argc, char ***argv )
       default : Aux_Error( ERROR_INFO, "incorrect parameter %s = %d !!\n", "OPT__INIT", OPT__INIT );
    }
    
-// reset M_STAR 
+// reset M_STAR; 
 #  ifdef MODEL_MSTAR
    Init_ExternalAccPot();
 #  endif
@@ -226,6 +226,16 @@ void Init_GAMER( int *argc, char ***argv )
       if ( MPI_Rank == 0 )    Aux_Message( stdout, "%s ... done\n", "Calculating gravitational potential" );
    } // if ( OPT__GRAVITY_TYPE == GRAVITY_SELF  ||  OPT__GRAVITY_TYPE == GRAVITY_BOTH )
 #  endif // #ifdef GARVITY
+
+
+#  ifdef MODEL_IC_FLUID
+   Aux_Error( ERROR_INFO, "MODEL_IC_FLUID is not ready yet!!\n" );
+   Init_FluidField();   // assume density field is read-in
+#  endif
+   
+#  if defined (GRACKLE) && defined (MODEL_IC_GRACKLE)
+   Init_GrackleField();
+#  endif
 
 
 // initialize particle acceleration
