@@ -62,10 +62,10 @@ void Grackle_Init()
 
 #  else
    Che_Units.comoving_coordinates = 0;
-   Che_Units.density_units        = UNIT_D;
-   Che_Units.length_units         = UNIT_L;
-   Che_Units.time_units           = UNIT_T;
-   Che_Units.velocity_units       = UNIT_V;
+   Che_Units.density_units        = 5.93924146044389e-13;
+   Che_Units.length_units         = 1.49597870750767e+13;
+   Che_Units.time_units           = 5.02280842159966e+09;
+   Che_Units.velocity_units       = Che_Units.length_units/Che_Units.time_units;
    Che_Units.a_units              = 1.0;
    Che_Units.a_value              = 1.0;
 #  endif
