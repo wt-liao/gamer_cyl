@@ -233,7 +233,7 @@ void Init_GAMER( int *argc, char ***argv )
    Init_FluidField();   // assume density field is read-in
 #  endif
    
-#  if defined (GRACKLE) && defined (MODEL_IC_GRACKLE)
+#  if defined (SUPPORT_GRACKLE) && defined (MODEL_IC_GRACKLE)
    Init_GrackleField();
 #  endif
 

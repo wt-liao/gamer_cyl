@@ -578,6 +578,10 @@ void Grackle_Close( const int lv, const int SaveSg, const real h_Che_Array[], co
 void Grackle_AdvanceDt( const int lv, const double TimeNew, const double TimeOld, const double dt, const int SaveSg,
                         const bool OverlapMPI, const bool Overlap_Sync );
 void CPU_GrackleSolver( grackle_field_data *Che_FieldData, code_units Che_Units, const int NPatchGroup, const real dt );
+
+#ifdef MODEL_IC_GRACKLE
+void Init_GrackleField();
+#endif // #ifdef MODEL_IC_GRACKLE
 #endif // #ifdef SUPPORT_GRACKLE
 
 
