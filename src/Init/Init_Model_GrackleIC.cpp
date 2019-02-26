@@ -1,5 +1,6 @@
-#  if defined (GRACKLE) && defined (MODEL_IC_GRACKLE)
+#  if defined (SUPPORT_GRACKLE) && defined (MODEL_IC_GRACKLE)
 
+#include "GAMER.h"
 #include "TestProb.h"
 
 // some constants in cgs
@@ -13,7 +14,8 @@ static double engy_HII    = 13.54*eV_cgs ; // eV
 static double engy_HeII   = 24.48*eV_cgs ; 
 static double engy_HeIII  = 54.17*eV_cgs ;
 
-static void Find_GrackleIC(const real PriVar, double n_grackle, const double X, const double Y, const double Z);
+static void Find_GrackleIC(const real* PriVar, double* n_grackle, const double X, const double Y, const double Z);
+static void Con2Pri(const real* ConVar, real* PriVar);
 
 static double rate_k4_func(const real T);
 static double rate_k5_func(const real T);
@@ -31,8 +33,12 @@ static double n_H2_func(const real n_cgs, const real T, const real tau_dyn_cgs);
 //-------------------------------------------------------------------------------------------------------
 
 void Init_GrackleField(){
+   if ( MPI_Rank == 0 ) Aux_Message(stdout, "Generating IC for Grackle... \n");
+   if ( MPI_Rank == 0 ) Aux_Message(stdout, "Grackle unit: [L]=%12.8f; [T]=%12.8f; [Dens]=%12.8f . \n", 
+                                    Che_Units.length_units, Che_Units.time_units, Che_Units.density_units);
+   
    const int lv = 0; // currently only implement for no-amr scheme
-   real X, Y, Z
+   real X, Y, Z;
    real  ConVar[NCOMP_TOTAL], PriVar[NCOMP_TOTAL] ;
    real (*fluid)[PS1][PS1][PS1]=NULL;
    
@@ -49,8 +55,8 @@ void Init_GrackleField(){
       for (int j=0; j<PS1; j++)  {  Y = Aux_Coord_CellIdx2AdoptedCoord( lv, PID, 1, j );
       for (int i=0; i<PS1; i++)  {  X = Aux_Coord_CellIdx2AdoptedCoord( lv, PID, 0, i );
          // get fluid field
-         for (int v=0; v<NCOMP_TOTAL; v++)   fluid[v][k][j][i] = ConVar[v];
-         CPU_Con2Pri(ConVar, PriVar, MIN_PRES, NormPassive_No, NULL_INT, NULL, JeansMinPres_No, NULL_REAL );
+         for (int v=0; v<NCOMP_TOTAL; v++)   ConVar[v] = fluid[v][k][j][i];
+         Con2Pri(ConVar, PriVar);
          
          // calculate the necesary field
          Find_GrackleIC(PriVar, n_grackle, X, Y, Z);
@@ -83,7 +89,8 @@ void Init_GrackleField(){
          
       }}} // for loop: k, j, i
    } // openmp black
-
+   
+   if ( MPI_Rank == 0 ) Aux_Message(stdout, "Generating IC for Grackle... Done! \n");
 }  // Init_GrackleField()
 
 
@@ -100,7 +107,7 @@ void Init_GrackleField(){
 //                           [6]: n_HM, [7]: n_H2, [8]: n_H2II
 //-------------------------------------------------------------------------------------------------------
 
-void Find_GrackleIC(const real PriVar, double n_grackle, const double X, const double Y, const double Z){
+void Find_GrackleIC(const real* PriVar, double* n_grackle, const double X, const double Y, const double Z){
    
    const double rho_unit    = Che_Units.density_units;
    const double L_unit      = Che_Units.length_units;
@@ -109,14 +116,14 @@ void Find_GrackleIC(const real PriVar, double n_grackle, const double X, const d
    const double _rho_unit   = 1/rho_unit;
    
    //### check if this fraction is mass fraction; should be! 
-   const double y_He        = 0.25; // He fraction
+   const double y_He        = 0.24; // He fraction
    const double H2_FLOOR    = 1e-8; // probably don't need, since the relaxation step will allow the formation of H_2
    const double m_ave_cgs   = m_H_cgs*(1-y_He) + m_He_cgs*y_He;
    
    // dimensionless field
    const double GAMMA_1     = GAMMA - (real)1.0 ;
    const double m_H         = m_H_cgs / mass_unit;
-   const double R           = 4.64952804093003e+0 ; //### replace this number to a consistent way of conversion here
+   const double R           = (k_B/m_ave_cgs) * SQR(time_unit/L_unit) ;
    const double rho         = PriVar[DENS]; 
    const double pres        = PriVar[ENGY];
    const double T           = pres / ( rho * R ) ; // Temperature unit is K 
@@ -141,7 +148,7 @@ void Find_GrackleIC(const real PriVar, double n_grackle, const double X, const d
    if ( GRACKLE_PRIMORDIAL == GRACKLE_PRI_CHE_NSPE9 ) {
       // n: particle number density; f: mass fraction
       const double n_HII   = n_HII_func(n_H_cgs, T);
-      const double n_H2I   = n_H2_func(n_H_cgs, T, tau_dyn_cgs) ;
+      const double n_H2I   = n_H2_func(0.5*n_H_cgs, T, tau_dyn_cgs) ;
       const double n_HI    = n_H_cgs - n_HII - 2*n_H2I;
       const double n_HM    = TINY_NUMBER; // in grackle, HM and H2II are both in equlibrium
       const double n_H2II  = TINY_NUMBER;
@@ -150,8 +157,10 @@ void Find_GrackleIC(const real PriVar, double n_grackle, const double X, const d
       const double n_HeI   = n_He_cgs - n_HeII ;   
       const double n_HeIII = TINY_NUMBER;
       
+      const double n_e     = n_HII + n_HeII;
+      
       // [0]: n_e, [1]: n_HI, [2]: n_HII, [3]: n_HeI, [4]: n_HeII, [5]: n_HeIII
-      n_grackle[0] = n_e     * m_e_cgs  * _rho_unit ;
+      n_grackle[0] = n_e     * m_H_cgs  * _rho_unit ;
       n_grackle[1] = n_HI    * m_H_cgs  * _rho_unit ;
       n_grackle[2] = n_HII   * m_H_cgs  * _rho_unit ;
       n_grackle[3] = n_HeI   * m_He_cgs * _rho_unit ;
@@ -196,7 +205,7 @@ double rate_k5_func(const real T) {
 double n_HII_func(const real n_cgs, const real T) {
    
    const double consts  = 2*M_PI*m_e_cgs*k_B*T / SQR(planck_h) ;
-   const double T_tario = engy_HII / (k_B*T) ; 
+   const double T_ratio = engy_HII / (k_B*T) ; 
    const double g_ratio = 1.0; 
    
    double c1 = g_ratio*POW(consts, 1.5) / n_cgs * EXP(- T_ratio); 
@@ -208,13 +217,13 @@ double n_HII_func(const real n_cgs, const real T) {
 }
 
 
-/-------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 // Function    :  n_HeII 
 //-------------------------------------------------------------------------------------------------------
 double n_HeII_func(const real n_cgs, const real T) {
    
    const double consts  = 2*M_PI*m_e_cgs*k_B*T / SQR(planck_h) ;
-   const double T_tario = engy_HeII / (k_B*T) ; 
+   const double T_ratio = engy_HeII / (k_B*T) ; 
    const double g_ratio = 4.0; 
    
    double c1 = g_ratio*POW(consts, 1.5) / n_cgs * EXP(- T_ratio); 
@@ -240,14 +249,37 @@ double n_H2_func(const real n_cgs, const real T, const real tau_dyn_cgs) {
    n_HI          = 0.5*( -coeff + SQRT(coeff*coeff + 4*coeff*n_cgs) ) ;
    n_H2_estimate = (k4/k5)*SQR(n_HI) ;
    
-   tau_chem = 1 / ( k4*SQR(n_cgs) ) ;
-   n_H2     = n_H2_estimate * EXP(-tau_chem / tau_dyn_cgs);
+   //tau_chem = 1 / ( k4*SQR(n_cgs) ) ;
+   //n_H2     = n_H2_estimate * EXP(-tau_chem / tau_dyn_cgs);
+
+   n_H2          = FMIN(n_H2_estimate, n_cgs) ;
    
    return n_H2 ;
 }
 
 
-#  endif // defined (GRACKLE) && defined (MODEL_IC_GRACKLE)
+//-------------------------------------------------------------------------------------------------------
+// Function    :  Con2Pri
+//-------------------------------------------------------------------------------------------------------
+void Con2Pri(const real* ConVar, real* PriVar) {
+   real dens, _dens, vel_x, vel_y, vel_z, pres, Eint; 
+   
+   dens  = ConVar[DENS];
+   _dens = 1/dens;
+   vel_x = ConVar[MOMX] * _dens;
+   vel_y = ConVar[MOMY] * _dens;
+   vel_z = ConVar[MOMZ] * _dens;
+   Eint  = ConVar[ENGY] - 0.5*dens*( SQR(vel_x)+SQR(vel_y)+SQR(vel_z) );
+   pres  = FMAX( Eint/(GAMMA-1), MIN_PRES );
+   
+   PriVar[DENS] = dens;
+   PriVar[MOMX] = vel_x;
+   PriVar[MOMY] = vel_y;
+   PriVar[MOMZ] = vel_z;
+   PriVar[ENGY] = pres; 
+}
+
+#  endif // defined (SUPPORT_GRACKLE) && defined (MODEL_IC_GRACKLE)
 
 
 
