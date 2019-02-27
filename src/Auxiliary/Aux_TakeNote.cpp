@@ -133,6 +133,14 @@ void Aux_TakeNote()
       fprintf( Note, "SUPPORT_GRACKLE                 OFF\n" );
 #     endif
 
+#     ifdef MODEL_IC_GRACKLE
+      fprintf( Note, "MODEL_IC_GRACKLE                 ON\n" );
+#     else
+      fprintf( Note, "MODEL_IC_GRACKLE                 OFF\n" );
+#     endif
+
+
+
 //    b. options in HYDRO
 #     if   ( MODEL == HYDRO )
 
