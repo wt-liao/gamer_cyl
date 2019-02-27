@@ -73,7 +73,7 @@ void Grackle_Close( const int lv, const int SaveSg, const real h_Che_Array[], co
 
 // thread-private variables
    int  idx_pg, PID, PID0, offset;  // idx_pg: array indices within a patch group
-   real Dens, Pres;
+   real Dens, Pres, Eint_new;
    real (*fluid)[PS1][PS1][PS1]=NULL;;
 
    const real *Ptr_Dens=NULL, *Ptr_sEint=NULL, *Ptr_Ek=NULL, *Ptr_e=NULL, *Ptr_HI=NULL, *Ptr_HII=NULL;
@@ -81,7 +81,7 @@ void Grackle_Close( const int lv, const int SaveSg, const real h_Che_Array[], co
    const real *Ptr_DI=NULL, *Ptr_DII=NULL, *Ptr_HDI=NULL;
    
 #  ifdef MODEL_IC_GRACKLE
-   real Etot_old, Dens_old, MomX_old, MomY_old, MomZ_old, Eint_old, delta_Eint; 
+   real Etot_old, Eint_old, delta_Eint; 
 #  endif
 
 #  pragma omp for schedule( static )
@@ -114,22 +114,21 @@ void Grackle_Close( const int lv, const int SaveSg, const real h_Che_Array[], co
 
          for (int idx_p=0; idx_p<CUBE(PS1); idx_p++)
          {
+            Dens     = Ptr_Dens [idx_pg];
+            Eint_new = Ptr_sEint[idx_pg];
+            
 #           ifdef MODEL_IC_GRACKLE
             // fluid field before grackle stepping
-            Dens_old          = *(fluid[DENS][0][0] + idx_p); 
-            MomX_old          = *(fluid[MOMX][0][0] + idx_p);
-            MomY_old          = *(fluid[MOMY][0][0] + idx_p);
-            MomZ_old          = *(fluid[MOMZ][0][0] + idx_p); 
-            Etot_old          = *(fluid[ENGY][0][0] + idx_p); 
-            Eint_old          = Etot_old - 0.5*( SQR(MomX_old)+SQR(MomY_old)+SQR(MomZ_old) ) / Dens_old ;
-            Eint_old          = FMAX(Eint_old, MIN_PRES*Gamma_1) ;
-            delta_Eint        = Ptr_sEint[idx_pg] - Eint_old ;
-            Ptr_sEint[idx_pg] = Eint_old + 0.1*delta_Eint ;
+            Etot_old   = *(fluid[ENGY][0][0] + idx_p); 
+            Eint_old   = Etot_old - Ptr_Ek[idx_pg] ;
+            Eint_old   = FMAX(Eint_old, MIN_PRES*_Gamma_m1) ;
+            delta_Eint = Eint_new*Dens - Eint_old ;
+            Eint_new   = (Eint_old + 0.1*delta_Eint)/Dens ;
 #           endif
             
 //          apply the minimum pressure check
-            Dens = Ptr_Dens [idx_pg];
-            Pres = Ptr_sEint[idx_pg]*Dens*Gamma_m1;
+            
+            Pres = Eint_new*Dens*Gamma_m1;
             Pres = CPU_CheckMinPres( Pres, MIN_PRES );
 
 //          update the total energy density
