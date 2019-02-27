@@ -207,6 +207,7 @@ bool                 GRACKLE_CMB_FLOOR;
 bool                 GRACKLE_PE_HEATING;
 double               GRACKLE_PE_HEATING_RATE;
 char                 GRACKLE_CLOUDY_TABLE[MAX_STRING];
+int                  GRACKLE_THREE_BODY_RATE;
 int                  CHE_GPU_NPGROUP;
 #endif
 
