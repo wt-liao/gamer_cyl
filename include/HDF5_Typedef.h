@@ -496,6 +496,7 @@ struct InputPara_t
    double Grackle_PE_HeatingRate;
    char  *Grackle_CloudyTable;
    int    Grackle_ThreeBodyRate;
+   int    Grackle_CIE_Cooling;
    int    Che_GPU_NPGroup;
 #  endif
 

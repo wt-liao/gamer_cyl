@@ -93,6 +93,7 @@ void Grackle_Init()
    grackle_data->photoelectric_heating_rate = GRACKLE_PE_HEATING_RATE;
    grackle_data->grackle_data_file          = GRACKLE_CLOUDY_TABLE;
    grackle_data->three_body_rate            = GRACKLE_THREE_BODY_RATE;
+   grackle_data->cie_cooling                = GRACKLE_CIE_COOLING;
 
 #  ifdef OPENMP
 // currently we adopt the OpenMP implementation in Grackle directly, which applies the parallelization to
