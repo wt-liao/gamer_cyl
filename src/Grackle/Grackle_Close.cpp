@@ -79,6 +79,10 @@ void Grackle_Close( const int lv, const int SaveSg, const real h_Che_Array[], co
    const real *Ptr_Dens=NULL, *Ptr_sEint=NULL, *Ptr_Ek=NULL, *Ptr_e=NULL, *Ptr_HI=NULL, *Ptr_HII=NULL;
    const real *Ptr_HeI=NULL, *Ptr_HeII=NULL, *Ptr_HeIII=NULL, *Ptr_HM=NULL, *Ptr_H2I=NULL, *Ptr_H2II=NULL;
    const real *Ptr_DI=NULL, *Ptr_DII=NULL, *Ptr_HDI=NULL;
+   
+#  ifdef MODEL_IC_GRACKLE
+   real Etot_old, Dens_old, MomX_old, MomY_old, MomZ_old, Eint_old, delta_Eint; 
+#  endif
 
 #  pragma omp for schedule( static )
    for (int TID=0; TID<NPG; TID++)
@@ -110,6 +114,19 @@ void Grackle_Close( const int lv, const int SaveSg, const real h_Che_Array[], co
 
          for (int idx_p=0; idx_p<CUBE(PS1); idx_p++)
          {
+#           ifdef MODEL_IC_GRACKLE
+            // fluid field before grackle stepping
+            Dens_old          = *(fluid[DENS][0][0] + idx_p); 
+            MomX_old          = *(fluid[MOMX][0][0] + idx_p);
+            MomY_old          = *(fluid[MOMY][0][0] + idx_p);
+            MomZ_old          = *(fluid[MOMZ][0][0] + idx_p); 
+            Etot_old          = *(fluid[ENGY][0][0] + idx_p); 
+            Eint_old          = Etot_old - 0.5*( SQR(MomX_old)+SQR(MomY_old)+SQR(MomZ_old) ) / Dens_old ;
+            Eint_old          = FMAX(Eint_old, MIN_PRES*Gamma_1) ;
+            delta_Eint        = Ptr_sEint[idx_pg] - Eint_old ;
+            Ptr_sEint[idx_pg] = Eint_old + 0.1*delta_Eint ;
+#           endif
+            
 //          apply the minimum pressure check
             Dens = Ptr_Dens [idx_pg];
             Pres = Ptr_sEint[idx_pg]*Dens*Gamma_m1;
