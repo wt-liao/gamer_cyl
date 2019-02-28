@@ -230,17 +230,16 @@ void BC_User_xm( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
                  const int ArraySizeZ, const int Idx_Start[], const int Idx_End[],
                  const int TFluVarIdxList[], const double dh[], const double *Corner, const int TVar ) 
 {
+#  ifdef UserPotBC
 // 1D array -> 3D array
    const int FACE = 0;
    real (*Array3D)[ArraySizeZ][ArraySizeY][ArraySizeX] = ( real (*)[ArraySizeZ][ArraySizeY][ArraySizeX] )Array;
    
-#  ifdef UserPotBC
    if (PotArray != NULL) {
       Poi_BoundaryCondition_Extrapolation( PotArray, FACE, 1, GhostSize, ArraySizeX, ArraySizeY, ArraySizeZ, 
                                            Idx_Start, Idx_End, NULL, NULL );
    }
    real (*PotArray3D)[ArraySizeZ][ArraySizeY][ArraySizeX] = ( real (*)[ArraySizeZ][ArraySizeY][ArraySizeX] )PotArray;
-#  endif
    
    const double X0    = Corner[0] + (double)Idx_End[0]*dh[0];
    const double Y0    = Corner[1] + (double)Idx_Start[1]*dh[1];
@@ -259,7 +258,6 @@ void BC_User_xm( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
    double X, Y, Z;
    int    i, j, k;
 
-#  ifdef UserPotBC   
    for (k=Idx_Start[2], Z=Z0; k<=Idx_End[2];   k++, Z+=dh[2])
    for (j=Idx_Start[1], Y=Y0; j<=Idx_End[1];   j++, Y+=dh[1])
    {
@@ -302,17 +300,16 @@ void BC_User_xp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
                  const int ArraySizeZ, const int Idx_Start[], const int Idx_End[],
                  const int TFluVarIdxList[], const double dh[], const double *Corner, const int TVar )
 {
+#  ifdef UserPotBC
 // 1D array -> 3D array
    const int FACE = 1;
    real (*Array3D)[ArraySizeZ][ArraySizeY][ArraySizeX] = ( real (*)[ArraySizeZ][ArraySizeY][ArraySizeX] )Array;
    
-#  ifdef UserPotBC
    if (PotArray != NULL) {
       Poi_BoundaryCondition_Extrapolation( PotArray, FACE, 1, GhostSize, ArraySizeX, ArraySizeY, ArraySizeZ, 
                                            Idx_Start, Idx_End, NULL, NULL );
    }
    real (*PotArray3D)[ArraySizeZ][ArraySizeY][ArraySizeX] = ( real (*)[ArraySizeZ][ArraySizeY][ArraySizeX] )PotArray;
-#  endif
    
    const double X0    = Corner[0] + (double)Idx_Start[0]*dh[0];
    const double Y0    = Corner[1] + (double)Idx_Start[1]*dh[1];
@@ -329,7 +326,6 @@ void BC_User_xp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
    double X, Y, Z;
    int    i, j, k;
    
-#  ifdef UserPotBC
    
    for (k=Idx_Start[2], Z=Z0; k<=Idx_End[2]; k++, Z+=dh[2])
    for (j=Idx_Start[1], Y=Y0; j<=Idx_End[1]; j++, Y+=dh[1])
@@ -388,6 +384,7 @@ void BC_User_ym( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
                  const int ArraySizeZ, const int Idx_Start[], const int Idx_End[],
                  const int TFluVarIdxList[], const double dh[], const double *Corner, const int TVar )
 {
+#  ifdef UserPotBC
 // 1D array -> 3D array
    const int FACE = 2;
    real (*Array3D)[ArraySizeZ][ArraySizeY][ArraySizeX] = ( real (*)[ArraySizeZ][ArraySizeY][ArraySizeX] )Array;
@@ -412,6 +409,7 @@ void BC_User_ym( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
       Array3D[MOMZ][k][j][i] = Array3D[MOMZ][k][j_ref][i] ;
       Array3D[ENGY][k][j][i] = Array3D[ENGY][k][j_ref][i] ;
    }            
+#  endif
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -431,6 +429,7 @@ void BC_User_yp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
                  const int ArraySizeZ, const int Idx_Start[], const int Idx_End[],
                  const int TFluVarIdxList[], const double dh[], const double *Corner, const int TVar )
 {
+#  ifdef UserPotBC
 // 1D array -> 3D array
    const int FACE = 3;
    real (*Array3D)[ArraySizeZ][ArraySizeY][ArraySizeX] = ( real (*)[ArraySizeZ][ArraySizeY][ArraySizeX] )Array;
@@ -455,6 +454,7 @@ void BC_User_yp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
       Array3D[MOMZ][k][j][i] = Array3D[MOMZ][k][j_ref][i] ;
       Array3D[ENGY][k][j][i] = Array3D[ENGY][k][j_ref][i] ;  
    }
+#  endif
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -474,6 +474,7 @@ void BC_User_zm( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
                  const int ArraySizeZ, const int Idx_Start[], const int Idx_End[],
                  const int TFluVarIdxList[], const double dh[], const double *Corner, const int TVar )
 {
+#  ifdef UserPotBC
 // 1D array -> 3D array
    const int FACE = 4;
    real (*Array3D)[ArraySizeZ][ArraySizeY][ArraySizeX] = ( real (*)[ArraySizeZ][ArraySizeY][ArraySizeX] )Array;
@@ -496,7 +497,6 @@ void BC_User_zm( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
    int    i, j, k;
    
    
-#  ifdef UserPotBC
    if (PotArray != NULL) {
       Poi_BoundaryCondition_Extrapolation( PotArray, FACE, 1, GhostSize, ArraySizeX, ArraySizeY, ArraySizeZ, 
                                            Idx_Start, Idx_End, NULL, NULL );
@@ -593,6 +593,7 @@ void BC_User_zp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
                  const int ArraySizeZ, const int Idx_Start[], const int Idx_End[],
                  const int TFluVarIdxList[], const double dh[], const double *Corner, const int TVar )
 {
+#  ifdef UserPotBC
 // 1D array -> 3D array
    const int FACE = 5;
    real (*Array3D)[ArraySizeZ][ArraySizeY][ArraySizeX]    = ( real (*)[ArraySizeZ][ArraySizeY][ArraySizeX] )Array;
@@ -615,7 +616,6 @@ void BC_User_zp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
    double X, Y, Z, Z_m1;
    int    i, j, k;
    
-#  ifdef UserPotBC
    if (PotArray != NULL) {
       Poi_BoundaryCondition_Extrapolation( PotArray, FACE, 1, GhostSize, ArraySizeX, ArraySizeY, ArraySizeZ, 
                                            Idx_Start, Idx_End, NULL, NULL );
