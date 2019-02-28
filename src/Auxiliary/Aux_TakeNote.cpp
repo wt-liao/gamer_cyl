@@ -139,6 +139,11 @@ void Aux_TakeNote()
       fprintf( Note, "MODEL_IC_GRACKLE                 OFF\n" );
 #     endif
 
+#     ifdef GRACKLE_RELAX
+      fprintf( Note, "GRACKLE_RELAX                    ON\n" );
+#     else
+      fprintf( Note, "GRACKLE_RELAX                    OFF\n" );
+#     endif
 
 
 //    b. options in HYDRO

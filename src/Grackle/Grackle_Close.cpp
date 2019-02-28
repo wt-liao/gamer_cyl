@@ -80,7 +80,7 @@ void Grackle_Close( const int lv, const int SaveSg, const real h_Che_Array[], co
    const real *Ptr_HeI=NULL, *Ptr_HeII=NULL, *Ptr_HeIII=NULL, *Ptr_HM=NULL, *Ptr_H2I=NULL, *Ptr_H2II=NULL;
    const real *Ptr_DI=NULL, *Ptr_DII=NULL, *Ptr_HDI=NULL;
    
-#  ifdef MODEL_IC_GRACKLE
+#  ifdef GRACKLE_RELAX
    real Etot_old, Eint_old, delta_Eint; 
 #  endif
 
@@ -117,7 +117,7 @@ void Grackle_Close( const int lv, const int SaveSg, const real h_Che_Array[], co
             Dens     = Ptr_Dens [idx_pg];
             Eint_new = Ptr_sEint[idx_pg];
             
-#           ifdef MODEL_IC_GRACKLE
+#           ifdef GRACKLE_RELAX
             // fluid field before grackle stepping
             Etot_old   = *(fluid[ENGY][0][0] + idx_p); 
             Eint_old   = Etot_old - Ptr_Ek[idx_pg] ;
