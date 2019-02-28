@@ -1,3 +1,5 @@
+#ifdef GRAVITY
+
 #include "GAMER.h"
 #include "TestProb.h"
 
@@ -324,12 +326,12 @@ void Init_TestProb_Hydro_SGThinDisk()
    BC_User_Ptr              = NULL;
    Flu_ResetByUser_Func_Ptr = NULL;
    End_User_Ptr             = NULL;
-#ifdef GRAVITY
    Init_ExternalAcc_Ptr     = Init_ExternalAcc;       // option: OPT__GRAVITY_TYPE=2/3; example: SelfGravity/Init_ExternalAcc.cpp
-#endif //GRAVITY
 #  endif // #if ( MODEL == HYDRO )
 
 
    if ( MPI_Rank == 0 )    Aux_Message( stdout, "%s ... done\n", __FUNCTION__ );
 
 } // FUNCTION : Init_TestProb_Hydro_BlastWave
+
+#endif // #ifdef GRAVITY
