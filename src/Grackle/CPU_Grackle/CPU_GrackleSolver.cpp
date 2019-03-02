@@ -40,6 +40,18 @@ void CPU_GrackleSolver( grackle_field_data *Che_FieldData, code_units Che_Units,
 // --> this approach is found to be much more efficient than parallelizing different patches or patch groups here
    if (  solve_chemistry( &Che_Units, Che_FieldData, dt ) == 0  )
       Aux_Error( ERROR_INFO, "Grackle solve_chemistry() failed !!\n" );
+   
+   // get grackle cooling time scale
+   gr_float *gr_cooling_time;
+   
+   if ( calculate_cooling_time(&my_units, &my_fields, gr_cooling_time) == 0 ) {
+     Aux_Error( ERROR_INFO, "Grackle calculate_cooling_time() failed !!\n" );
+   }
+   else {
+      for (int n=0; n<NPG*CUBE(PS2); n++) {
+         dt_Grackle_local = FMIN(dt_Grackle_local, gr_cooling_time[n]);
+      }
+   }
 
 } // FUNCTION : CPU_GrackleSolver
 

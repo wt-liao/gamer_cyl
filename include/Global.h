@@ -221,6 +221,7 @@ extern char            GRACKLE_CLOUDY_TABLE[MAX_STRING];
 extern int             GRACKLE_THREE_BODY_RATE;
 extern int             GRACKLE_CIE_COOLING;
 extern int             CHE_GPU_NPGROUP;
+extern real            dt_Grackle_global, dt_Grackle_local; 
 #endif
 
 

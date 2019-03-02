@@ -210,6 +210,7 @@ char                 GRACKLE_CLOUDY_TABLE[MAX_STRING];
 int                  GRACKLE_THREE_BODY_RATE;
 int                  GRACKLE_CIE_COOLING;
 int                  CHE_GPU_NPGROUP;
+real                 dt_Grackle_global, dt_Grackle_local = HUGE_NUMBER;
 #endif
 
 // (2-8) star formation
