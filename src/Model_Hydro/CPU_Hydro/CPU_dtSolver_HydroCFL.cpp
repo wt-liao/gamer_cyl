@@ -99,7 +99,7 @@ void CPU_dtSolver_HydroCFL( real dt_Array[], const real Flu_Array[][NCOMP_FLUID]
          CoolingFunc(cool_rate, PriVar, x_pos);
          _dt_cool = cool_rate * (Gamma-1.0) / Pres ;
          MaxCFL   = FMAX(_safety_cool*_dt_cool, MaxCFL) ;
-#        endif
+#        endif // #ifdef COOLING
          
 #        endif
          
