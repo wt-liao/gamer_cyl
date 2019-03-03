@@ -39,7 +39,7 @@ SIMU_OPTION += -DMODEL=HYDRO
 SIMU_OPTION += -DGRAVITY
 
 # enable radiative thin cooling
-SIMU_OPTION += -DCOOLING
+#SIMU_OPTION += -DCOOLING
 
 # enable UserBC to use gravitataional pot
 SIMU_OPTION += -DUserPotBC
@@ -54,7 +54,13 @@ SIMU_OPTION += -DMODEL_MSTAR
 # support Grackle, a chemistry and radiative cooling library
 # --> must set NCOMP_PASSIVE_USER according to the primordial chemistry network set by GRACKLE_PRIMORDIAL
 # --> please enable OpenMP when compiling Grackle (by "make omp-on")
-#SIMU_OPTION += -DSUPPORT_GRACKLE
+SIMU_OPTION += -DSUPPORT_GRACKLE
+
+# grackle IC
+SIMU_OPTION += -DMODEL_IC_GRACKLE
+
+# relax GRACKLE cooling
+SIMU_OPTION += -DGRACKLE_RELAX
 
 # coordinate system: CARTESIAN/CYLINDRICAL/SPHERICAL (experimental)
 SIMU_OPTION += -DCOORDINATE=CYLINDRICAL
@@ -83,7 +89,7 @@ SIMU_OPTION += -DDUAL_ENERGY=DE_ENPY
 # number of user-defined passively advected scalars
 # --> set it to 0 or comment it out if none is required
 # --> useless for RTVD/WAF
-SIMU_OPTION += -DNCOMP_PASSIVE_USER=0
+SIMU_OPTION += -DNCOMP_PASSIVE_USER=9
 
 
 # (b-2) MHD options
@@ -229,7 +235,7 @@ SIMU_OPTION += -DRANDOM_NUMBER=RNG_GNU_EXT
   CXXFLAG     = -g -O3                                    # general flags
 ##CXXFLAG     = -g -O3 -std=c++11 #-gxx-name=YOUR_G++
 ##CXXFLAG     = -g -fast
-  CXXFLAG    += -w1                                       # warning flags
+  CXXFLAG    += -w1 -dynamic                                      # warning flags
   OPENMPFLAG  = -fopenmp                                  # openmp flag
   LIB         = -limf                                     # libraries and linker flags
 #
@@ -289,7 +295,7 @@ CUDA_PATH    :=
 FFTW_PATH    :=
 MPI_PATH     :=
 HDF5_PATH    :=
-GRACKLE_PATH :=
+GRACKLE_PATH := /u/sciteam/liao/software
 GSL_PATH     :=
 LIBYT_PATH   :=
 
@@ -402,7 +408,8 @@ CC_FILE     += End_GAMER.cpp  End_MemFree.cpp  End_MemFree_Fluid.cpp  End_StopMa
                Init_MemAllocate_Fluid.cpp  Init_Parallelization.cpp  Init_RecordBasePatch.cpp  Init_Refine.cpp \
                Init_ByRestart_v1.cpp  Init_ByFunction.cpp  Init_TestProb.cpp  Init_ByFile.cpp  Init_OpenMP.cpp \
                Init_ByRestart_HDF5.cpp  Init_ResetParameter.cpp  Init_ByRestart_v2.cpp  Init_MemoryPool.cpp \
-               Init_Unit.cpp  Init_UniformGrid.cpp  Init_Field.cpp  Init_MemAllocate_dt.cpp  End_MemFree_dt.cpp
+               Init_Unit.cpp  Init_UniformGrid.cpp  Init_Field.cpp  Init_MemAllocate_dt.cpp  End_MemFree_dt.cpp \
+               Init_Model_GrackleIC.cpp
 
 CC_FILE     += Interpolate.cpp  Int_CQuadratic.cpp  Int_MinMod1D.cpp  Int_MinMod3D.cpp  Int_vanLeer.cpp \
                Int_Quadratic.cpp  Int_Table.cpp  Int_CQuartic.cpp  Int_Quartic.cpp
