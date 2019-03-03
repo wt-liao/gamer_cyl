@@ -44,6 +44,8 @@ void CPU_GrackleSolver( grackle_field_data *Che_FieldData, code_units Che_Units,
    
    // ### this part should be optimized for performance
    // get grackle cooling time scale
+   real *gr_cooling_time = new real[ (long)NPatchGroup*(long)CUBE(PS2) ] ;
+   
    if ( calculate_cooling_time(&Che_Units, Che_FieldData, gr_cooling_time) == 0 ) {
      Aux_Error( ERROR_INFO, "Grackle calculate_cooling_time() failed !!\n" );
    }
@@ -55,6 +57,7 @@ void CPU_GrackleSolver( grackle_field_data *Che_FieldData, code_units Che_Units,
          dt_Grackle_local = FMIN( dt_Grackle_local, FABS(gr_cooling_time[n]) );
    } // if (calculate_cooling_time), else...
    
+   delete [] gr_cooling_time;
 
 } // FUNCTION : CPU_GrackleSolver
 
