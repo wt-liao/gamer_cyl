@@ -253,7 +253,7 @@ void BC_User_xm( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
    const bool CheckMinPres_Yes = true;
    const real Gamma_m1         = GAMMA - (real)1.0;
    
-   double engy_bc, pres_ref;
+   double engy_bc, pres_ref, _rho_ref;
    
    double X, Y, Z;
    int    i, j, k;
@@ -264,8 +264,9 @@ void BC_User_xm( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
       pres_ref  = CPU_GetPressure( Array3D[DENS][k][j][i_ref], Array3D[MOMX][k][j][i_ref], 
                                    Array3D[MOMY][k][j][i_ref], Array3D[MOMZ][k][j][i_ref], 
                                    Array3D[ENGY][k][j][i_ref], Gamma_m1, CheckMinPres_Yes, MIN_PRES );
+      _rho_ref  = 1.0/Array3D[DENS][k][j][i_ref];
                                    
-      for (i=Idx_End[0],   X=X0; i>=Idx_Start[0]; i--, X-=dh[0])
+      for (i=Idx_End[0], X=X0; i>=Idx_Start[0]; i--, X-=dh[0])
       {
          // outflow 
          Array3D[DENS][k][j][i] = Array3D[DENS][k][j][i_ref] ;
@@ -276,6 +277,22 @@ void BC_User_xm( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
          Array3D[ENGY][k][j][i] = pres_ref/Gamma_m1 
                                 + 0.5*( SQR(Array3D[MOMX][k][j][i]) + SQR(Array3D[MOMY][k][j][i]) + 
                                         SQR(Array3D[MOMZ][k][j][i]) ) / Array3D[DENS][k][j][i] ;
+         
+#        ifdef SUPPORT_GRACKLE
+         if (GRACKLE_PRIMORDIAL != GRACKLE_PRI_CHE_NSPE9)
+            Aux_Message(stderr, "User defined BC curretly only support Grackle with 9 spices! \n");
+         
+         for (int n=Idx_e; n<=Idx_H2II; n++) {
+            Array3D[n][k][j][i] = Array3D[n][k][j][i_ref] * ( Array3D[DENS][k][j][i]*_rho_ref );
+         }
+#        endif //#SUPPORT_GRACKLE
+         
+#        if ( DUAL_ENERGY == DE_ENPY )
+         Array3D[Idx_Enpy][k][j][i] = 
+            CPU_Fluid2Entropy(Array3D[DENS][k][j][i], Array3D[MOMX][k][j][i], Array3D[MOMY][k][j][i],
+                              Array3D[MOMZ][k][j][i], Array3D[ENGY][k][j][i], Gamma_m1);
+#        endif // DUAL_ENERGY == DE_ENPY
+         
       } // i
    } // k, j
    
@@ -334,35 +351,10 @@ void BC_User_xp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
       // outflow 
       Array3D[DENS][k][j][i] = Array3D[DENS][k][j][i_ref] ;
       Array3D[MOMX][k][j][i] = Array3D[MOMX][k][j][i_ref] ;
-      //Array3D[MOMY][k][j][i] = Array3D[MOMY][k][j][i_ref] ;
+      Array3D[MOMY][k][j][i] = Array3D[MOMY][k][j][i_ref] ;
       Array3D[MOMZ][k][j][i] = Array3D[MOMZ][k][j][i_ref] ;
-      //Array3D[ENGY][k][j][i] = Array3D[ENGY][k][j][i_ref] ;
-      
-      // derived other field
-      sph_rad  = SQRT( Z*Z + X*X );
-      star_g   = - GM * X / CUBE(sph_rad) ;
-      dens      = Array3D[DENS][k][j][i];
-      
-      if (i != Idx_End[0]) {
-         pot_grad  = (PotArray3D[0][k][j][i+1] - PotArray3D[0][k][j][i-1])/(2.0*dh[0]) ;
-         //###
-         pres_grad = 0.0;
-      } 
-      else  {
-         pot_grad  = (PotArray3D[0][k][j][i]   - PotArray3D[0][k][j][i-1])/(1.0*dh[0]) ;
-         //###
-         pres_grad = 0.0;
-      }               
-      
-      vtheta_square = (pres_grad + dens*pot_grad - dens*star_g)*(X/dens);
-      vtheta = (vtheta_square > 0.0)? SQRT(vtheta_square) : 0.0 ;
-      
-      Array3D[MOMY][k][j][i] = dens * vtheta ;
-      //Aux_Message(stdout, "MOMY ref and derived = %8.5f, %8.5f. \n", Array3D[MOMY][k][j][i_ref], dens * vtheta);
-      
-      // keep pressure the same, but modify K.E., since pres_grad = 0.0 currently
-      Array3D[ENGY][k][j][i] = Array3D[ENGY][k][j][i_ref] 
-                             - 0.5*SQR(Array3D[MOMY][k][j][i_ref])/dens + 0.5*dens*SQR(vtheta) ; 
+      Array3D[ENGY][k][j][i] = Array3D[ENGY][k][j][i_ref] ;
+
    }
 #  endif // UserPotBC
 }
@@ -521,23 +513,6 @@ void BC_User_zm( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
       // fill in bc
       for (k=Idx_End[2], Z=Z0; k>=Idx_Start[2]; k--, Z-=dh[2]) {
          
-         // outflow 
-         /*
-         Array3D[DENS][k][j][i] = Array3D[DENS][k_ref][j][i] ;
-         Array3D[MOMX][k][j][i] = Array3D[MOMX][k_ref][j][i] ;
-         Array3D[MOMY][k][j][i] = Array3D[MOMY][k_ref][j][i] ;
-         Array3D[MOMZ][k][j][i] = Array3D[MOMZ][k_ref][j][i] ;
-         */
-         
-         // only allow outflow in zm: vz <= 0.0
-         /*
-         if ( Array3D[MOMZ][k_ref][j][i] < 0.0)   
-            Array3D[MOMZ][k][j][i] = Array3D[MOMZ][k_ref][j][i] ;  
-         else
-            Array3D[MOMZ][k][j][i] = 0.0;
-         */
-         
-         
          // calculate for BC value
          Z_p1     = Z+dh[2];
          sph_rad  = SQRT( Z_p1*Z_p1 + X*X );
@@ -549,13 +524,6 @@ void BC_User_zm( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
                                  
          dens_p1  = Array3D[DENS][k+1][j][i];
          pot_grad = PotArray3D[0][k+2][j][i] - PotArray3D[0][k][j][i];
-         
-         /*
-         if (pot_grad > 0) {
-            pot_grad = 0;
-            Aux_Message(stdout, "Weird Potential BC at (X, Y, Z) = (%8.4f, %8.4f, %8.4f) in User_BC. Reset pot_grad=0. \n", X, Y, Z);
-         }
-         */
          
          pres_bc  = pres_p2 + dens_p1*pot_grad - dens_p1*star_g*(2.0*dh[2]) ;
          pres_bc  = FMAX( pres_bc, MIN_PRES ) ;
@@ -570,6 +538,23 @@ void BC_User_zm( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
                                              SQR(Array3D[MOMZ][k][j][i]) ) / Array3D[DENS][k][j][i] ;
          
          Array3D[ENGY][k][j][i] = engy_bc ;
+         
+         
+#        ifdef SUPPORT_GRACKLE
+         if (GRACKLE_PRIMORDIAL != GRACKLE_PRI_CHE_NSPE9)
+            Aux_Message(stderr, "User defined BC curretly only support Grackle with 9 spices! \n");
+         
+         for (int n=Idx_e; n<=Idx_H2II; n++) {
+            Array3D[n][k][j][i] = Array3D[n][k_ref][j][i] * ( Array3D[DENS][k][j][i]*_rho_ref );
+         }
+#        endif //#SUPPORT_GRACKLE
+         
+#        if ( DUAL_ENERGY == DE_ENPY )
+         Array3D[Idx_Enpy][k][j][i] = 
+            CPU_Fluid2Entropy(Array3D[DENS][k][j][i], Array3D[MOMX][k][j][i], Array3D[MOMY][k][j][i],
+                              Array3D[MOMZ][k][j][i], Array3D[ENGY][k][j][i], Gamma_m1);
+#        endif // DUAL_ENERGY == DE_ENPY
+         
       }         
    } // for (i, j)
 #  endif // UserPotBC
@@ -639,23 +624,6 @@ void BC_User_zp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
       // fill in bc
       for (k=Idx_Start[2], Z=Z0; k<=Idx_End[2]; k++, Z+=dh[2]) {
          
-         // outflow 
-         /*
-         Array3D[DENS][k][j][i] = Array3D[DENS][k_ref][j][i] ;
-         Array3D[MOMX][k][j][i] = Array3D[MOMX][k_ref][j][i] ;
-         Array3D[MOMY][k][j][i] = Array3D[MOMY][k_ref][j][i] ;
-         Array3D[MOMZ][k][j][i] = Array3D[MOMZ][k_ref][j][i] ;  
-         */
-         
-         // only allow outflow in zp: vz > 0.0
-         /*
-         if ( Array3D[MOMZ][k_ref][j][i] > 0.0)   
-            Array3D[MOMZ][k][j][i] = Array3D[MOMZ][k_ref][j][i] ;  
-         else
-            Array3D[MOMZ][k][j][i] = 0.0;
-         */
-         
-         
          // calculate for BC value
          Z_m1     = Z-dh[2];
          sph_rad  = SQRT( Z_m1*Z_m1 + X*X );
@@ -667,11 +635,6 @@ void BC_User_zp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
                                  
          dens_m1  = Array3D[DENS][k-1][j][i];
          pot_grad = PotArray3D[0][k][j][i] - PotArray3D[0][k-2][j][i];
-         
-         if (pot_grad < 0) {
-            pot_grad = 0;
-            Aux_Message(stdout, "Weird Potential BC at (X, Y, Z) = (%8.4f, %8.4f, %8.4f) in User_BC. Reset pot_grad=0. \n", X, Y, Z);
-         }
          
          pres_bc  = pres_m2 - dens_m1*pot_grad + dens_m1*star_g*(2.0*dh[2]) ;
          pres_bc  = FMAX( pres_bc, MIN_PRES ) ;
@@ -686,6 +649,22 @@ void BC_User_zp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
                                              SQR(Array3D[MOMZ][k][j][i]) ) / Array3D[DENS][k][j][i] ;
          
          Array3D[ENGY][k][j][i] = engy_bc ;
+         
+#        ifdef SUPPORT_GRACKLE
+         if (GRACKLE_PRIMORDIAL != GRACKLE_PRI_CHE_NSPE9)
+            Aux_Message(stderr, "User defined BC curretly only support Grackle with 9 spices! \n");
+         
+         for (int n=Idx_e; n<=Idx_H2II; n++) {
+            Array3D[n][k][j][i] = Array3D[n][k_ref][j][i] * ( Array3D[DENS][k][j][i]*_rho_ref );
+         }
+#        endif //#SUPPORT_GRACKLE
+         
+#        if ( DUAL_ENERGY == DE_ENPY )
+         Array3D[Idx_Enpy][k][j][i] = 
+            CPU_Fluid2Entropy(Array3D[DENS][k][j][i], Array3D[MOMX][k][j][i], Array3D[MOMY][k][j][i],
+                              Array3D[MOMZ][k][j][i], Array3D[ENGY][k][j][i], Gamma_m1);
+#        endif // DUAL_ENERGY == DE_ENPY
+         
       }         
    } // for (i, j)
    
