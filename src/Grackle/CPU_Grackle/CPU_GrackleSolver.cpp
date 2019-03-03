@@ -41,17 +41,20 @@ void CPU_GrackleSolver( grackle_field_data *Che_FieldData, code_units Che_Units,
    if (  solve_chemistry( &Che_Units, Che_FieldData, dt ) == 0  )
       Aux_Error( ERROR_INFO, "Grackle solve_chemistry() failed !!\n" );
    
-   // get grackle cooling time scale
-   gr_float *gr_cooling_time;
    
-   if ( calculate_cooling_time(&my_units, &my_fields, gr_cooling_time) == 0 ) {
+   // ### this part should be optimized for performance
+   // get grackle cooling time scale
+   if ( calculate_cooling_time(&Che_Units, Che_FieldData, gr_cooling_time) == 0 ) {
      Aux_Error( ERROR_INFO, "Grackle calculate_cooling_time() failed !!\n" );
    }
+   
+   //### note that not all cells in gr_cooling_time is updated in every loop
+   //### since NPG could change; need to double check
    else {
-      for (int n=0; n<NPG*CUBE(PS2); n++) {
-         dt_Grackle_local = FMIN(dt_Grackle_local, gr_cooling_time[n]);
-      }
-   }
+      for (int n=0; n<NPatchGroup*CUBE(PS2); n++) 
+         dt_Grackle_local = FMIN( dt_Grackle_local, FABS(gr_cooling_time[n]) );
+   } // if (calculate_cooling_time), else...
+   
 
 } // FUNCTION : CPU_GrackleSolver
 

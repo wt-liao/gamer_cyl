@@ -81,6 +81,10 @@ void Init_MemAllocate_Grackle( const int Che_NPG )
    for (int t=0; t<2; t++)
       h_Che_Array[t] = new real [ (long)Che_NField*(long)Che_NPG*(long)CUBE(PS2) ];
 
+   // allocate for cooling time
+   //### optimization?
+   real *gr_cooling_time = new real[ NPatchGroup*CUBE(PS2) ] ;
+   
 } // FUNCTION : Init_MemAllocate_Grackle
 
 

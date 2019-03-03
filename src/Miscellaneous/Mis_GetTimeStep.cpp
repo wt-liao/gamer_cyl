@@ -189,8 +189,8 @@ double Mis_GetTimeStep( const int lv, const double dTime_SyncFaLv, const double 
 // 1.9 modify by wtl; needed to be double check 
 #  ifdef SUPPORT_GRACKLE
    double dt_grackle_safty = 0.2;
-   MPI_Allreduce( &dt_grckle_local, &dt_grackle_global, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD );
-   dTime[NdTime] = dTime_dt * (dt_grackle_safty * dt_grackle_global);
+   MPI_Allreduce( &dt_Grackle_local, &dt_Grackle_global, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD );
+   dTime[NdTime] = dTime_dt * (dt_grackle_safty * dt_Grackle_global);
    sprintf( dTime_Name[NdTime++], "%s", "Grackle" );
 #  endif
 

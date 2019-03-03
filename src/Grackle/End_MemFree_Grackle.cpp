@@ -26,6 +26,8 @@ void End_MemFree_Grackle()
       if ( h_Che_Array[t] != NULL )    delete [] h_Che_Array[t];
       h_Che_Array[t] = NULL;
    }
+   
+   delete [] gr_cooling_time;
 
 } // FUNCTION : End_MemFree_Grackle
 
