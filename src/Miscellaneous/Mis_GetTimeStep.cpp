@@ -190,6 +190,7 @@ double Mis_GetTimeStep( const int lv, const double dTime_SyncFaLv, const double 
 #  ifdef SUPPORT_GRACKLE
    double dt_grackle_safty = 0.2;
    MPI_Allreduce( &dt_Grackle_local, &dt_Grackle_global, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD );
+   dt_Grackle_local = HUGE_NUMBER ;
    dTime[NdTime] = dTime_dt * (dt_grackle_safty * dt_Grackle_global);
    sprintf( dTime_Name[NdTime++], "%s", "Grackle" );
 #  endif

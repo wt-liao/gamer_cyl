@@ -53,8 +53,11 @@ void CPU_GrackleSolver( grackle_field_data *Che_FieldData, code_units Che_Units,
    //### note that not all cells in gr_cooling_time is updated in every loop
    //### since NPG could change; need to double check
    else {
-      for (int n=0; n<NPatchGroup*CUBE(PS2); n++) 
+      for (int n=0; n<NPatchGroup*CUBE(PS2); n++) {
          dt_Grackle_local = FMIN( dt_Grackle_local, FABS(gr_cooling_time[n]) );
+      }
+         
+      
    } // if (calculate_cooling_time), else...
    
    delete [] gr_cooling_time;

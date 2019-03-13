@@ -34,7 +34,7 @@ static double n_H2_func(const real n_cgs, const real T, const real tau_dyn_cgs);
 
 void Init_GrackleField(){
    if ( MPI_Rank == 0 ) Aux_Message(stdout, "Generating IC for Grackle... \n");
-   if ( MPI_Rank == 0 ) Aux_Message(stdout, "Grackle unit: [L]=%12.8f; [T]=%12.8f; [Dens]=%12.8f . \n", 
+   if ( MPI_Rank == 0 ) Aux_Message(stdout, "Grackle unit: [L]=%12.8e; [T]=%12.8e; [Dens]=%12.8e . \n", 
                                     Che_Units.length_units, Che_Units.time_units, Che_Units.density_units);
    
    const int lv = 0; // currently only implement for no-amr scheme
@@ -249,10 +249,10 @@ double n_H2_func(const real n_cgs, const real T, const real tau_dyn_cgs) {
    n_HI          = 0.5*( -coeff + SQRT(coeff*coeff + 4*coeff*n_cgs) ) ;
    n_H2_estimate = (k4/k5)*SQR(n_HI) ;
    
-   //tau_chem = 1 / ( k4*SQR(n_cgs) ) ;
-   //n_H2     = n_H2_estimate * EXP(-tau_chem / tau_dyn_cgs);
+   tau_chem = 1 / ( k4*SQR(n_cgs) ) ;
+   n_H2     = n_H2_estimate * EXP(-tau_chem / tau_dyn_cgs);
 
-   n_H2          = FMIN(n_H2_estimate, n_cgs) ;
+   //n_H2          = FMIN(n_H2_estimate, n_cgs) ;
    
    return n_H2 ;
 }
