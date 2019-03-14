@@ -31,6 +31,9 @@ static void BC_User_zm( real *Array, real *PotArray, const int NVar_Flu, const i
 static void BC_User_zp( real *Array, real *PotArray, const int NVar_Flu, const int GhostSize, const int ArraySizeX, 
                         const int ArraySizeY, const int ArraySizeZ, const int Idx_Start[], const int Idx_End[],
                         const int TFluVarIdxList[], const double dh[], const double *Corner, const int TVar );
+
+static const double rho_ratio_limit = 0.6;
+
 #endif
 
 
@@ -484,7 +487,7 @@ void BC_User_zm( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
    const real Gamma_m1         = GAMMA - (real)1.0;
    
    double pres_bc, engy_bc, sph_rad, star_g, dens_p1, pres_p2, pot_grad;
-   double pres_ref, rho_ref, _rho_ref, RT_ref, Vx_ref, Vy_ref, Vz_ref;
+   double pres_ref, rho_guess, rho_ref, _rho_ref, RT_ref, Vx_ref, Vy_ref, Vz_ref;
    double X, Y, Z, Z_p1;
    int    i, j, k;
    
@@ -529,7 +532,13 @@ void BC_User_zm( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
          pres_bc  = FMAX( pres_bc, MIN_PRES ) ;
          
          // use isothermal condition to determine rho
-         Array3D[DENS][k][j][i] = pres_bc/RT_ref;
+         rho_guess = pres_bc/RT_ref;         
+         if ( rho_guess < rho_ratio_limit*rho_ref ) Array3D[DENS][k][j][i] = rho_ratio_limit*rho_ref ;
+         else                                       Array3D[DENS][k][j][i] = rho_guess ;
+         
+         pres_bc = Array3D[DENS][k][j][i] * RT_ref;
+         pres_bc  = FMAX( pres_bc, MIN_PRES ) ;
+         
          Array3D[MOMX][k][j][i] = Array3D[DENS][k][j][i] * Vx_ref;
          Array3D[MOMY][k][j][i] = Array3D[DENS][k][j][i] * Vy_ref;
          Array3D[MOMZ][k][j][i] = Array3D[DENS][k][j][i] * Vz_ref;
@@ -597,7 +606,7 @@ void BC_User_zp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
    const real Gamma_m1         = GAMMA - (real)1.0;
    
    double pres_bc, engy_bc, sph_rad, star_g, dens_m1, pres_m2, pot_grad;
-   double pres_ref, rho_ref, _rho_ref, RT_ref, Vx_ref, Vy_ref, Vz_ref;
+   double pres_ref, rho_guess, rho_ref, _rho_ref, RT_ref, Vx_ref, Vy_ref, Vz_ref;
    double X, Y, Z, Z_m1;
    int    i, j, k;
    
@@ -621,6 +630,11 @@ void BC_User_zp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
                                    Array3D[ENGY][k_ref][j][i], Gamma_m1, CheckMinPres_Yes, MIN_PRES );
       RT_ref    = pres_ref * _rho_ref;
       
+      if (!Aux_IsFinite(Vx_ref) || !Aux_IsFinite(Vy_ref) || !Aux_IsFinite(Vz_ref)) {
+         Aux_Message(stdout, "Unphysical ref velocity in BC_USER ZP. \n");
+      }
+      
+      
       // fill in bc
       for (k=Idx_Start[2], Z=Z0; k<=Idx_End[2]; k++, Z+=dh[2]) {
          
@@ -640,7 +654,13 @@ void BC_User_zp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
          pres_bc  = FMAX( pres_bc, MIN_PRES ) ;
          
          // use isothermal condition to determine rho
-         Array3D[DENS][k][j][i] = pres_bc/RT_ref;
+         rho_guess = pres_bc/RT_ref;         
+         if ( rho_guess < rho_ratio_limit*rho_ref ) Array3D[DENS][k][j][i] = rho_ratio_limit*rho_ref ;
+         else                                       Array3D[DENS][k][j][i] = rho_guess ;
+         
+         pres_bc = Array3D[DENS][k][j][i] * RT_ref;
+         pres_bc  = FMAX( pres_bc, MIN_PRES ) ;
+         
          Array3D[MOMX][k][j][i] = Array3D[DENS][k][j][i] * Vx_ref;
          Array3D[MOMY][k][j][i] = Array3D[DENS][k][j][i] * Vy_ref;
          Array3D[MOMZ][k][j][i] = Array3D[DENS][k][j][i] * Vz_ref;
@@ -649,6 +669,7 @@ void BC_User_zp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
                                              SQR(Array3D[MOMZ][k][j][i]) ) / Array3D[DENS][k][j][i] ;
          
          Array3D[ENGY][k][j][i] = engy_bc ;
+         
          
 #        ifdef SUPPORT_GRACKLE
          if (GRACKLE_PRIMORDIAL != GRACKLE_PRI_CHE_NSPE9)
