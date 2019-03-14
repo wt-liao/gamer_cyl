@@ -23,7 +23,7 @@ extern int CheIdx_DII;
 extern int CheIdx_HDI;
 extern int CheIdx_Metal;
 
-
+extern double  Time[NLEVEL];
 
 
 //-------------------------------------------------------------------------------------------------------
@@ -82,6 +82,9 @@ void Grackle_Close( const int lv, const int SaveSg, const real h_Che_Array[], co
    
 #  ifdef GRACKLE_RELAX
    real Etot_old, Eint_old, delta_Eint; 
+   const double t_orbit = 0.79 ;
+   const double t_relax = 5*t_orbit ;
+   const double t_curr  = Time[0];
 #  endif
 
 #  pragma omp for schedule( static )
@@ -123,7 +126,7 @@ void Grackle_Close( const int lv, const int SaveSg, const real h_Che_Array[], co
             Eint_old   = Etot_old - Ptr_Ek[idx_pg] ;
             Eint_old   = FMAX(Eint_old, MIN_PRES*_Gamma_m1) ;
             delta_Eint = Eint_new*Dens - Eint_old ;
-            Eint_new   = (Eint_old + 0.1*delta_Eint)/Dens ;
+            Eint_new   = (Eint_old + FABS( t_curr/t_relax )*delta_Eint)/Dens ;
 #           endif
             
 //          apply the minimum pressure check
