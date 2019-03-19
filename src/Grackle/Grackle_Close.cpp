@@ -81,9 +81,9 @@ void Grackle_Close( const int lv, const int SaveSg, const real h_Che_Array[], co
    const real *Ptr_DI=NULL, *Ptr_DII=NULL, *Ptr_HDI=NULL;
    
 #  ifdef GRACKLE_RELAX
-   real Etot_old, Eint_old, delta_Eint; 
+   real Etot_old, Eint_old, delta_Eint, dens_cgs, relax_frac, t_ratio; 
    const double t_orbit = 0.79 ;
-   const double t_relax = 5*t_orbit ;
+   const double t_relax = 1*t_orbit ;
    const double t_curr  = Time[0];
 #  endif
 
@@ -121,12 +121,15 @@ void Grackle_Close( const int lv, const int SaveSg, const real h_Che_Array[], co
             Eint_new = Ptr_sEint[idx_pg];
             
 #           ifdef GRACKLE_RELAX
+            dens_cgs   = Dens*(Che_Units.density_units);
+            t_ratio    = FMIN(t_curr/t_relax, 1.0);
+            relax_frac = t_ratio * FMIN( POW(dens_cgs*1e12, -1*(1-t_ratio)), 1 );
             // fluid field before grackle stepping
             Etot_old   = *(fluid[ENGY][0][0] + idx_p); 
             Eint_old   = Etot_old - Ptr_Ek[idx_pg] ;
             Eint_old   = FMAX(Eint_old, MIN_PRES*_Gamma_m1) ;
             delta_Eint = Eint_new*Dens - Eint_old ;
-            Eint_new   = (Eint_old + FABS( t_curr/t_relax )*delta_Eint)/Dens ;
+            Eint_new   = (Eint_old + relax_frac*delta_Eint)/Dens ;
 #           endif
             
 //          apply the minimum pressure check
