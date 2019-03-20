@@ -630,11 +630,6 @@ void BC_User_zp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
                                    Array3D[ENGY][k_ref][j][i], Gamma_m1, CheckMinPres_Yes, MIN_PRES );
       RT_ref    = pres_ref * _rho_ref;
       
-      if (!Aux_IsFinite(Vx_ref) || !Aux_IsFinite(Vy_ref) || !Aux_IsFinite(Vz_ref)) {
-         Aux_Message(stdout, "Unphysical ref velocity in BC_USER ZP. \n");
-      }
-      
-      
       // fill in bc
       for (k=Idx_Start[2], Z=Z0; k<=Idx_End[2]; k++, Z+=dh[2]) {
          
