@@ -50,6 +50,16 @@ void Grackle_Close( const int lv, const int SaveSg, const real h_Che_Array[], co
    const int   Size1v     = NPG*Size1pg;
    const real  Gamma_m1   = GAMMA - (real)1.0;
    const real _Gamma_m1   = (real)1.0 / Gamma_m1;
+   //
+   const double time_unit = Che_Units.time_units;
+   const double L_unit    = Che_Units.length_units;
+   const double T_CMB     = 50 ;
+   const double m_ave_cgs = Const_mH * (0.76 + 0.24*4) ;
+   const double R         = (Const_kB/m_ave_cgs) * SQR(time_unit/L_unit) ;
+   
+#  ifdef GRACKLE_DT
+   const dt_Lv0 = dTime_AllLv[0] ;  // dt at lv = 0
+#  endif
 
    const real *Ptr_Dens0  = h_Che_Array + CheIdx_Dens *Size1v;
    const real *Ptr_sEint0 = h_Che_Array + CheIdx_sEint*Size1v;
@@ -74,8 +84,8 @@ void Grackle_Close( const int lv, const int SaveSg, const real h_Che_Array[], co
 // thread-private variables
    int  idx_pg, PID, PID0, offset;  // idx_pg: array indices within a patch group
    real Dens, Pres, Eint_new;
-   real (*fluid)[PS1][PS1][PS1]=NULL;;
-
+   real (*fluid)[PS1][PS1][PS1]=NULL;
+   
    const real *Ptr_Dens=NULL, *Ptr_sEint=NULL, *Ptr_Ek=NULL, *Ptr_e=NULL, *Ptr_HI=NULL, *Ptr_HII=NULL;
    const real *Ptr_HeI=NULL, *Ptr_HeII=NULL, *Ptr_HeIII=NULL, *Ptr_HM=NULL, *Ptr_H2I=NULL, *Ptr_H2II=NULL;
    const real *Ptr_DI=NULL, *Ptr_DII=NULL, *Ptr_HDI=NULL;
@@ -120,17 +130,26 @@ void Grackle_Close( const int lv, const int SaveSg, const real h_Che_Array[], co
             Dens     = Ptr_Dens [idx_pg];
             Eint_new = Ptr_sEint[idx_pg];
             
-#           ifdef GRACKLE_RELAX
+            // check min Temperature; T_CMB ~ 50K at z~20
+            Eint_new = FMAX( Eint_new, Dens*R*T_CMB/Gamma_m1 );
+            
+#           ifdef GRACKLE_DT
             dens_cgs   = Dens*(Che_Units.density_units);
-            t_ratio    = FMIN(t_curr/t_relax, 1.0);
-            relax_frac = t_ratio * FMIN( POW(dens_cgs*1e12, -1*(1-t_ratio)), 1 );
-            // fluid field before grackle stepping
             Etot_old   = *(fluid[ENGY][0][0] + idx_p); 
             Eint_old   = Etot_old - Ptr_Ek[idx_pg] ;
             Eint_old   = FMAX(Eint_old, MIN_PRES*_Gamma_m1) ;
             delta_Eint = Eint_new*Dens - Eint_old ;
+            
+            if (dens_cgs > 1e-12) 
+               dt_Grackle_local = FMIN(dt_Grackle_local, FABS(Eint_old/delta_Eint * dt_Lv0);
+            
+#           ifdef GRACKLE_RELAX
+            t_ratio    = FMIN(t_curr/t_relax, 1.0);
+            relax_frac = t_ratio * FMIN( POW(dens_cgs*1e12, -1*(1-t_ratio)), 1 );
             Eint_new   = (Eint_old + relax_frac*delta_Eint)/Dens ;
-#           endif
+#           endif // GRACKLE_RELAX
+            
+#           endif // GRACKLE_DT
             
 //          apply the minimum pressure check
             
