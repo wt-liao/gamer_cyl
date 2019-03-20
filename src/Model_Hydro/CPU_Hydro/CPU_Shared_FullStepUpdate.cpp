@@ -115,7 +115,38 @@ void CPU_FullStepUpdate( const real Input[][ FLU_NXT*FLU_NXT*FLU_NXT ], real Out
          Output[v][ID2] += GeoSource[v] * dt ;
 #        endif
       }
-
+      
+      //### modified by wtl for debugging; only work for cyl coord
+      /*
+      double pres_debug = CPU_GetPressure( Output[DENS][ID2], Output[MOMX][ID2], Output[MOMY][ID2], 
+                                           Output[MOMZ][ID2], Output[ENGY][ID2],
+                                           Gamma_m1, false, NULL_REAL );
+                            
+      if ( pres_debug < MIN_PRES ) 
+         Aux_Message(stdout, "Weird prssure = %8.4e at (X,Y,Z)=(%6.3f, %6.3f, %6.3f). \n", 
+                     pres_debug, x_pos[0], x_pos[1], x_pos[2]);
+                          
+      if ( Output[DENS][ID2]<0 || !Aux_IsFinite(Output[DENS][ID2]) )
+         Aux_Message(stdout, "Weird density = %8.4e at (X,Y,Z)=(%6.3f, %6.3f, %6.3f). \n", 
+                     Output[DENS][ID2], x_pos[0], x_pos[1], x_pos[2]);
+                     
+      if ( Output[ENGY][ID2]<0 || !Aux_IsFinite(Output[ENGY][ID2]) )
+         Aux_Message(stdout, "Weird energy = %8.4e at (X,Y,Z)=(%6.3f, %6.3f, %6.3f). \n", 
+                     Output[ENGY][ID2], x_pos[0], x_pos[1], x_pos[2]);
+      
+      if ( !Aux_IsFinite(Output[MOMX][ID2]) )
+         Aux_Message(stdout, "Weird Mom_x = %8.4e at (X,Y,Z)=(%6.3f, %6.3f, %6.3f). \n", 
+                     Output[MOMX][ID2], x_pos[0], x_pos[1], x_pos[2]);
+                     
+      if ( !Aux_IsFinite(Output[MOMY][ID2]) )
+         Aux_Message(stdout, "Weird Mom_y = %8.4e at (X,Y,Z)=(%6.3f, %6.3f, %6.3f). \n", 
+                     Output[MOMY][ID2], x_pos[0], x_pos[1], x_pos[2]);
+                     
+      if ( !Aux_IsFinite(Output[MOMZ][ID2]) )
+         Aux_Message(stdout, "Weird Mom_z = %8.4e at (X,Y,Z)=(%6.3f, %6.3f, %6.3f). \n", 
+                     Output[MOMZ][ID2], x_pos[0], x_pos[1], x_pos[2]);
+      */
+            
 
 //    we no longer ensure positive density and pressure here
 //    --> these checks have been moved to Flu_Close()->CorrectUnphysical()
