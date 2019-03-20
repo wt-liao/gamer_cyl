@@ -497,6 +497,7 @@ struct InputPara_t
    char  *Grackle_CloudyTable;
    int    Grackle_ThreeBodyRate;
    int    Grackle_CIE_Cooling;
+   int    Grackle_H2_OpaApprox;
    int    Che_GPU_NPGroup;
 #  endif
 
