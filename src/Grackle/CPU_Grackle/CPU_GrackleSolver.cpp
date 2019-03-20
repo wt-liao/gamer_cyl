@@ -41,7 +41,7 @@ void CPU_GrackleSolver( grackle_field_data *Che_FieldData, code_units Che_Units,
    if (  solve_chemistry( &Che_Units, Che_FieldData, dt ) == 0  )
       Aux_Error( ERROR_INFO, "Grackle solve_chemistry() failed !!\n" );
    
-   
+#  ifdef GRACKLE_DT
    // ### this part should be optimized for performance
    // get grackle cooling time scale
    real *gr_cooling_time = new real[ (long)NPatchGroup*(long)CUBE(PS2) ] ;
@@ -54,13 +54,17 @@ void CPU_GrackleSolver( grackle_field_data *Che_FieldData, code_units Che_Units,
    //### since NPG could change; need to double check
    else {
       for (int n=0; n<NPatchGroup*CUBE(PS2); n++) {
-         dt_Grackle_local = FMIN( dt_Grackle_local, FABS(gr_cooling_time[n]) );
+         // only check high density cells
+         //### this does not seem to match the index 
+         if ( Che_FieldData->density[n] * Che_Units.density_units > 1e-12)
+            dt_Grackle_local = FMIN( dt_Grackle_local, FABS(gr_cooling_time[n]) );
       }
          
       
    } // if (calculate_cooling_time), else...
    
    delete [] gr_cooling_time;
+#  endif // GRACKLE_DT
 
 } // FUNCTION : CPU_GrackleSolver
 
