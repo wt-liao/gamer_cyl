@@ -42,6 +42,7 @@ void CPU_GrackleSolver( grackle_field_data *Che_FieldData, code_units Che_Units,
       Aux_Error( ERROR_INFO, "Grackle solve_chemistry() failed !!\n" );
    
 #  ifdef GRACKLE_DT
+   /*
    // ### this part should be optimized for performance
    // get grackle cooling time scale
    real *gr_cooling_time = new real[ (long)NPatchGroup*(long)CUBE(PS2) ] ;
@@ -64,6 +65,7 @@ void CPU_GrackleSolver( grackle_field_data *Che_FieldData, code_units Che_Units,
    } // if (calculate_cooling_time), else...
    
    delete [] gr_cooling_time;
+   */
 #  endif // GRACKLE_DT
 
 } // FUNCTION : CPU_GrackleSolver
