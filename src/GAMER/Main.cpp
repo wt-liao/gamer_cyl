@@ -209,6 +209,7 @@ double               GRACKLE_PE_HEATING_RATE;
 char                 GRACKLE_CLOUDY_TABLE[MAX_STRING];
 int                  GRACKLE_THREE_BODY_RATE;
 int                  GRACKLE_CIE_COOLING;
+int                  GRACKLE_H2_OPA_APPROX;
 int                  CHE_GPU_NPGROUP;
 real                 dt_Grackle_global, dt_Grackle_local = HUGE_NUMBER;
 #endif

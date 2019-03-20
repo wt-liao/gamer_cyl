@@ -220,6 +220,7 @@ extern double          GRACKLE_PE_HEATING_RATE;
 extern char            GRACKLE_CLOUDY_TABLE[MAX_STRING];
 extern int             GRACKLE_THREE_BODY_RATE;
 extern int             GRACKLE_CIE_COOLING;
+extern int             GRACKLE_H2_OPA_APPROX;
 extern int             CHE_GPU_NPGROUP;
 extern real            dt_Grackle_global, dt_Grackle_local; 
 #endif
