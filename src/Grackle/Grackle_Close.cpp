@@ -141,7 +141,7 @@ void Grackle_Close( const int lv, const int SaveSg, const real h_Che_Array[], co
             delta_Eint = Eint_new*Dens - Eint_old ;
             
             if (dens_cgs > 1e-12) 
-               dt_Grackle_local = FMIN(dt_Grackle_local, FABS(Eint_old/delta_Eint * dt_Lv0);
+               dt_Grackle_local = FMIN(dt_Grackle_local, FABS(Eint_old/delta_Eint * dt_Lv0) );
             
 #           ifdef GRACKLE_RELAX
             t_ratio    = FMIN(t_curr/t_relax, 1.0);
