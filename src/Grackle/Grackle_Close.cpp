@@ -58,7 +58,7 @@ void Grackle_Close( const int lv, const int SaveSg, const real h_Che_Array[], co
    const double R         = (Const_kB/m_ave_cgs) * SQR(time_unit/L_unit) ;
    
 #  ifdef GRACKLE_DT
-   const dt_Lv0 = dTime_AllLv[0] ;  // dt at lv = 0
+   const double dt_Lv0    = dTime_AllLv[0] ;  // dt at lv = 0
 #  endif
 
    const real *Ptr_Dens0  = h_Che_Array + CheIdx_Dens *Size1v;
