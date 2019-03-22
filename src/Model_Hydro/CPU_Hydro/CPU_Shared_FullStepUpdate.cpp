@@ -118,17 +118,21 @@ void CPU_FullStepUpdate( const real Input[][ FLU_NXT*FLU_NXT*FLU_NXT ], real Out
       
       //### modified by wtl for debugging; only work for cyl coord
       /*
-      double pres_debug = CPU_GetPressure( Output[DENS][ID2], Output[MOMX][ID2], Output[MOMY][ID2], 
-                                           Output[MOMZ][ID2], Output[ENGY][ID2],
-                                           Gamma_m1, false, NULL_REAL );
+      double pres_debug1 = CPU_GetPressure( Input[DENS][ID3], Input[MOMX][ID3], Input[MOMY][ID3], 
+                                            Input[MOMZ][ID3], Input[ENGY][ID3],
+                                            Gamma_m1, false, NULL_REAL );
+      
+      double pres_debug  = CPU_GetPressure( Output[DENS][ID2], Output[MOMX][ID2], Output[MOMY][ID2], 
+                                            Output[MOMZ][ID2], Output[ENGY][ID2],
+                                            Gamma_m1, false, NULL_REAL );
                             
       if ( pres_debug < MIN_PRES ) 
-         Aux_Message(stdout, "Weird prssure = %8.4e at (X,Y,Z)=(%6.3f, %6.3f, %6.3f). \n", 
-                     pres_debug, x_pos[0], x_pos[1], x_pos[2]);
+         Aux_Message(stdout, "Weird prssure = %8.4e (before stepping: %8.4e) at (X,Y,Z)=(%6.3f, %6.3f, %6.3f). \n", 
+                     pres_debug, pres_debug1, x_pos[0], x_pos[1], x_pos[2]);
                           
       if ( Output[DENS][ID2]<0 || !Aux_IsFinite(Output[DENS][ID2]) )
-         Aux_Message(stdout, "Weird density = %8.4e at (X,Y,Z)=(%6.3f, %6.3f, %6.3f). \n", 
-                     Output[DENS][ID2], x_pos[0], x_pos[1], x_pos[2]);
+         Aux_Message(stdout, "Weird density = %8.4e (before stepping: %8.4e) at (X,Y,Z)=(%6.3f, %6.3f, %6.3f). \n", 
+                     Output[DENS][ID2], Input[DENS][ID3], x_pos[0], x_pos[1], x_pos[2]);
                      
       if ( Output[ENGY][ID2]<0 || !Aux_IsFinite(Output[ENGY][ID2]) )
          Aux_Message(stdout, "Weird energy = %8.4e at (X,Y,Z)=(%6.3f, %6.3f, %6.3f). \n", 
