@@ -426,6 +426,9 @@ void EvolveLevel( const int lv, const double dTime_FaLv )
       if ( GRACKLE_ACTIVATE )
       {
          const int SaveSg_Che = SaveSg_Flu;  // save in the same FluSg
+#        ifdef GRACKLE_DT
+         dt_Grackle_local = HUGE_NUMBER ;
+#        endif
 
          if ( OPT__VERBOSE  &&  MPI_Rank == 0 )
             Aux_Message( stdout, "   Lv %2d: Grackle_AdvanceDt, counter = %4ld ... ", lv, AdvanceCounter[lv] );
