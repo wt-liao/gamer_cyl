@@ -130,26 +130,41 @@ void Grackle_Close( const int lv, const int SaveSg, const real h_Che_Array[], co
             Dens     = Ptr_Dens [idx_pg];
             Eint_new = Ptr_sEint[idx_pg];
             
-            // check min Temperature; T_CMB ~ 50K at z~20
-            Eint_new = FMAX( Eint_new, Dens*R*T_CMB/Gamma_m1 );
-            
-#           ifdef GRACKLE_DT
+#           ifdef GRACKLE_RELAX
             dens_cgs   = Dens*(Che_Units.density_units);
             Etot_old   = *(fluid[ENGY][0][0] + idx_p); 
             Eint_old   = Etot_old - Ptr_Ek[idx_pg] ;
             Eint_old   = FMAX(Eint_old, MIN_PRES*_Gamma_m1) ;
             delta_Eint = Eint_new*Dens - Eint_old ;
             
-            if (dens_cgs > 1e-12) 
-               dt_Grackle_local = FMIN(dt_Grackle_local, FABS(Eint_old/delta_Eint * dt_Lv0) );
-            
-#           ifdef GRACKLE_RELAX
             t_ratio    = FMIN(t_curr/t_relax, 1.0);
             relax_frac = t_ratio * FMIN( POW(dens_cgs*1e12, -1*(1-t_ratio)), 1 );
             Eint_new   = (Eint_old + relax_frac*delta_Eint)/Dens ;
-#           endif // GRACKLE_RELAX
+#           endif 
             
+            
+#           ifdef GRACKLE_DT
+#           ifndef GRACKLE_RELAX
+            dens_cgs   = Dens*(Che_Units.density_units);
+            Etot_old   = *(fluid[ENGY][0][0] + idx_p); 
+            Eint_old   = Etot_old - Ptr_Ek[idx_pg] ;
+            Eint_old   = FMAX(Eint_old, MIN_PRES*_Gamma_m1) ;
+#           endif // ifndef GRACKLE_RELAX
+            
+            delta_Eint = Eint_new*Dens - Eint_old ;
+            if (dens_cgs > 1e-12) {
+               dt_Grackle_local = FMIN(dt_Grackle_local, FABS(Eint_old/delta_Eint *dt_Lv0) );
+               
+               if ( FABS(Eint_old/delta_Eint *dt_Lv0) < 1e-8) {
+                  Aux_Message(stdout, "Extreme dt_grackle = %8.4e at rho_cgs = %8.4e and T = %8.4e. \n",
+                              FABS(Eint_old/delta_Eint *dt_Lv0), dens_cgs, Eint_new*Gamma_m1/R );
+               }
+            }
+               
 #           endif // GRACKLE_DT
+            
+            // check min Temperature; T_CMB ~ 50K at z~20
+            Eint_new = FMAX( Eint_new, R*T_CMB*_Gamma_m1 );
             
 //          apply the minimum pressure check
             
