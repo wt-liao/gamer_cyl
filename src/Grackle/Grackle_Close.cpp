@@ -138,7 +138,7 @@ void Grackle_Close( const int lv, const int SaveSg, const real h_Che_Array[], co
             delta_Eint = Eint_new*Dens - Eint_old ;
             
             t_ratio    = FMIN(t_curr/t_relax, 1.0);
-            relax_frac = t_ratio * FMIN( POW(dens_cgs*1e12, -1*(1-t_ratio)), 1 );
+            relax_frac = t_ratio; // * FMIN( POW(dens_cgs*1e12, -1*(1-t_ratio)), 1 );
             Eint_new   = (Eint_old + relax_frac*delta_Eint)/Dens ;
 #           endif 
             
