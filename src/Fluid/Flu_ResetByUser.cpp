@@ -109,7 +109,7 @@ void Flu_ResetByUser_API( const int lv, const int FluSg, const double TTime )
       ExtAcc_AuxArray[3] = (real) NEWTON_G * M_STAR;
    
       // 3.0 set d_mstar to zero; set d_mstar_sum to zero in Aux_Record_User()
-      d_MStar = 0.0 ;
+      //d_MStar = 0.0 ;
    }
 #  endif // #ifdef MODEL_MSTAR
    
