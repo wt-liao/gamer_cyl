@@ -90,7 +90,7 @@ void Grackle_Close( const int lv, const int SaveSg, const real h_Che_Array[], co
    const real *Ptr_HeI=NULL, *Ptr_HeII=NULL, *Ptr_HeIII=NULL, *Ptr_HM=NULL, *Ptr_H2I=NULL, *Ptr_H2II=NULL;
    const real *Ptr_DI=NULL, *Ptr_DII=NULL, *Ptr_HDI=NULL;
    
-#  ifdef GRACKLE_RELAX
+#  if defined(GRACKLE_RELAX) || defined(GRACKLE_DT)
    real Etot_old, Eint_old, delta_Eint, dens_cgs, relax_frac, t_ratio; 
    const double t_orbit = 0.79 ;
    const double t_relax = 1*t_orbit ;
