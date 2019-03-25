@@ -57,6 +57,12 @@ void Grackle_Close( const int lv, const int SaveSg, const real h_Che_Array[], co
    const double m_ave_cgs = Const_mH * (0.76 + 0.24*4) ;
    const double R         = (Const_kB/m_ave_cgs) * SQR(time_unit/L_unit) ;
    
+#  if defined(GRACKLE_RELAX) || defined(GRACKLE_DT)
+   const double t_orbit = 0.79 ;
+   const double t_relax = 3*t_orbit ;
+   const double t_curr  = Time[0];
+#  endif
+   
 #  ifdef GRACKLE_DT
    const double dt_Lv0    = dTime_AllLv[0] ;  // dt at lv = 0
 #  endif
@@ -92,9 +98,6 @@ void Grackle_Close( const int lv, const int SaveSg, const real h_Che_Array[], co
    
 #  if defined(GRACKLE_RELAX) || defined(GRACKLE_DT)
    real Etot_old, Eint_old, delta_Eint, dens_cgs, relax_frac, t_ratio; 
-   const double t_orbit = 0.79 ;
-   const double t_relax = 3*t_orbit ;
-   const double t_curr  = Time[0];
 #  endif
 
 #  pragma omp for schedule( static )
@@ -131,7 +134,8 @@ void Grackle_Close( const int lv, const int SaveSg, const real h_Che_Array[], co
             Eint_new = Ptr_sEint[idx_pg];
             
 #           ifdef GRACKLE_RELAX
-            if (t_curr < t_relax) {
+            // only relax if the Time < relaxation time OR Temperature <= 2e5 K
+            if (t_curr < t_relax || Eint_new/R*Gamma_m1 < 2e5 ) {
                dens_cgs   = Dens*(Che_Units.density_units);
                Etot_old   = *(fluid[ENGY][0][0] + idx_p); 
                Eint_old   = Etot_old - Ptr_Ek[idx_pg] ;
