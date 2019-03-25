@@ -17,7 +17,7 @@ extern void CPU_Con2Pri( const real In[], real Out[], const real Gamma_m1, const
                          const bool JeansMinPres, const real JeansMinPres_Coeff );
 // for cooling
 #ifdef COOLING
-extern void CoolingFunc(real &cool_rate, const real PriVar[], const real x_pos[]);
+extern void CoolingFunc(real* cool_rate, const real PriVar[], const real x_pos[]);
 #endif // COOLING
 #endif
 

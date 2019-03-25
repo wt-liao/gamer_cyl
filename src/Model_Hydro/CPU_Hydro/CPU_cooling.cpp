@@ -6,7 +6,7 @@
 
 #ifdef COOLING
 extern double  Time[NLEVEL];
-extern void    CoolingFunc(real &cool_rate, const real PriVar[], const real x_pos[]);
+extern void    CoolingFunc(real* cool_rate, const real PriVar[], const real x_pos[]);
 
 // for POPIII
 static double rate_k4_func(const real T);
@@ -27,7 +27,7 @@ static double Brem_cool_func(const real T, const real n_e, const double n_HII);
 //
 // NOTE        :  
 //-------------------------------------------------------------------------------------------------------
-void CoolingFunc(real &cool_rate, const real PriVar[], const real x_pos[]) {
+void CoolingFunc(real* cool_rate, const real PriVar[], const real x_pos[]) {
    
    // Boltzmann R in the unit of popIII setting
    const double t_orbit     = 0.79 ;                  // outer orbital time

@@ -3,7 +3,7 @@
 #if ( !defined GPU  &&  MODEL == HYDRO )
 
 #ifdef COOLING
-extern void CoolingFunc(real &cool_rate, const real PriVar[], const real x_pos[]);
+extern void CoolingFunc(real* cool_rate, const real PriVar[], const real x_pos[]);
 #endif
 
 
