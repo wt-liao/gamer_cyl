@@ -93,7 +93,7 @@ void Grackle_Close( const int lv, const int SaveSg, const real h_Che_Array[], co
 #  if defined(GRACKLE_RELAX) || defined(GRACKLE_DT)
    real Etot_old, Eint_old, delta_Eint, dens_cgs, relax_frac, t_ratio; 
    const double t_orbit = 0.79 ;
-   const double t_relax = 1*t_orbit ;
+   const double t_relax = 3*t_orbit ;
    const double t_curr  = Time[0];
 #  endif
 
@@ -131,15 +131,17 @@ void Grackle_Close( const int lv, const int SaveSg, const real h_Che_Array[], co
             Eint_new = Ptr_sEint[idx_pg];
             
 #           ifdef GRACKLE_RELAX
-            dens_cgs   = Dens*(Che_Units.density_units);
-            Etot_old   = *(fluid[ENGY][0][0] + idx_p); 
-            Eint_old   = Etot_old - Ptr_Ek[idx_pg] ;
-            Eint_old   = FMAX(Eint_old, MIN_PRES*_Gamma_m1) ;
-            delta_Eint = Eint_new*Dens - Eint_old ;
+            if (t_curr < t_relax) {
+               dens_cgs   = Dens*(Che_Units.density_units);
+               Etot_old   = *(fluid[ENGY][0][0] + idx_p); 
+               Eint_old   = Etot_old - Ptr_Ek[idx_pg] ;
+               Eint_old   = FMAX(Eint_old, MIN_PRES*_Gamma_m1) ;
+               delta_Eint = Eint_new*Dens - Eint_old ;
             
-            t_ratio    = FMIN(t_curr/t_relax, 1.0);
-            relax_frac = t_ratio; // * FMIN( POW(dens_cgs*1e12, -1*(1-t_ratio)), 1 );
-            Eint_new   = (Eint_old + relax_frac*delta_Eint)/Dens ;
+               t_ratio    = FMIN(t_curr/t_relax, 1.0);
+               relax_frac = t_ratio; // * FMIN( POW(dens_cgs*1e12, -1*(1-t_ratio)), 1 );
+               Eint_new   = (Eint_old + relax_frac*delta_Eint)/Dens ;
+            }
 #           endif 
             
             
