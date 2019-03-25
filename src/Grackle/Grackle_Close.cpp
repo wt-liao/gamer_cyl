@@ -135,12 +135,13 @@ void Grackle_Close( const int lv, const int SaveSg, const real h_Che_Array[], co
             Eint_new = Ptr_sEint[idx_pg];
             
 #           ifdef GRACKLE_RELAX
+            dens_cgs   = Dens*(Che_Units.density_units);
+            Etot_old   = *(fluid[ENGY][0][0] + idx_p); 
+            Eint_old   = Etot_old - Ptr_Ek[idx_pg] ;
+            Eint_old   = FMAX(Eint_old, MIN_PRES*_Gamma_m1) ;
+            
             // only relax if the Time < relaxation time OR Temperature <= 2e5 K
             if (t_curr < t_relax && Eint_new/R*Gamma_m1 < T_upper ) {
-               dens_cgs   = Dens*(Che_Units.density_units);
-               Etot_old   = *(fluid[ENGY][0][0] + idx_p); 
-               Eint_old   = Etot_old - Ptr_Ek[idx_pg] ;
-               Eint_old   = FMAX(Eint_old, MIN_PRES*_Gamma_m1) ;
                delta_Eint = Eint_new*Dens - Eint_old ;
             
                t_ratio    = FMIN(t_curr/t_relax, 1.0);
