@@ -135,7 +135,7 @@ void Grackle_Close( const int lv, const int SaveSg, const real h_Che_Array[], co
             
 #           ifdef GRACKLE_RELAX
             // only relax if the Time < relaxation time OR Temperature <= 2e5 K
-            if (t_curr < t_relax || Eint_new/R*Gamma_m1 < 2e5 ) {
+            if (t_curr < t_relax && Eint_new/R*Gamma_m1 < 2e5 ) {
                dens_cgs   = Dens*(Che_Units.density_units);
                Etot_old   = *(fluid[ENGY][0][0] + idx_p); 
                Eint_old   = Etot_old - Ptr_Ek[idx_pg] ;
