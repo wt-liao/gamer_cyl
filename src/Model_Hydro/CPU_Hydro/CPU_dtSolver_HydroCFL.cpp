@@ -3,7 +3,7 @@
 #if ( !defined GPU  &&  MODEL == HYDRO )
 
 #ifdef COOLING
-extern void CoolingFunc(real cool_rate, const real PriVar[], const real x_pos[]);
+extern void CoolingFunc(real &cool_rate, const real PriVar[], const real x_pos[]);
 #endif
 
 
@@ -96,7 +96,7 @@ void CPU_dtSolver_HydroCFL( real dt_Array[], const real Flu_Array[][NCOMP_FLUID]
          PriVar[3] = Vz;
          PriVar[4] = Pres;
          
-         CoolingFunc(cool_rate, PriVar, x_pos);
+         CoolingFunc(&cool_rate, PriVar, x_pos);
          _dt_cool = cool_rate * (Gamma-1.0) / Pres ;
          MaxCFL   = FMAX(_safety_cool*_dt_cool, MaxCFL) ;
 #        endif

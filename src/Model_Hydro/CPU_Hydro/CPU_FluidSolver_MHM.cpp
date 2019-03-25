@@ -68,7 +68,7 @@ extern void GetCoord( const double Corner[], const real dh[], const int loop_siz
                       const int i, const int j, const int k );
 extern void GeometrySourceTerm( const real PriVar[], const real x_pos[], real GeoSource[] );
 #ifdef COOLING
-extern void CoolingFunc(real cool_rate, const real PriVar[], const real x_pos[]);
+extern void CoolingFunc(real &cool_rate, const real PriVar[], const real x_pos[]);
 #endif
 #endif
 
@@ -423,7 +423,7 @@ void CPU_RiemannPredict( const real Flu_Array_In[][ FLU_NXT*FLU_NXT*FLU_NXT ], c
       
 #     ifdef COOLING
       // ### currently cooling only work for cylindrical coord
-      CoolingFunc(cool_rate, PriVar, x_pos);
+      CoolingFunc(&cool_rate, PriVar, x_pos);
 #     endif
 
       for (int d=0; d<3; d++) {
