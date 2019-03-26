@@ -30,7 +30,7 @@ static double Brem_cool_func(const real T, const real n_e, const double n_HII);
 void CoolingFunc(real* cool_rate, const real PriVar[], const real x_pos[]) {
    
    // Boltzmann R in the unit of popIII setting
-   const double t_orbit     = 0.79 ;                  // outer orbital time
+   const double t_orbit     = 0.79 ;                  // outer orbital time: POPIII: 0.79; SG: 125
    const double R           = 4.64952804093003e+0 ;   // needed for converting to T (temperature)
    
    const double t_curr      = Time[0];
@@ -49,7 +49,7 @@ void CoolingFunc(real* cool_rate, const real PriVar[], const real x_pos[]) {
    //const double tau_dyn     = sph_rad / v_abs ;
    
    // cooling parameter: cooling time = beta * (dynamical time)
-   // relax the system w/ cooling time = 10 dyn_tau
+   // relax the system w/ cooling time = 15 dyn_tau
    const double beta        = 15.0;
    const double cool_time   = beta * tau_dyn;
    
@@ -61,7 +61,7 @@ void CoolingFunc(real* cool_rate, const real PriVar[], const real x_pos[]) {
    else           *cool_rate = TINY_NUMBER ;
    
    // ramp down cooling? 
-   if (t_curr < t_relax) *cool_rate *= FABS( 1.0 - (t_relax-t_curr)/t_relax ) ; 
+   if (t_curr < t_relax) *cool_rate *= FABS( t_curr/t_relax ) ; 
    
 
    
