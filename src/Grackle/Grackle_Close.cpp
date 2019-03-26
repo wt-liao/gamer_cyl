@@ -54,13 +54,13 @@ void Grackle_Close( const int lv, const int SaveSg, const real h_Che_Array[], co
    const double time_unit = Che_Units.time_units;
    const double L_unit    = Che_Units.length_units;
    const double T_CMB     = 50 ;
-   const double T_upper   = 2e5;
+   const double T_upper   = 2e6;
    const double m_ave_cgs = Const_mH * (0.76 + 0.24*4) ;
    const double R         = (Const_kB/m_ave_cgs) * SQR(time_unit/L_unit) ;
    
 #  if defined(GRACKLE_RELAX) || defined(GRACKLE_DT)
    const double t_orbit = 0.79 ;
-   const double t_relax = 3*t_orbit ;
+   const double t_relax = 1*t_orbit ;
    const double t_curr  = Time[0];
 #  endif
    
