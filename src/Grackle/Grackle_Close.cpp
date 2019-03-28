@@ -54,7 +54,7 @@ void Grackle_Close( const int lv, const int SaveSg, const real h_Che_Array[], co
    const double time_unit = Che_Units.time_units;
    const double L_unit    = Che_Units.length_units;
    const double T_CMB     = 50 ;
-   const double T_upper   = 2e6;
+   const double T_upper   = 1e6;
    const double m_ave_cgs = Const_mH * (0.76 + 0.24*4) ;
    const double R         = (Const_kB/m_ave_cgs) * SQR(time_unit/L_unit) ;
    
@@ -151,6 +151,11 @@ void Grackle_Close( const int lv, const int SaveSg, const real h_Che_Array[], co
 #           endif 
             
             
+//          check min Temperature; T_CMB ~ 50K at z~20
+            Eint_new = FMAX( Eint_new, R*T_CMB  *_Gamma_m1 );
+            Eint_new = FMIN( Eint_new, R*T_upper*_Gamma_m1 );
+            
+            
 #           ifdef GRACKLE_DT
 #           ifndef GRACKLE_RELAX
             dens_cgs   = Dens*(Che_Units.density_units);
@@ -171,9 +176,6 @@ void Grackle_Close( const int lv, const int SaveSg, const real h_Che_Array[], co
                
 #           endif // GRACKLE_DT
             
-            // check min Temperature; T_CMB ~ 50K at z~20
-            Eint_new = FMAX( Eint_new, R*T_CMB  *_Gamma_m1 );
-            Eint_new = FMIN( Eint_new, R*T_upper*_Gamma_m1 );
             
 //          apply the minimum pressure check
             
