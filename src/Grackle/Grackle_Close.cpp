@@ -54,7 +54,7 @@ void Grackle_Close( const int lv, const int SaveSg, const real h_Che_Array[], co
    const double time_unit = Che_Units.time_units;
    const double L_unit    = Che_Units.length_units;
    const double T_CMB     = 50 ;
-   const double T_upper   = 1e6;
+   const double T_upper   = 5e4;
    const double m_ave_cgs = Const_mH * (0.76 + 0.24*4) ;
    const double R         = (Const_kB/m_ave_cgs) * SQR(time_unit/L_unit) ;
    
