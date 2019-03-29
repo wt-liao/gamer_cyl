@@ -600,15 +600,6 @@ void BC_User_zm( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
          Array3D[MOMY][k][j][i] = Array3D[MOMY][k_ref][j][i] ;
          Array3D[MOMZ][k][j][i] = 0; //Array3D[MOMZ][k_ref][j][i] ;
          
-         // only allow outflow in zm: vz <= 0.0
-         /*
-         if ( Array3D[MOMZ][k_ref][j][i] < 0.0)   
-            Array3D[MOMZ][k][j][i] = Array3D[MOMZ][k_ref][j][i] ;  
-         else
-            Array3D[MOMZ][k][j][i] = 0.0;
-         */
-         
-         
          // calculate for BC value
          Z_p1     = Z+dh[2];
          sph_rad  = SQRT( Z_p1*Z_p1 + X*X );
@@ -619,9 +610,8 @@ void BC_User_zm( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
                                      Array3D[ENGY][k+2][j][i], Gamma_m1, CheckMinPres_Yes, MIN_PRES );
                                  
          dens_p1  = Array3D[DENS][k+1][j][i];
-         //pot_grad = PotArray3D[0][k+2][j][i] - PotArray3D[0][k][j][i];
          
-         pres_bc  = pres_p2 + dens_p1*pot_grad - dens_p1*star_g*(2.0*dh[2]) ;
+         pres_bc  = pres_p2 - dens_p1*star_g*(2.0*dh[2]) ;
          pres_bc  = FMAX( pres_bc, MIN_PRES ) ;
          
          
@@ -702,13 +692,6 @@ void BC_User_zp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
          Array3D[MOMY][k][j][i] = Array3D[MOMY][k_ref][j][i] ;
          Array3D[MOMZ][k][j][i] = 0; // Array3D[MOMZ][k_ref][j][i] ;  
          
-         // only allow outflow in zp: vz > 0.0
-         /*
-         if ( Array3D[MOMZ][k_ref][j][i] > 0.0)   
-            Array3D[MOMZ][k][j][i] = Array3D[MOMZ][k_ref][j][i] ;  
-         else
-            Array3D[MOMZ][k][j][i] = 0.0;
-         */
          
          // calculate for force balance BC value
          Z_m1     = Z-dh[2];
@@ -720,8 +703,7 @@ void BC_User_zp( real *Array, real *PotArray, const int NVar_Flu, const int Ghos
                                      Array3D[ENGY][k-2][j][i], Gamma_m1, CheckMinPres_Yes, MIN_PRES );
                                  
          dens_m1  = Array3D[DENS][k-1][j][i];
-         //pot_grad = PotArray3D[0][k][j][i] - PotArray3D[0][k-2][j][i];
-         pres_bc  = pres_m2 - dens_m1*pot_grad + dens_m1*star_g*(2.0*dh[2]) ;
+         pres_bc  = pres_m2 + dens_m1*star_g*(2.0*dh[2]) ;
          pres_bc  = FMAX( pres_bc, MIN_PRES ) ;
          
          
