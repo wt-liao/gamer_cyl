@@ -215,7 +215,7 @@ bool Flu_ResetByUser( real fluid[], const double X, const double Y, const double
    const double T_CMB           = 50 ;
    const double T_upper         = 5e4;
    const double m_ave_cgs       = Const_mH * (0.76 + 0.24*4) ;
-   const double R               = (Const_kB/m_ave_cgs) * SQR(time_unit/L_unit) ;
+   const double R               = (Const_kB/m_ave_cgs) * SQR(time_unit/length_unit) ;
    const double Gamma_m1        = GAMMA - 1.0;
    const double _Gamma_m1       = 1.0/Gamma_m1;
    const bool   CheckMinPres_No = false;
