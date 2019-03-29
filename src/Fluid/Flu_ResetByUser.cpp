@@ -125,6 +125,7 @@ void Flu_ResetByUser_API( const int lv, const int FluSg, const double TTime )
 
       return;
    }
+   */
 
    const double *dh      = amr->dh[lv];
 #  if ( MODEL == HYDRO  ||  MODEL == MHD )
@@ -184,6 +185,6 @@ void Flu_ResetByUser_API( const int lv, const int FluSg, const double TTime )
 
       }}} // i,j,k
    } // for (int PID=0; PID<amr->NPatchComma[lv][1]; PID++)
-   */
+   
    
 } // FUNCTION : Flu_ResetByUser_API
