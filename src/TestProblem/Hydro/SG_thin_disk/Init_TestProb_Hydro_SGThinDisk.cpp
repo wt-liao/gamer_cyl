@@ -210,6 +210,8 @@ bool Flu_ResetByUser( real fluid[], const double X, const double Y, const double
    // for MODEL_MSTAR, reset updates the M_star. Thus, no need to loop through XYZ;  
    // Put the reset directly in Flu_ResetByUser_API; 
 #  ifdef SET_T_LIMIT
+   const double time_unit       = 5.02280842159966e+09;
+   const double length_unit     = 1.49597870750767e+13;
    const double T_CMB           = 50 ;
    const double T_upper         = 5e4;
    const double m_ave_cgs       = Const_mH * (0.76 + 0.24*4) ;
