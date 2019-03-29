@@ -103,7 +103,7 @@ void SetParameter()
    ReadPara->Add( "const_R",           &const_R,               1.0,         Eps_double,        NoMax_double      );
    ReadPara->Add( "slope_q",           &slope_q,               -2.0,        NoMin_double,      NoMax_double      );
    ReadPara->Add( "slope_p",           &slope_p,               -1.5,        NoMin_double,      NoMax_double      );
-   ReadPara->Add( "T_0",               &T_0,                   4e-4,        Eps_double,        NoMax_double      );
+   ReadPara->Add( "T_0",               &T_0,                   4e-2,        Eps_double,        NoMax_double      );
    ReadPara->Add( "rho_0",             &rho_0,                 1.0,         Eps_double,        NoMax_double      );
 
    ReadPara->Read( FileName );
