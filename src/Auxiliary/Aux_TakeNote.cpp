@@ -132,6 +132,12 @@ void Aux_TakeNote()
 #     else
       fprintf( Note, "SUPPORT_GRACKLE                 OFF\n" );
 #     endif
+      
+#     ifdef GRACKLE_DT
+      fprintf( Note, "GRACKLE_DT                      ON\n" );
+#     else
+      fprintf( Note, "GRACKLE_DT                      OFF\n" );
+#     endif      
 
 #     ifdef MODEL_IC_GRACKLE
       fprintf( Note, "MODEL_IC_GRACKLE                 ON\n" );

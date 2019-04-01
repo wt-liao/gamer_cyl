@@ -1782,6 +1782,10 @@ void Check_InputPara( const char *FileName, const int FormatVersion )
    LoadField( "Grackle_H2_OpaApprox",    &RS.Grackle_H2_OpaApprox,    SID, TID, NonFatal, &RT.Grackle_H2_OpaApprox,     1, NonFatal );
    LoadField( "Che_GPU_NPGroup",         &RS.Che_GPU_NPGroup,         SID, TID, NonFatal, &RT.Che_GPU_NPGroup,          1, NonFatal );
 #  endif
+   
+#  ifdef GRACKLE_DT
+   LoadField( "dt_Grackle",              &RS.dt_Grackle,              SID, TID, NonFatal, &RT.dt_Grackle,               1, NonFatal );
+#  endif
 
 // star formation
 #  ifdef STAR_FORMATION
@@ -2051,6 +2055,14 @@ void ResetParameter( const char *FileName, double *EndT, long *EndStep )
       if (MPI_Rank == 0)      Aux_Message( stdout, "      NOTE : parameter %s is reset to %14.7e\n", "M_STAR", M_STAR ) ;
    }
 #  endif 
+   
+#  ifdef GRACKLE_DT
+   int dtGrackle_FieldIdx = H5Tget_member_index( TID, "dt_Grackle" );
+   if (dtGrackle_FieldIdx >= 0) {
+      LoadField( "dt_Grackle", &dt_Grackle_local, SID, TID, NonFatal, NullPtr, -1, NonFatal );
+      if (MPI_Rank == 0)      Aux_Message( stdout, "      NOTE : parameter %s is reset to %14.7e\n", "dt_Grackle_local", dt_Grackle_local ) ;
+   }
+#  endif
 
 // 4. close all objects
    Status = H5Tclose( TID );

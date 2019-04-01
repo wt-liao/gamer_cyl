@@ -1920,6 +1920,10 @@ void FillIn_InputPara( InputPara_t &InputPara )
    InputPara.Grackle_H2_OpaApprox    = GRACKLE_H2_OPA_APPROX;
    InputPara.Che_GPU_NPGroup         = CHE_GPU_NPGROUP;
 #  endif
+   
+#  ifdef GRACKLE_DT
+   InputPara.dt_Grackle              = dt_Grackle_local ;
+#  endif
 
 // star formation
 #  ifdef STAR_FORMATION
@@ -2624,6 +2628,10 @@ void GetCompound_InputPara( hid_t &H5_TypeID )
    H5Tinsert( H5_TypeID, "Grackle_CIE_Cooling",     HOFFSET(InputPara_t,Grackle_CIE_Cooling    ), H5T_NATIVE_INT     );
    H5Tinsert( H5_TypeID, "Grackle_H2_OpaApprox",    HOFFSET(InputPara_t,Grackle_H2_OpaApprox   ), H5T_NATIVE_INT     );
    H5Tinsert( H5_TypeID, "Che_GPU_NPGroup",         HOFFSET(InputPara_t,Che_GPU_NPGroup        ), H5T_NATIVE_INT     );
+#  endif
+   
+#  ifdef GRACKLE_DT
+   H5Tinsert( H5_TypeID, "dt_Grackle",              HOFFSET(InputPara_t,dt_Grackle             ), H5T_NATIVE_DOUBLE  );
 #  endif
 
 // star formation

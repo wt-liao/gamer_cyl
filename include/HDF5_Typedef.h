@@ -500,6 +500,11 @@ struct InputPara_t
    int    Grackle_H2_OpaApprox;
    int    Che_GPU_NPGroup;
 #  endif
+   
+// GRACKLE_DT
+#  ifdef GRACKLE_DT
+   double dt_Grackle;
+#  endif
 
 // star formation
 #  ifdef STAR_FORMATION
