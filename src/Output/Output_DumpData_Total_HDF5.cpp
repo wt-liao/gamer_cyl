@@ -1922,7 +1922,7 @@ void FillIn_InputPara( InputPara_t &InputPara )
 #  endif
    
 #  ifdef GRACKLE_DT
-   InputPara.dt_Grackle              = dt_Grackle_local ;
+   InputPara.dt_Grackle              = dt_Grackle_global ;
 #  endif
 
 // star formation
