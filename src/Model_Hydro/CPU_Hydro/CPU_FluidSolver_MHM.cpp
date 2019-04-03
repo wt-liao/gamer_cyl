@@ -533,7 +533,7 @@ void CPU_Find_H2_Opacity( const real Half_Var[][NCOMP_TOTAL], real Output[][ PS2
    
    const double m_ave_cgs = Const_mH * (0.76 + 0.24*4) ;
    const double const_R   = (Const_kB/m_ave_cgs) * SQR(time_unit/length_unit) ;
-   const double _cosnt_R  = 1 / const_R ;
+   const double _const_R  = 1 / const_R ;
    const double _Gamma_m1 = 1 / (GAMMA-1); 
    const real   _dh[3]    = {1/dh[0], 1/dh[1], 1/dh[2]};
    

@@ -33,7 +33,7 @@ void Grackle_Load_Alpha_Table(){
    const int N_elem = int( Table_T_Size/sizeof(double) ); 
    
    if (MPI_Rank == 0)
-      Aux_Message(stdout, "H2 Opacity NOTE: %d elements in H2 Opacity Table. \n", N_idx); 
+      Aux_Message(stdout, "H2 Opacity NOTE: %d elements in H2 Opacity Table. \n", N_elem); 
    
    // allocate memory for T-table and Alpha-table
    //### declare H2_Op_T_Tabl, H2_Op_Alpha_Table in global.h -> Done!
