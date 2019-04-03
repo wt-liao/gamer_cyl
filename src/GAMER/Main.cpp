@@ -212,6 +212,13 @@ int                  GRACKLE_CIE_COOLING;
 int                  GRACKLE_H2_OPA_APPROX;
 int                  CHE_GPU_NPGROUP;
 real                 dt_Grackle_global, dt_Grackle_local = HUGE_NUMBER;
+
+#ifdef GRACKLE_H2_SOBOLEV
+double              *H2_Op_T_Table     = NULL ;
+double              *H2_Op_Alpha_Table = NULL ; 
+double               Grackle_T_Start, Grackle_T_End, Grackle_dT; 
+#endif
+
 #endif
 
 // (2-8) star formation

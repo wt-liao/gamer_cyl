@@ -63,7 +63,12 @@ void Init_GAMER( int *argc, char ***argv )
 // initialize Grackle
 #  ifdef SUPPORT_GRACKLE
    if ( GRACKLE_ACTIVATE )    Grackle_Init();
-#  endif
+   
+#  ifdef GRACKLE_H2_SOBOLEV
+   Grackle_Load_Alpha_Table();
+#  endif // GRACKLE_H2_SOBOLEV
+   
+#  endif // #ifdef SUPOORT_GRACKLE
 
 
 // initialize parameters for the parallelization (rectangular domain decomposition)

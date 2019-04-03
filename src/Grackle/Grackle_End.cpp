@@ -27,6 +27,21 @@ void Grackle_End()
 
    delete grackle_data;
    grackle_data = NULL;
+   
+   
+#  ifdef GRACKLE_H2_SOBOLEV
+   
+   if (H2_Op_T_Table != NULL) {
+      delete [] H2_Op_T_Table;
+      H2_Op_T_Table = NULL;
+   }
+   
+   if (H2_Op_Alpha_Table != NULL) {
+      delete [] H2_Op_Alpha_Table;
+      H2_Op_Alpha_Table = NULL;
+   }
+   
+#  endif
 
 
    if ( MPI_Rank == 0 )    Aux_Message( stdout, "%s ... done\n", __FUNCTION__ );

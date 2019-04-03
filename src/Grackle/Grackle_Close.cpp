@@ -25,6 +25,9 @@ extern int CheIdx_Metal;
 
 extern double  Time[NLEVEL];
 
+//### NOTE for GRACKLE_H2_SOBOLEV
+// currently, we don't need to update Opacity field, so no modification here
+
 
 //-------------------------------------------------------------------------------------------------------
 // Function    :  Grackle_Close

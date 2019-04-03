@@ -24,7 +24,11 @@ int CheIdx_DII   = Idx_Undefined;
 int CheIdx_HDI   = Idx_Undefined;
 int CheIdx_Metal = Idx_Undefined;
 
-
+#  ifdef GRACKLE_H2_SOBOLEV
+int CheIdx_H2_TauX = Idx_Undefined;
+int CheIdx_H2_TauY = Idx_Undefined;
+int CheIdx_H2_TauZ = Idx_Undefined;
+#  endif
 
 
 //-------------------------------------------------------------------------------------------------------
@@ -75,6 +79,14 @@ void Init_MemAllocate_Grackle( const int Che_NPG )
 
    if ( GRACKLE_METAL )
    CheIdx_Metal = Che_NField ++;
+   
+#  ifdef GRACKLE_H2_SOBOLEV
+   //### check if we can access grackle_data here
+   // if (grackle_data->h2_optical_depth_approximation == 2)
+   CheIdx_H2_TauX = Che_NField ++; 
+   CheIdx_H2_TauY = Che_NField ++; 
+   CheIdx_H2_TauZ = Che_NField ++; 
+#  endif
 
 
 // allocate the input/output array for the Grackle solver

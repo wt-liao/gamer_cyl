@@ -76,6 +76,11 @@ void Grackle_Init_FieldData()
    Che_FieldData->RT_HeII_ionization_rate = NULL;
    Che_FieldData->RT_H2_dissociation_rate = NULL;
    Che_FieldData->RT_heating_rate         = NULL;
+   
+   // H2 Sobolev fields
+   Che_FieldData->H2_Sobolev_tau_x        = NULL;
+   Che_FieldData->H2_Sobolev_tau_y        = NULL;
+   Che_FieldData->H2_Sobolev_tau_z        = NULL;
 
 } // FUNCTION : Grackle_Init_FieldData
 

@@ -72,6 +72,11 @@ extern void CoolingFunc(real cool_rate, const real PriVar[], const real x_pos[])
 #endif
 #endif
 
+#if (defined SUPPORT_GRACKLE) && (defined GRACKLE_H2_SOBOLEV) && (FLU_SCHEME == MHM_RP)
+static void CPU_Find_H2_Opacity( const real Half_Var[][NCOMP_TOTAL], real Output[][ PS2*PS2*PS2 ], 
+                                 const real* dh, const real* Corner ) ;
+#endif // if (defined SUPPORT_GRACKLE) && (defined GRACKLE_H2_SOBOLEV) && (FLU_SCHEME == MHM_RP)
+
 
 
 //-------------------------------------------------------------------------------------------------------
@@ -275,6 +280,12 @@ void CPU_FluidSolver_MHM( const real Flu_Array_In[][NCOMP_TOTAL][ FLU_NXT*FLU_NX
 //       4. store the inter-patch fluxes
          if ( StoreFlux )
          CPU_StoreFlux( Flux_Array[P], FC_Flux );
+         
+         
+//       5. use Half_Var to calculate optical depth
+#        if (defined SUPPORT_GRACKLE) && (defined GRACKLE_H2_SOBOLEV) && (FLU_SCHEME == MHM_RP)
+         CPU_Find_H2_Opacity( Half_Var, Flu_Arrat_Out[P], dh, Corner_Array[P] );
+#        endif
 
       } // for (int P=0; P<NPatchGroup; P++)
 
@@ -492,6 +503,107 @@ void RiemannFluxGrad( const real Flux_R, const real Flux_L, real* const & dF, co
    }   
    
 } // FUNCTION: RiemannFluxGrad
+
+
+
+#if (defined SUPPORT_GRACKLE) && (defined GRACKLE_H2_SOBOLEV) 
+//-------------------------------------------------------------------------------------------------------
+// Function    :  
+// Description :  
+//
+// Parameter   :  Flux         : 
+//                dF           : 
+//
+// NOTE        :  
+//-------------------------------------------------------------------------------------------------------
+void CPU_Find_H2_Opacity( const real Half_Var[][NCOMP_TOTAL], real Output[][ PS2*PS2*PS2 ], 
+                          const real* dh, const real* Corner ) {
+   
+   real dens, _dens, engy, pres, Temp, lnT;
+   real alpha, cs, dvx_dx, dvy_dv, dvz_dz, tau_x, tau_y, tau_z; 
+   real x_pos[3], face_pos[1][2] ;
+   int Idx, ID1, ID2, ID_iL, ID_iR, ID_jL, ID_jR, ID_kL, ID_kR ;
+   
+   const int Ghost_Size = int(0.5*(N_HF_VAR-PS2));
+   
+   const double length_unit   = Che_Units.length_units;
+   const double time_unit     = Che_Units.time_units;
+   //const double density_unit  = Che_Units.density_units; 
+   //const double velocity_unit = Che_Units.velocity_units;
+   
+   const double m_ave_cgs = Const_mH * (0.76 + 0.24*4) ;
+   const double const_R   = (Const_kB/m_ave_cgs) * SQR(time_unit/L_unit) ;
+   const double _cosnt_R  = 1 / const_R ;
+   const double _Gamma_m1 = 1 / (GAMMA-1); 
+   const real   _dh[3]    = {1/dh[0], 1/dh[1], 1/dh[2]};
+   
+   const double _Grackle_dT  = 1 / Grackle_dT ; 
+   const double* Alpha_Table = H2_Op_Alpha_Table; 
+   const double* T_Table     = H2_Op_T_Table ; 
+   
+   for (int k1=0, k2=Ghost_Size;  k1<PS2;  k1++, k2++)
+   for (int j1=0, j2=Ghost_Size;  j1<PS2;  j1++, j2++)
+   for (int i1=0, i2=Ghost_Size;  i1<PS2;  i1++, i2++)
+   {
+      //### check the size of Half_Var; currently set to be N_HF_VAR
+      ID1 = (k1*PS2        + j1)*PS2      + i1;
+      ID2 = (k2*N_HF_VAR   + j2)*N_HF_VAR + i2;
+      
+      GetCoord( Corner, dh, N_HF_VAR, x_pos, face_pos, i2, j2, k2);
+         
+      dens  = Half_Var[ID2][DENS];
+      _dens = 1 / dens; 
+      engy  = Half_Var[ID2][ENGY];
+      pres  = engy * _Gamma_m1;
+      //### make sure positive pressure
+      //### DE scheme
+      
+      Temp = pres * _const_R * _dens;
+      lnT  = LOG(Temp); 
+      
+      // get T_idx corresponding to table & interpolate
+      Idx = int( (lnT-Grackle_T_Start)/Grackle_dT ) ; 
+      
+      alpha  = Alpha_Table[Idx] + 
+               (Alpha_Table[Idx+1]-Alpha_Table[Idx]) * ( (lnT-T_Table[Idx]) * _Grackle_dT ); 
+      alpha  = FMAX(alpha, TINY_NUMBER); 
+      
+      // calculate vel gradient and find tau in each direction
+      ID_iL = (k2*N_HF_VAR   + j2)*N_HF_VAR + (i2-1) ;
+      ID_iR = (k2*N_HF_VAR   + j2)*N_HF_VAR + (i2+1) ;
+      ID_jL = (k2*N_HF_VAR   + (j2-1))*N_HF_VAR + i2 ;
+      ID_jR = (k2*N_HF_VAR   + (j2+1))*N_HF_VAR + i2 ;
+      ID_kL = ((k2-1)*N_HF_VAR   + j2)*N_HF_VAR + i2 ;
+      ID_kR = ((k2+1)*N_HF_VAR   + j2)*N_HF_VAR + i2 ;
+      
+      // calculate velocity gradient
+      dvx_dx = (Half_Var[ID_iR][MOMX] - Half_Var[ID_iL][MOMX]) * (0.5*_dh[0]);
+      dvy_dy = (Half_Var[ID_jR][MOMY] - Half_Var[ID_jL][MOMY]) * (0.5*_dh[1]) / x_pos[0];
+      dvz_dz = (Half_Var[ID_kR][MOMZ] - Half_Var[ID_kL][MOMZ]) * (0.5*_dh[2]);
+      
+      // calculate tau
+      cs    = SQRT( GAMMA*pres*_dens) ; 
+      tau_x = alph* FABS(cs/dvx_dx); 
+      tau_y = alph* FABS(cs/dvy_dy);
+      tau_z = alph* FABS(cs/dvz_dz);
+      
+      // save alpha and tau
+      // note: real tau = (tau*length_unit) * n_H2 <- do this in grackle
+      Output[Idx_alpha ][ID1] = alpha; 
+      Output[Idx_OpTauX][ID1] = tau_x;
+      Output[Idx_OpTauY][ID1] = tau_y;
+      Output[Idx_OpTauZ][ID1] = tau_z;
+      
+      //### if tau is very small, it might become difficult to calculate beta
+      //### check this in grackle
+      
+   } // loop through k, j, i
+   
+} // CPU_Find_H2_Opacity
+
+#endif // #if (defined SUPPORT_GRACKLE) && (defined GRACKLE_H2_SOBOLEV) 
+
+
 #endif // COORDINATE == CYLINDRICAL
 
 #endif // #if ( FLU_SCHEME == MHM_RP )

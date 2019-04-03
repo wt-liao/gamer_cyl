@@ -179,7 +179,6 @@ void SetGridIC( real fluid[], const double x, const double y, const double z, co
 } // FUNCTION : SetGridIC
 
 
-#ifdef GRAVITY
 //-------------------------------------------------------------------------------------------------------
 // Function    :  Flu_ResetByUser_Func
 // Description :  Function to reset the fluid field
@@ -286,7 +285,28 @@ void Aux_Record_User()
    
 } // FUNCTION : Aux_Record_User
 
-#endif //GRAVITY
+
+#  if (defined SUPPORT_GRACKLE) && (defined GRACKLE_H2_SOBOLEV)
+//-------------------------------------------------------------------------------------------------------
+// Function    :  AddNewField_GrackleOp
+// Description :  Add the problem-specific fields
+// 
+// Parameter   :  None
+//
+// Return      :  None
+//-------------------------------------------------------------------------------------------------------
+void AddNewField_GrackleOp()
+{
+   Idx_alpha  = AddField( "Alpha",     NORMALIZE_NO );
+   Idx_OpTauX = AddField( "Opacity_X", NORMALIZE_NO );
+   Idx_OpTauY = AddField( "Opacity_Y", NORMALIZE_NO );
+   Idx_OpTauZ = AddField( "Opacity_Z", NORMALIZE_NO );
+
+} // FUNCTION : AddNewField_GrackleOp
+
+#endif // #if (defined SUPPORT_GRACKLE) && (defined GRACKLE_H2_SOBOLEV)
+
+
 
 #endif // #if ( MODEL == HYDRO )
 
@@ -327,6 +347,11 @@ void Init_TestProb_Hydro_SGThinDisk()
    Flu_ResetByUser_Func_Ptr = NULL;
    End_User_Ptr             = NULL;
    Init_ExternalAcc_Ptr     = Init_ExternalAcc;       // option: OPT__GRAVITY_TYPE=2/3; example: SelfGravity/Init_ExternalAcc.cpp
+   
+#  if (defined SUPPORT_GRACKLE) && (defined GRACKLE_H2_SOBOLEV)
+   Init_Field_User_Ptr      = AddNewField_GrackleOp;
+#  endif
+   
 #  endif // #if ( MODEL == HYDRO )
 
 

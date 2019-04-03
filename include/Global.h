@@ -223,6 +223,12 @@ extern int             GRACKLE_CIE_COOLING;
 extern int             GRACKLE_H2_OPA_APPROX;
 extern int             CHE_GPU_NPGROUP;
 extern real            dt_Grackle_global, dt_Grackle_local; 
+
+#ifdef GRACKLE_H2_SOBOLEV
+extern double         *H2_Op_T_Table, *H2_Op_Alpha_Table ; 
+extern double          Grackle_T_Start, Grackle_T_End, Grackle_dT; 
+#endif
+
 #endif
 
 
@@ -275,7 +281,7 @@ extern real       (*h_Che_Array[2]);
 extern grackle_field_data *Che_FieldData;
 extern code_units Che_Units;
 #endif
-#endif
+#endif // SUPPORT_GRACKLE
 
 extern real        *h_dt_Array_T    [2];
 extern real       (*h_Flu_Array_T   [2])[NCOMP_FLUID][ CUBE(PS1) ];
