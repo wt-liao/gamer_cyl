@@ -582,6 +582,10 @@ void CPU_GrackleSolver( grackle_field_data *Che_FieldData, code_units Che_Units,
 #ifdef MODEL_IC_GRACKLE
 void Init_GrackleField();
 #endif // #ifdef MODEL_IC_GRACKLE
+#ifdef GRACKLE_H2_SOBOLEV
+void Grackle_Load_Alpha_Table();
+#endif // GRACKLE_H2_SOBOLEV
+
 #endif // #ifdef SUPPORT_GRACKLE
 
 

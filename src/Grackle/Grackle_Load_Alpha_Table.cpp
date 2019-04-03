@@ -55,9 +55,9 @@ void Grackle_Load_Alpha_Table(){
    fclose(Alpha_Table);
    
    //### allocate Grackle_T_Start, Grackle_dT in global.h. Done!
-   Grackle_T_Start = T_Table[0]; 
-   Grackle_T_End   = T_Table[N_elem -1] ;
-   Grackle_dT      = T_Table[1] - T_Table[0] ;
+   Grackle_T_Start = H2_Op_T_Table[0]; 
+   Grackle_T_End   = H2_Op_T_Table[N_elem -1] ;
+   Grackle_dT      = H2_Op_T_Table[1] - H2_Op_T_Table[0] ;
    
    //### free H2_Op_T_Table, H2_Op_Alpha_Table in Grackle_End(). Done!
    

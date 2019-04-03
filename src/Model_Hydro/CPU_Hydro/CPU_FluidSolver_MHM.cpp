@@ -284,7 +284,7 @@ void CPU_FluidSolver_MHM( const real Flu_Array_In[][NCOMP_TOTAL][ FLU_NXT*FLU_NX
          
 //       5. use Half_Var to calculate optical depth
 #        if (defined SUPPORT_GRACKLE) && (defined GRACKLE_H2_SOBOLEV) && (FLU_SCHEME == MHM_RP)
-         CPU_Find_H2_Opacity( Half_Var, Flu_Arrat_Out[P], dh, Corner_Array[P] );
+         CPU_Find_H2_Opacity( Half_Var, Flu_Array_Out[P], dh, Corner_Array[P] );
 #        endif
 
       } // for (int P=0; P<NPatchGroup; P++)
@@ -520,7 +520,7 @@ void CPU_Find_H2_Opacity( const real Half_Var[][NCOMP_TOTAL], real Output[][ PS2
                           const real* dh, const real* Corner ) {
    
    real dens, _dens, engy, pres, Temp, lnT;
-   real alpha, cs, dvx_dx, dvy_dv, dvz_dz, tau_x, tau_y, tau_z; 
+   real alpha, cs, dvx_dx, dvy_dy, dvz_dz, tau_x, tau_y, tau_z; 
    real x_pos[3], face_pos[1][2] ;
    int Idx, ID1, ID2, ID_iL, ID_iR, ID_jL, ID_jR, ID_kL, ID_kR ;
    
@@ -532,7 +532,7 @@ void CPU_Find_H2_Opacity( const real Half_Var[][NCOMP_TOTAL], real Output[][ PS2
    //const double velocity_unit = Che_Units.velocity_units;
    
    const double m_ave_cgs = Const_mH * (0.76 + 0.24*4) ;
-   const double const_R   = (Const_kB/m_ave_cgs) * SQR(time_unit/L_unit) ;
+   const double const_R   = (Const_kB/m_ave_cgs) * SQR(time_unit/length_unit) ;
    const double _cosnt_R  = 1 / const_R ;
    const double _Gamma_m1 = 1 / (GAMMA-1); 
    const real   _dh[3]    = {1/dh[0], 1/dh[1], 1/dh[2]};
@@ -583,9 +583,9 @@ void CPU_Find_H2_Opacity( const real Half_Var[][NCOMP_TOTAL], real Output[][ PS2
       
       // calculate tau
       cs    = SQRT( GAMMA*pres*_dens) ; 
-      tau_x = alph* FABS(cs/dvx_dx); 
-      tau_y = alph* FABS(cs/dvy_dy);
-      tau_z = alph* FABS(cs/dvz_dz);
+      tau_x = alpha* FABS(cs/dvx_dx); 
+      tau_y = alpha* FABS(cs/dvy_dy);
+      tau_z = alpha* FABS(cs/dvz_dz);
       
       // save alpha and tau
       // note: real tau = (tau*length_unit) * n_H2 <- do this in grackle
