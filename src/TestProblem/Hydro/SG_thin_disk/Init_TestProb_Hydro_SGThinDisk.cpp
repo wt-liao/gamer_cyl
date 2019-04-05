@@ -266,9 +266,9 @@ bool Flu_ResetByUser( real fluid[], const double X, const double Y, const double
                             Gamma_m1, CheckMinPres_No, MIN_PRES ); 
    T = pres*_dens/R;
    
-   // reset for T_CMB
+   // reset for T_lower
    if (T < T_lower) {
-      pres_reset  = dens*R*T_CMB;
+      pres_reset  = dens*R*T_lower;
       ie_reset    = pres_reset * _Gamma_m1;
       fluid[ENGY] = 0.5*(SQR(fluid[MOMX])+SQR(fluid[MOMY])+SQR(fluid[MOMZ]))*_dens + ie_reset;
       return true;
