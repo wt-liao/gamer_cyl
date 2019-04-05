@@ -65,6 +65,9 @@ SIMU_OPTION += -DGRACKLE_RELAX
 # grackle dt
 SIMU_OPTION += -DGRACKLE_DT
 
+# grackle sobolev approx 
+SIMU_OPTION += -DGRACKLE_H2_SOBOLEV
+
 # coordinate system: CARTESIAN/CYLINDRICAL/SPHERICAL (experimental)
 SIMU_OPTION += -DCOORDINATE=CYLINDRICAL
 
@@ -92,7 +95,7 @@ SIMU_OPTION += -DDUAL_ENERGY=DE_ENPY
 # number of user-defined passively advected scalars
 # --> set it to 0 or comment it out if none is required
 # --> useless for RTVD/WAF
-SIMU_OPTION += -DNCOMP_PASSIVE_USER=9
+SIMU_OPTION += -DNCOMP_PASSIVE_USER=13
 
 
 # (b-2) MHD options
@@ -412,7 +415,7 @@ CC_FILE     += End_GAMER.cpp  End_MemFree.cpp  End_MemFree_Fluid.cpp  End_StopMa
                Init_ByRestart_v1.cpp  Init_ByFunction.cpp  Init_TestProb.cpp  Init_ByFile.cpp  Init_OpenMP.cpp \
                Init_ByRestart_HDF5.cpp  Init_ResetParameter.cpp  Init_ByRestart_v2.cpp  Init_MemoryPool.cpp \
                Init_Unit.cpp  Init_UniformGrid.cpp  Init_Field.cpp  Init_MemAllocate_dt.cpp  End_MemFree_dt.cpp \
-               Init_Model_GrackleIC.cpp
+               Init_Model_GrackleIC.cpp 
 
 CC_FILE     += Interpolate.cpp  Int_CQuadratic.cpp  Int_MinMod1D.cpp  Int_MinMod3D.cpp  Int_vanLeer.cpp \
                Int_Quadratic.cpp  Int_Table.cpp  Int_CQuartic.cpp  Int_Quartic.cpp
@@ -617,7 +620,8 @@ ifeq "$(filter -DSUPPORT_GRACKLE, $(SIMU_OPTION))" "-DSUPPORT_GRACKLE"
 CC_FILE     += CPU_GrackleSolver.cpp
 
 CC_FILE     += Grackle_Init.cpp  Grackle_End.cpp  Init_MemAllocate_Grackle.cpp  End_MemFree_Grackle.cpp \
-               Grackle_Prepare.cpp  Grackle_Close.cpp  Grackle_Init_FieldData.cpp  Grackle_AdvanceDt.cpp
+               Grackle_Prepare.cpp  Grackle_Close.cpp  Grackle_Init_FieldData.cpp  Grackle_AdvanceDt.cpp \
+               Grackle_Load_Alpha_Table.cpp
 
 vpath %.cpp    Grackle  Grackle/CPU_Grackle
 endif # SUPPORT_GRACKLE
