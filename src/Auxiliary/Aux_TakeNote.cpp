@@ -91,10 +91,16 @@ void Aux_TakeNote()
       fprintf( Note, "MODEL_MSTAR                     OFF\n" );
 #     endif
       
-#     ifdef SET_T_LIMIT
-      fprintf( Note, "SET_T_LIMIT                     ON\n" );
+#     ifdef SET_T_LIMIT_POPIII
+      fprintf( Note, "SET_T_LIMIT_POPIII              ON\n" );
 #     else
-      fprintf( Note, "SET_T_LIMIT                     OFF\n" );
+      fprintf( Note, "SET_T_LIMIT_POPIII              OFF\n" );
+#     endif
+      
+#     ifdef SET_T_LIMIT_SG
+      fprintf( Note, "SET_T_LIMIT_SG                  ON\n" );
+#     else
+      fprintf( Note, "SET_T_LIMIT_SG                  OFF\n" );
 #     endif
 
 #     ifdef GRAVITY
