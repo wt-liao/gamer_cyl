@@ -34,7 +34,7 @@ void CoolingFunc(real* cool_rate, const real PriVar[], const real x_pos[]) {
    const double R           = 4.64952804093003e+0 ;   // needed for converting to T (temperature)
    
    const double t_curr      = Time[0];
-   const double t_relax     = 5*t_orbit ; 
+   const double t_relax     = 3*t_orbit ; 
    
    
    const double GM          = ExtAcc_AuxArray[3] ;
