@@ -209,7 +209,8 @@ bool Flu_ResetByUser( real fluid[], const double X, const double Y, const double
 {
    // for MODEL_MSTAR, reset updates the M_star. Thus, no need to loop through XYZ;  
    // Put the reset directly in Flu_ResetByUser_API; 
-#  ifdef SET_T_LIMIT
+   
+#  ifdef SET_T_LIMIT_POPIII
    const double time_unit       = 5.02280842159966e+09;
    const double length_unit     = 1.49597870750767e+13;
    const double T_CMB           = 50 ;
@@ -230,6 +231,43 @@ bool Flu_ResetByUser( real fluid[], const double X, const double Y, const double
    
    // reset for T_CMB
    if (T < T_CMB) {
+      pres_reset  = dens*R*T_CMB;
+      ie_reset    = pres_reset * _Gamma_m1;
+      fluid[ENGY] = 0.5*(SQR(fluid[MOMX])+SQR(fluid[MOMY])+SQR(fluid[MOMZ]))*_dens + ie_reset;
+      return true;
+   }
+   
+   // reset for T_upper
+   else if (T > T_upper) {
+      pres_reset  = dens*R*T_upper;
+      ie_reset    = pres_reset * _Gamma_m1;
+      fluid[ENGY] = 0.5*(SQR(fluid[MOMX])+SQR(fluid[MOMY])+SQR(fluid[MOMZ]))*_dens + ie_reset;
+      return true;
+   }
+   
+#  endif // SET_T_LIMIT
+   
+#  ifdef SET_T_LIMIT_SG
+   const double time_unit       = 5.02280842159966e+06;
+   const double length_unit     = 1.49597870750767e+13;
+   const double T_lower         = 10 ;
+   const double T_upper         = 1e6;
+   const double m_ave_cgs       = Const_mH ;
+   const double R               = (Const_kB/m_ave_cgs) * SQR(time_unit/length_unit) ;
+   const double Gamma_m1        = GAMMA - 1.0;
+   const double _Gamma_m1       = 1.0/Gamma_m1;
+   const bool   CheckMinPres_No = false;
+   
+   double pres, pres_reset, ie_reset, T, dens, _dens; 
+   
+   dens  = fluid[DENS]; 
+   _dens = 1 / dens ;
+   pres  = CPU_GetPressure( fluid[DENS], fluid[MOMX], fluid[MOMY], fluid[MOMZ], fluid[ENGY], 
+                            Gamma_m1, CheckMinPres_No, MIN_PRES ); 
+   T = pres*_dens/R;
+   
+   // reset for T_CMB
+   if (T < T_lower) {
       pres_reset  = dens*R*T_CMB;
       ie_reset    = pres_reset * _Gamma_m1;
       fluid[ENGY] = 0.5*(SQR(fluid[MOMX])+SQR(fluid[MOMY])+SQR(fluid[MOMZ]))*_dens + ie_reset;
