@@ -57,7 +57,7 @@ void Grackle_Close( const int lv, const int SaveSg, const real h_Che_Array[], co
    const double time_unit = Che_Units.time_units;
    const double L_unit    = Che_Units.length_units;
    const double T_CMB     = 50 ;
-   const double T_upper   = 5e4;
+   const double T_upper   = 5e7;
    const double m_ave_cgs = Const_mH * (0.76 + 0.24*4) ;
    const double R         = (Const_kB/m_ave_cgs) * SQR(time_unit/L_unit) ;
    
@@ -155,7 +155,7 @@ void Grackle_Close( const int lv, const int SaveSg, const real h_Che_Array[], co
             
             
 //          check min Temperature; T_CMB ~ 50K at z~20
-            Eint_new = FMAX( Eint_new, R*T_CMB  *_Gamma_m1 );
+            //Eint_new = FMAX( Eint_new, R*T_CMB  *_Gamma_m1 );
             Eint_new = FMIN( Eint_new, R*T_upper*_Gamma_m1 );
             
             
@@ -170,11 +170,12 @@ void Grackle_Close( const int lv, const int SaveSg, const real h_Che_Array[], co
             delta_Eint = Eint_new*Dens - Eint_old ;
             if (dens_cgs > 1e-12) {
                dt_Grackle_local = FMIN(dt_Grackle_local, FABS(Eint_old/delta_Eint *dt_Lv0) );
-               
+               /*
                if ( FABS(Eint_old/delta_Eint *dt_Lv0) < 1e-8) {
                   Aux_Message(stdout, "Extreme dt_grackle = %8.4e at rho_cgs = %8.4e and T = %8.4e. \n",
                               FABS(Eint_old/delta_Eint *dt_Lv0), dens_cgs, Eint_new*Gamma_m1/R );
                }
+               */
             }
                
 #           endif // GRACKLE_DT
