@@ -23,6 +23,9 @@ void Grackle_Load_Alpha_Table(){
    if (Alpha_Table == NULL && MPI_Rank == 0)
       Aux_Message(stderr, "ERROR: cannot find <H2_Op_Alpha>: H2 Opacity Alpha-table. \n");
    
+   fseek (T_Table ,     0 , SEEK_END);
+   fseek (Alpha_Table , 0 , SEEK_END);
+   
    long Table_T_Size     = ftell(T_Table)    ;
    long Table_Alpha_Size = ftell(Alpha_Table);
    
