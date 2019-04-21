@@ -45,8 +45,8 @@ void CoolingFunc(real* cool_rate, const real PriVar[], const real x_pos[]) {
    const double v_abs       = SQRT( SQR(PriVar[MOMX]) + SQR(PriVar[MOMY]) + SQR(PriVar[MOMZ]) ) ;
    const double sph_rad     = SQRT( SQR(x_pos[0]) + SQR(x_pos[2]) );
    
-   const double tau_dyn     = SQRT( CUBE(sph_rad) / GM );
-   //const double tau_dyn     = sph_rad / v_abs ;
+   //const double tau_dyn     = SQRT( CUBE(sph_rad) / GM );
+   const double tau_dyn     = SQRT( CUBE(x_pos[0]) / GM );
    
    // cooling parameter: cooling time = beta * (dynamical time)
    // relax the system w/ cooling time = 15 dyn_tau
