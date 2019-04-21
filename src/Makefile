@@ -42,7 +42,7 @@ SIMU_OPTION += -DGRAVITY
 SIMU_OPTION += -DCOOLING
 
 # enable temperature limit
-SIMU_OPTION += -DSET_T_LIMIT
+SIMU_OPTION += -DSET_T_LIMIT_SG
 
 # enable UserBC to use gravitataional pot
 SIMU_OPTION += -DUserPotBC
