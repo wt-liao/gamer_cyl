@@ -47,7 +47,7 @@ int Flu_AdvanceDt( const int lv, const double TimeNew, const double TimeOld, con
 #  ifdef MODEL_MSTAR
    d_MStar    = 0.0 ;
    d_Star_J   = 0.0 ;
-   for (int d=0; d<3; d++ ) d_Star_Mom[0] = 0.0; //cartesian mom
+   for (int d=0; d<3; d++ ) d_Star_Mom[d] = 0.0; //cartesian mom
 #  endif
 
 // invoke the fluid solver
