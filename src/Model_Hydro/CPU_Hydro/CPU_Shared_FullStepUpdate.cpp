@@ -73,6 +73,7 @@ void CPU_FullStepUpdate( const real Input[][ FLU_NXT*FLU_NXT*FLU_NXT ], real Out
    const real Edge_x1_L = amr->BoxEdgeL[0];
    real dist2center, r_i;
    double d_star_mom_r, d_star_mom_theta, cos_theta, sin_theta;
+   const double star_pos[3] = {ExtAcc_AuxArray[0], ExtAcc_AuxArray[1], ExtAcc_AuxArray[2]};
 #  endif // MODEL_MSTAR
 #  endif // COORDINATE == CYLINDRICAL
 
@@ -101,7 +102,9 @@ void CPU_FullStepUpdate( const real Input[][ FLU_NXT*FLU_NXT*FLU_NXT ], real Out
 #     ifdef MODEL_MSTAR
       // only account for the flux from the inner most r-grid; be carful about ghost zone
       r_i         = x_pos[0]-0.5*dh[0] ;
-      dist2center = SQRT( SQR(r_i) + SQR(x_pos[2]) ) ;
+      //dist2center = SQRT( SQR(r_i) + SQR(x_pos[2]) ) ;
+      dist2center = SQRT( SQR(r_i-star_pos[0]) + SQR(x_pos[2]-star_pos[2]) ) ;
+      
       if (x_pos[0] > Edge_x1_L && x_pos[0] < Edge_x1_L+dh[0] && dist2center < ACCRETE_RADIUS ) {
          //### Note that Flux = physical_flux*r_i
          d_MStar         += FMAX( Flux[ID1][0][DENS], 0 ) * dt * (dh[1]*dh[2]) ; 
