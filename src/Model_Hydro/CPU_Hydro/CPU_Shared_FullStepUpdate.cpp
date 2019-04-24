@@ -1,6 +1,9 @@
 #include "GAMER.h"
 #include "CUFLU.h"
+
+#ifdef MODEL_MSTAR
 #include "TestProb.h"
+#endif
 
 #if (  !defined GPU  &&  MODEL == HYDRO  &&  \
        ( FLU_SCHEME == MHM || FLU_SCHEME == MHM_RP || FLU_SCHEME == CTU )  )
