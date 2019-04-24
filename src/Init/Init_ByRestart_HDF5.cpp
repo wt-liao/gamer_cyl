@@ -2047,6 +2047,21 @@ void ResetParameter( const char *FileName, double *EndT, long *EndStep )
       LoadField( "M_STAR",   &M_STAR, SID, TID, NonFatal, NullPtr, -1, NonFatal );
       if (MPI_Rank == 0)      Aux_Message( stdout, "      NOTE : parameter %s is reset to %14.7e\n", "M_STAR", M_STAR ) ;
    }
+   
+   int STAR_J_FieldIdx = H5Tget_member_index( TID, "STAR_J" );
+   if (STAR_J_FieldIdx >= 0) {
+      LoadField( "STAR_J",   &STAR_J, SID, TID, NonFatal, NullPtr, -1, NonFatal );
+      if (MPI_Rank == 0)      Aux_Message( stdout, "      NOTE : parameter %s is reset to %14.7e\n", "STAR_J", STAR_J ) ;
+   }
+   
+   int STAR_Mom_FieldIdx = H5Tget_member_index( TID, "Star_Mom" );
+   if (STAR_Mom_FieldIdx >= 0) {
+      LoadField( "Star_Mom",  Star_Mom, SID, TID, NonFatal, NullPtr, -1, NonFatal );
+      if (MPI_Rank == 0)      Aux_Message( stdout, "      NOTE : parameter %s is reset to (%14.7e, %14.7e, %14.7e)\n", 
+                                           "Star_Mom", Star_Mom[0], Star_Mom[1], Star_Mom[2] ) ;
+   }
+   
+   //LoadField( "BoxEdgeL", RS.BoxEdgeL, SID, TID, NonFatal, RT.BoxEdgeL, 3, NonFatal );
 #  endif 
 
 // 4. close all objects

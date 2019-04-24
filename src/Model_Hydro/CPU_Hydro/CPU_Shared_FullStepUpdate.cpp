@@ -72,6 +72,7 @@ void CPU_FullStepUpdate( const real Input[][ FLU_NXT*FLU_NXT*FLU_NXT ], real Out
 #  ifdef MODEL_MSTAR
    const real Edge_x1_L = amr->BoxEdgeL[0];
    real dist2center, r_i;
+   double d_star_mom_r, d_star_mom_theta, cos_theta, sin_theta;
 #  endif // MODEL_MSTAR
 #  endif // COORDINATE == CYLINDRICAL
 
@@ -102,8 +103,19 @@ void CPU_FullStepUpdate( const real Input[][ FLU_NXT*FLU_NXT*FLU_NXT ], real Out
       r_i         = x_pos[0]-0.5*dh[0] ;
       dist2center = SQRT( SQR(r_i) + SQR(x_pos[2]) ) ;
       if (x_pos[0] > Edge_x1_L && x_pos[0] < Edge_x1_L+dh[0] && dist2center < ACCRETE_RADIUS ) {
-         //### Note that FLUX = physical_flux*r_i
-         d_MStar += FMAX( Flux[ID1][0][DENS], 0 ) * dt * (dh[1]*dh[2]) ; 
+         //### Note that Flux = physical_flux*r_i
+         d_MStar         += FMAX( Flux[ID1][0][DENS], 0 ) * dt * (dh[1]*dh[2]) ; 
+         
+         d_star_mom_r     = Flux[ID1][0][MOMX] * dt * (dh[1]*dh[2]) ;
+         d_star_mom_theta = Flux[ID1][0][MOMY] * dt * (dh[1]*dh[2]) / r_i ;
+         cos_theta        = cos(x_pos[1]);
+         sin_theta        = sin(x_pos[1]);
+         
+         // momentum change in cartesian 
+         d_Star_Mom[0]   += d_star_mom_r*cos_theta - d_star_mom_theta*sin_theta ;
+         d_Star_Mom[1]   += d_star_mom_r*sin_theta + d_star_mom_theta*cos_theta ;
+         d_Star_Mom[2]   += Flux[ID1][0][MOMZ] * dt * (dh[1]*dh[2]) ;
+         d_Star_J        += d_star_mom_theta * r_i ;
       } 
 #     endif // MODEL_MSTAR
       

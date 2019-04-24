@@ -339,7 +339,8 @@ void Aux_Record_User()
          if ( Aux_CheckFileExist(FileName) )    Aux_Message( stderr, "WARNING : file \"%s\" already exists !!\n", FileName );
 
          FILE *File_User = fopen( FileName, "a" );
-         fprintf( File_User, "#%13s%14s%3s%14s%14s%14s\n",  "Time", "Step", "", "dt", "d_MStar", "GM" );
+         fprintf( File_User, "#%13s%14s%3s%14s%14s%14s%14s%14s%14s%14s\n",  
+                 "Time", "Step", "", "dt", "d_MStar", "GM", "Star_R", "Star_Theta", "Star_Z", "Star_J" );
          fclose( File_User );
       }
 
@@ -350,7 +351,10 @@ void Aux_Record_User()
    if ( MPI_Rank == 0 )
    {
       FILE *File_User = fopen( FileName, "a" );
-      fprintf( File_User, "%14.7e%14ld%3s%14.7e%14.7e%14.7e\n", Time[0], Step, "", dTime_Base, d_MStar_SUM, ExtAcc_AuxArray[3] );
+      fprintf( File_User, "%14.7e%14ld%3s%14.7e%14.7e%14.7e%14.7e%14.7e%14.7e%14.7e\n", 
+               Time[0], Step, "", dTime_Base, d_MStar_SUM, ExtAcc_AuxArray[3], 
+               ExtAcc_AuxArray[0], ExtAcc_AuxArray[1], ExtAcc_AuxArray[2], STAR_J );
+               
       fclose( File_User );
    }
    

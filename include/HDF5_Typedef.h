@@ -437,6 +437,8 @@ struct InputPara_t
    double ACCRETE_RADIUS; 
    double Time2Accrete;
    double M_STAR;
+   double STAR_J;
+   double Star_Mom[3];
 #  endif
 
 // fluid solvers in both HYDRO/MHD/ELBDM

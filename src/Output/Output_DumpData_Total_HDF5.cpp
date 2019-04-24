@@ -1851,6 +1851,9 @@ void FillIn_InputPara( InputPara_t &InputPara )
    InputPara.ACCRETE_RADIUS          = ACCRETE_RADIUS;
    InputPara.Time2Accrete            = Time2Accrete;
    InputPara.M_STAR                  = M_STAR;
+   InputPara.STAR_J                  = STAR_J;
+   for (int d=0; d<3; d++) 
+   InputPara.Star_Mom[d]             = Star_Mom[d] ;
 #  endif
 
 // fluid solvers in both HYDRO/MHD/ELBDM
@@ -2547,6 +2550,8 @@ void GetCompound_InputPara( hid_t &H5_TypeID )
    H5Tinsert( H5_TypeID, "ACCRETE_RADIUS",          HOFFSET(InputPara_t,ACCRETE_RADIUS         ), H5T_NATIVE_DOUBLE  );
    H5Tinsert( H5_TypeID, "Time2Accrete",            HOFFSET(InputPara_t,Time2Accrete           ), H5T_NATIVE_DOUBLE  );
    H5Tinsert( H5_TypeID, "M_STAR",                  HOFFSET(InputPara_t,M_STAR                 ), H5T_NATIVE_DOUBLE  );
+   H5Tinsert( H5_TypeID, "STAR_J",                  HOFFSET(InputPara_t,STAR_J                 ), H5T_NATIVE_DOUBLE  );
+   H5Tinsert( H5_TypeID, "Star_Mom",                HOFFSET(InputPara_t,Star_Mom               ), H5_TypeID_Arr_3Double );
 #  endif
 
 // fluid solvers in both HYDRO/MHD/ELBDM
