@@ -107,7 +107,8 @@ void CPU_FullStepUpdate( const real Input[][ FLU_NXT*FLU_NXT*FLU_NXT ], real Out
       // only account for the flux from the inner most r-grid; be carful about ghost zone
       r_i         = x_pos[0]-0.5*dh[0] ;
       //dist2center = SQRT( SQR(r_i) + SQR(x_pos[2]) ) ;
-      dist2center = SQRT( SQR(r_i-star_pos[0]) + SQR(x_pos[2]-star_pos[2]) ) ;
+      dist2center = SQRT( SQR(r_i) + SQR(star_pos[0]) - 2*r_i*star_pos[0]*cos(x_pos[1]-star_pos[1]) 
+                        + SQR(x_pos[2]-star_pos[2]) ) ;
       
       if (x_pos[0] > Edge_x1_L && x_pos[0] < Edge_x1_L+dh[0] && dist2center < ACCRETE_RADIUS ) {
          //### Note that Flux = physical_flux*r_i
