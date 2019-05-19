@@ -114,16 +114,19 @@ void CPU_FullStepUpdate( const real Input[][ FLU_NXT*FLU_NXT*FLU_NXT ], real Out
          //### Note that Flux = physical_flux*r_i
          d_MStar         += FMAX( Flux[ID1][0][DENS], 0 ) * dt * (dh[1]*dh[2]) ; 
          
-         d_star_mom_r     = Flux[ID1][0][MOMX] * dt * (dh[1]*dh[2]) ;
-         d_star_mom_theta = Flux[ID1][0][MOMY] * dt * (dh[1]*dh[2]) / r_i ;
-         cos_theta        = cos(x_pos[1]);
-         sin_theta        = sin(x_pos[1]);
+         if (Flux[ID1][0][DENS] > 0) {
+            d_star_mom_r     = Flux[ID1][0][MOMX] * dt * (dh[1]*dh[2]) ;
+            d_star_mom_theta = Flux[ID1][0][MOMY] * dt * (dh[1]*dh[2]) / r_i ;
+            cos_theta        = cos(x_pos[1]);
+            sin_theta        = sin(x_pos[1]);
          
-         // momentum change in cartesian 
-         d_Star_Mom[0]   += d_star_mom_r*cos_theta - d_star_mom_theta*sin_theta ;
-         d_Star_Mom[1]   += d_star_mom_r*sin_theta + d_star_mom_theta*cos_theta ;
-         d_Star_Mom[2]   += Flux[ID1][0][MOMZ] * dt * (dh[1]*dh[2]) ;
-         d_Star_J        += d_star_mom_theta * r_i ;
+            // momentum change in cartesian 
+            d_Star_Mom[0]   += d_star_mom_r*cos_theta - d_star_mom_theta*sin_theta ;
+            d_Star_Mom[1]   += d_star_mom_r*sin_theta + d_star_mom_theta*cos_theta ;
+            d_Star_Mom[2]   += Flux[ID1][0][MOMZ] * dt * (dh[1]*dh[2]) ;
+            d_Star_J        += d_star_mom_theta * r_i ;
+         }
+         
       } 
 #     endif // MODEL_MSTAR
       
