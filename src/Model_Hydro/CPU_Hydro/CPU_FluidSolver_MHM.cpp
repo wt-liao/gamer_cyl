@@ -506,20 +506,24 @@ void RiemannFluxGrad( const real Flux_R, const real Flux_L, real* const & dF, co
 
 
 
-#if (defined SUPPORT_GRACKLE) && (defined GRACKLE_H2_SOBOLEV) 
+#ifdef SUPPORT_GRACKLE
+
+#if (defined GRACKLE_H2_SOBOLEV) 
 //-------------------------------------------------------------------------------------------------------
-// Function    :  
+// Function    :  CPU_Find_H2_Opacity
 // Description :  
 //
-// Parameter   :  Flux         : 
-//                dF           : 
+// Parameter   :  Half_Var     : primitive variable
+//                Output       : 
+//                dh
+//                Corner
 //
 // NOTE        :  
 //-------------------------------------------------------------------------------------------------------
 void CPU_Find_H2_Opacity( const real Half_Var[][NCOMP_TOTAL], real Output[][ PS2*PS2*PS2 ], 
                           const real* dh, const real* Corner ) {
    
-   real dens, _dens, engy, pres, Temp, lnT;
+   real dens, _dens, pres, Temp, lnT;
    real alpha, cs, dvx_dx, dvy_dy, dvz_dz, tau_x, tau_y, tau_z; 
    real x_pos[3], face_pos[1][2] ;
    int Idx, ID1, ID2, ID_iL, ID_iR, ID_jL, ID_jR, ID_kL, ID_kR ;
@@ -534,12 +538,17 @@ void CPU_Find_H2_Opacity( const real Half_Var[][NCOMP_TOTAL], real Output[][ PS2
    const double m_ave_cgs = Const_mH * (0.76 + 0.24*4) ;
    const double const_R   = (Const_kB/m_ave_cgs) * SQR(time_unit/length_unit) ;
    const double _const_R  = 1 / const_R ;
-   const double _Gamma_m1 = 1 / (GAMMA-1); 
+   const double Gamma_m1  = 1 / (GAMMA-1);
+   const double _Gamma_m1 = 1 / Gamma_m1; 
    const real   _dh[3]    = {1/dh[0], 1/dh[1], 1/dh[2]};
    
    const double _Grackle_dT  = 1 / Grackle_dT ; 
    const double* Alpha_Table = H2_Op_Alpha_Table; 
    const double* T_Table     = H2_Op_T_Table ; 
+   
+#  ifdef DUAL_ENERGY
+   const bool CheckMinPres_Yes = true; 
+#  endif
    
    for (int k1=0, k2=Ghost_Size;  k1<PS2;  k1++, k2++)
    for (int j1=0, j2=Ghost_Size;  j1<PS2;  j1++, j2++)
@@ -553,10 +562,14 @@ void CPU_Find_H2_Opacity( const real Half_Var[][NCOMP_TOTAL], real Output[][ PS2
          
       dens  = Half_Var[ID2][DENS];
       _dens = 1 / dens; 
-      engy  = Half_Var[ID2][ENGY];
-      pres  = engy * _Gamma_m1;
-      //### make sure positive pressure
-      //### DE scheme
+      
+      // pressure; DE scheme
+#     ifndef DUAL_ENERGY
+      pres  = Half_Var[ID2][ENGY];
+#     else
+      pres  = CPU_DensEntropy2Pres(Half_Var[ID2][DENS], Half_Var[ID2][ENPY], Gamma_m1, 
+                                   CheckMCheckMinPres_Yes, MIN_PRES);
+#     endif
       
       Temp = pres * _const_R * _dens;
       lnT  = LOG(Temp); 
@@ -601,8 +614,50 @@ void CPU_Find_H2_Opacity( const real Half_Var[][NCOMP_TOTAL], real Output[][ PS2
    
 } // CPU_Find_H2_Opacity
 
-#endif // #if (defined SUPPORT_GRACKLE) && (defined GRACKLE_H2_SOBOLEV) 
+#elif (defined GRACKLE_H2_DISK)
+//-------------------------------------------------------------------------------------------------------
+// Function    :  CPU_Find_H2_Opacity
+// Description :  use Idx_OpTauX as Tau
+//
+// Parameter   :  Half_Var     : primitive variable
+//                Output       : 
+//                dh
+//                Corner
+//
+// NOTE        :  
+//-------------------------------------------------------------------------------------------------------
+void CPU_Find_H2_Opacity( const real Half_Var[][NCOMP_TOTAL], real Output[][ PS2*PS2*PS2 ], 
+                          const real* dh, const real* Corner ) {
+                             
+   real dens, _dens, pres, Temp, lnT;
+   real enpy_guess ;
+   
+   for (int k1=0, k2=Ghost_Size;  k1<PS2;  k1++, k2++)
+   for (int j1=0, j2=Ghost_Size;  j1<PS2;  j1++, j2++)
+   for (int i1=0, i2=Ghost_Size;  i1<PS2;  i1++, i2++)
+   {
+      //### check the size of Half_Var; currently set to be N_HF_VAR
+      ID1 = (k1*PS2        + j1)*PS2      + i1;
+      ID2 = (k2*N_HF_VAR   + j2)*N_HF_VAR + i2;
+      
+      GetCoord( Corner, dh, N_HF_VAR, x_pos, face_pos, i2, j2, k2);
+      
+      // early return if in atmosphere
+      if ( FABS(x_pos[2]) > 2*x_pos[0] ) {
+         Output[Idx_OpTauX][ID1] = TINY_NUMBER ;
+         return ;
+      }
+      
+      // optical depth for disk bulk
+      // ### TBF  
+      dens  = Half_Var[ID2][DENS];
+      _dens = 1 / dens; 
+   }
+   
+}
 
+#endif // #if (defined GRACKLE_H2_SOBOLEV) ... elif (defined GRACKLE_H2_DISK)
+#endif // #ifdef SUPPORT_GRACKLE
 
 #endif // COORDINATE == CYLINDRICAL
 
