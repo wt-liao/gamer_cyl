@@ -112,12 +112,7 @@ void Flu_ResetByUser_API( const int lv, const int FluSg, const double TTime )
       for (int n=0; n<3; n++) Star_Mom[n] += d_Star_Mom_SUM[n] ;
       
       ExtAcc_AuxArray[3] = (real) NEWTON_G * M_STAR;
-<<<<<<< HEAD
-   
-      // 3.0 set d_mstar to zero; set d_mstar_sum to zero in Aux_Record_User()
-      //d_MStar = 0.0 ;
-=======
-      
+
       const double _M_Star = 1.0/M_STAR ;
       
       // 3.0 update star's mass and location
@@ -132,7 +127,6 @@ void Flu_ResetByUser_API( const int lv, const int FluSg, const double TTime )
       //
       Aux_Coord_Cartesian2AdoptedCoord(star_pos_crt, star_pos_cyl);
       for (int n=0; n<3; n++) ExtAcc_AuxArray[n] = star_pos_cyl[n] ;
->>>>>>> popIII_const_cooling
    }
 #  endif // #ifdef MODEL_MSTAR
    
