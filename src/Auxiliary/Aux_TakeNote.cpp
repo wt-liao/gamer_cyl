@@ -90,6 +90,18 @@ void Aux_TakeNote()
 #     else
       fprintf( Note, "MODEL_MSTAR                     OFF\n" );
 #     endif
+      
+#     ifdef SET_T_LIMIT_POPIII
+      fprintf( Note, "SET_T_LIMIT_POPIII              ON\n" );
+#     else
+      fprintf( Note, "SET_T_LIMIT_POPIII              OFF\n" );
+#     endif
+      
+#     ifdef SET_T_LIMIT_SG
+      fprintf( Note, "SET_T_LIMIT_SG                  ON\n" );
+#     else
+      fprintf( Note, "SET_T_LIMIT_SG                  OFF\n" );
+#     endif
 
 #     ifdef GRAVITY
 #     if   ( POT_SCHEME == SOR )

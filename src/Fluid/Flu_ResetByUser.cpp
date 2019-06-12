@@ -102,14 +102,37 @@ void Flu_ResetByUser_API( const int lv, const int FluSg, const double TTime )
    if (TTime > Time2Accrete) {
     
       // 1.0 MPI_AllReduce (or MPI_Reduce) to distribute d_mstar to d_mstar_sum
-      MPI_Allreduce(&d_MStar, &d_MStar_SUM, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+      MPI_Allreduce(&d_MStar,   &d_MStar_SUM,   1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+      MPI_Allreduce(&d_Star_J,  &d_Star_J_SUM,  1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+      MPI_Allreduce(d_Star_Mom, d_Star_Mom_SUM, 3, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
    
-      // 2.0 reset M_star and GM  // make sure this only haapen after 5th orbit
-      M_STAR += d_MStar_SUM ;
+      // 2.0 reset M, J, Mom and GM  
+      M_STAR += d_MStar_SUM  ;
+      STAR_J += d_Star_J_SUM ; 
+      for (int n=0; n<3; n++) Star_Mom[n] += d_Star_Mom_SUM[n] ;
+      
       ExtAcc_AuxArray[3] = (real) NEWTON_G * M_STAR;
+<<<<<<< HEAD
    
       // 3.0 set d_mstar to zero; set d_mstar_sum to zero in Aux_Record_User()
       //d_MStar = 0.0 ;
+=======
+      
+      const double _M_Star = 1.0/M_STAR ;
+      
+      // 3.0 update star's mass and location
+      const double dt = dTime_AllLv[0];
+      double star_pos_cyl[3] = { ExtAcc_AuxArray[0], ExtAcc_AuxArray[1], ExtAcc_AuxArray[2] } ;
+      double star_pos_crt[3] ;
+      Aux_Coord_Adopted2CartesianCoord(star_pos_cyl, star_pos_crt);
+      
+      // move the star based on d_Star_Mom_SUM
+      for (int n=0; n<3; n++) star_pos_crt[n] += Star_Mom[n]*_M_Star * dt ;
+      
+      //
+      Aux_Coord_Cartesian2AdoptedCoord(star_pos_crt, star_pos_cyl);
+      for (int n=0; n<3; n++) ExtAcc_AuxArray[n] = star_pos_cyl[n] ;
+>>>>>>> popIII_const_cooling
    }
 #  endif // #ifdef MODEL_MSTAR
    
@@ -125,6 +148,7 @@ void Flu_ResetByUser_API( const int lv, const int FluSg, const double TTime )
 
       return;
    }
+   */
 
    const double *dh      = amr->dh[lv];
 #  if ( MODEL == HYDRO  ||  MODEL == MHD )
@@ -184,6 +208,6 @@ void Flu_ResetByUser_API( const int lv, const int FluSg, const double TTime )
 
       }}} // i,j,k
    } // for (int PID=0; PID<amr->NPatchComma[lv][1]; PID++)
-   */
+   
    
 } // FUNCTION : Flu_ResetByUser_API

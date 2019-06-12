@@ -1,6 +1,10 @@
 #include "GAMER.h"
 #include "CUFLU.h"
 
+#ifdef MODEL_MSTAR
+#include "TestProb.h"
+#endif
+
 #if (  !defined GPU  &&  MODEL == HYDRO  &&  \
        ( FLU_SCHEME == MHM || FLU_SCHEME == MHM_RP || FLU_SCHEME == CTU )  )
 
@@ -17,7 +21,7 @@ extern void CPU_Con2Pri( const real In[], real Out[], const real Gamma_m1, const
                          const bool JeansMinPres, const real JeansMinPres_Coeff );
 // for cooling
 #ifdef COOLING
-extern void CoolingFunc(real cool_rate, const real PriVar[], const real x_pos[]);
+extern void CoolingFunc(real* cool_rate, const real PriVar[], const real x_pos[]);
 #endif // COOLING
 #endif
 
@@ -72,6 +76,8 @@ void CPU_FullStepUpdate( const real Input[][ FLU_NXT*FLU_NXT*FLU_NXT ], real Out
 #  ifdef MODEL_MSTAR
    const real Edge_x1_L = amr->BoxEdgeL[0];
    real dist2center, r_i;
+   double d_star_mom_r, d_star_mom_theta, cos_theta, sin_theta;
+   const double star_pos[3] = {ExtAcc_AuxArray[0], ExtAcc_AuxArray[1], ExtAcc_AuxArray[2]};
 #  endif // MODEL_MSTAR
 #  endif // COORDINATE == CYLINDRICAL
 
@@ -100,10 +106,27 @@ void CPU_FullStepUpdate( const real Input[][ FLU_NXT*FLU_NXT*FLU_NXT ], real Out
 #     ifdef MODEL_MSTAR
       // only account for the flux from the inner most r-grid; be carful about ghost zone
       r_i         = x_pos[0]-0.5*dh[0] ;
-      dist2center = SQRT( SQR(r_i) + SQR(x_pos[2]) ) ;
+      //dist2center = SQRT( SQR(r_i) + SQR(x_pos[2]) ) ;
+      dist2center = SQRT( SQR(r_i) + SQR(star_pos[0]) - 2*r_i*star_pos[0]*cos(x_pos[1]-star_pos[1]) 
+                        + SQR(x_pos[2]-star_pos[2]) ) ;
+      
       if (x_pos[0] > Edge_x1_L && x_pos[0] < Edge_x1_L+dh[0] && dist2center < ACCRETE_RADIUS ) {
-         //### Note that FLUX = physical_flux*r_i
-         d_MStar += FMAX( Flux[ID1][0][DENS], 0 ) * dt * (dh[1]*dh[2]) ; 
+         //### Note that Flux = physical_flux*r_i
+         d_MStar         += FMAX( Flux[ID1][0][DENS], 0 ) * dt * (dh[1]*dh[2]) ; 
+         
+         if (Flux[ID1][0][DENS] > 0) {
+            d_star_mom_r     = Flux[ID1][0][MOMX] * dt * (dh[1]*dh[2]) ;
+            d_star_mom_theta = Flux[ID1][0][MOMY] * dt * (dh[1]*dh[2]) / r_i ;
+            cos_theta        = cos(x_pos[1]);
+            sin_theta        = sin(x_pos[1]);
+         
+            // momentum change in cartesian 
+            d_Star_Mom[0]   += d_star_mom_r*cos_theta - d_star_mom_theta*sin_theta ;
+            d_Star_Mom[1]   += d_star_mom_r*sin_theta + d_star_mom_theta*cos_theta ;
+            d_Star_Mom[2]   += Flux[ID1][0][MOMZ] * dt * (dh[1]*dh[2]) ;
+            d_Star_J        += d_star_mom_theta * r_i ;
+         }
+         
       } 
 #     endif // MODEL_MSTAR
       
@@ -330,7 +353,7 @@ void GetFullStepGeoSource( const real ConInput[][ FLU_NXT*FLU_NXT*FLU_NXT ], rea
 #ifdef COOLING   
    
    real cool_rate;
-   CoolingFunc(cool_rate, PriVar_Buffer, x_pos);
+   CoolingFunc(&cool_rate, PriVar_Buffer, x_pos);
    
    // ### note that GeoSource now includes both GeoSource and Cooling
    GeoSource[ENGY] -= cool_rate ; 

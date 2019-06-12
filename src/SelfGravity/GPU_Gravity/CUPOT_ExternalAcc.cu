@@ -76,13 +76,16 @@ void   CPU_ExternalAcc( real Acc[], const double X, const double Y, const double
    const real GM       = (real)UserArray[3];
    const real eps      = (real)UserArray[4];
 
-   const real dx       = (real)(X - Cen[0]);
-   const real dy       = (real)(Y - Cen[1]);
-   const real dz       = (real)(Z - Cen[2]);
+   const real dx         = (real)(X - Cen[0]);
+   const real dy         = (real)(Y - Cen[1]);
+   const real dz         = (real)(Z - Cen[2]);
+   
 #  if ( COORDINATE == CARTESIAN )
-   const real r        = SQRT( dx*dx + dy*dy + dz*dz );
+   const real r          = SQRT( dx*dx + dy*dy + dz*dz );
 #  elif ( COORDINATE == CYLINDRICAL )
-   const real r        = SQRT( dx*dx + dz*dz );
+   const double cos_dtheta = cos( Y-Cen[1] ) ;
+   const double sin_dtheta = sin( Y-Cen[1] );
+   const real   r          = SQRT( X*X + Cen[0]*Cen[0] - 2*X*Cen[0]*cos_dtheta + dz*dz );
 #  endif
 
 // Plummer
@@ -103,9 +106,9 @@ void   CPU_ExternalAcc( real Acc[], const double X, const double Y, const double
    Acc[1] = -GM*_r3*dy;
    Acc[2] = -GM*_r3*dz;
 #  elif ( COORDINATE == CYLINDRICAL )
-   Acc[0] = -GM*_r3*dx;
-   Acc[1] = (real) 0.0;
-   Acc[2] = -GM*_r3*dz;
+   Acc[0] = -GM*_r3 * ( X-Cen[0]*cos_dtheta );
+   Acc[1] = -GM*_r3 * ( Cen[0]*sin_dtheta );
+   Acc[2] = -GM*_r3 * dz;
 #  endif
    
 

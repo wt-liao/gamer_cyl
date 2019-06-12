@@ -6,7 +6,7 @@
 
 #ifdef COOLING
 extern double  Time[NLEVEL];
-extern void    CoolingFunc(real cool_rate, const real PriVar[], const real x_pos[]);
+extern void    CoolingFunc(real* cool_rate, const real PriVar[], const real x_pos[]);
 
 // for POPIII
 static double rate_k4_func(const real T);
@@ -27,14 +27,14 @@ static double Brem_cool_func(const real T, const real n_e, const double n_HII);
 //
 // NOTE        :  
 //-------------------------------------------------------------------------------------------------------
-void CoolingFunc(real cool_rate, const real PriVar[], const real x_pos[]) {
+void CoolingFunc(real* cool_rate, const real PriVar[], const real x_pos[]) {
    
    // Boltzmann R in the unit of popIII setting
-   const double t_orbit     = 0.79 ;                  // outer orbital time
+   const double t_orbit     = 0.79 ;                  // outer orbital time: POPIII: 0.79; SG: 125
    const double R           = 4.64952804093003e+0 ;   // needed for converting to T (temperature)
    
    const double t_curr      = Time[0];
-   const double t_relax     = 5*t_orbit ; 
+   const double t_relax     = 3*t_orbit ; 
    
    
    const double GM          = ExtAcc_AuxArray[3] ;
@@ -45,20 +45,23 @@ void CoolingFunc(real cool_rate, const real PriVar[], const real x_pos[]) {
    const double v_abs       = SQRT( SQR(PriVar[MOMX]) + SQR(PriVar[MOMY]) + SQR(PriVar[MOMZ]) ) ;
    const double sph_rad     = SQRT( SQR(x_pos[0]) + SQR(x_pos[2]) );
    
-   const double tau_dyn     = SQRT( CUBE(sph_rad) / GM );
-   //const double tau_dyn     = sph_rad / v_abs ;
+   //const double tau_dyn     = SQRT( CUBE(sph_rad) / GM );
+   const double tau_dyn     = SQRT( CUBE(x_pos[0]) / GM );
    
    // cooling parameter: cooling time = beta * (dynamical time)
-   // relax the system w/ cooling time = 10 dyn_tau
+   // relax the system w/ cooling time = 15 dyn_tau
    const double beta        = 15.0;
    const double cool_time   = beta * tau_dyn;
    
+   *cool_rate = ie/cool_time;
+   
+   // below for popIII
    // check if temperature is smaller than 100K
-   if (T>= 100)   cool_rate = ie / cool_time ;
-   else           cool_rate = TINY_NUMBER ;
+   if (T>= 100)   *cool_rate = ie / cool_time ;
+   else           *cool_rate = TINY_NUMBER ;
    
    // ramp down cooling? 
-   if (t_curr < t_relax) cool_rate *= FABS( 1.0 - (t_relax-t_curr)/t_relax ) ; 
+   if (t_curr < t_relax) *cool_rate *= FABS( t_curr/t_relax ) ; 
    
 
    

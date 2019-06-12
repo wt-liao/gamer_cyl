@@ -257,6 +257,10 @@ void Init_Load_Parameter()
    ReadPara->Add( "ACCRETE_RADIUS",             &ACCRETE_RADIUS,                  0.5,             0.0,           NoMax_double   );
    ReadPara->Add( "Time2Accrete",               &Time2Accrete,                    0.0,             0.0,           NoMax_double   );
    ReadPara->Add( "M_STAR",                     &M_STAR,                          2e5,             0.0,           NoMax_double   );
+   ReadPara->Add( "STAR_J",                     &STAR_J,                          0.0,             NoMin_double,  NoMax_double   );
+   ReadPara->Add( "STAR_Mom_X",                 &(Star_Mom[0]),                   0.0,             NoMin_double,  NoMax_double   );
+   ReadPara->Add( "STAR_Mom_Y",                 &(Star_Mom[1]),                   0.0,             NoMin_double,  NoMax_double   );
+   ReadPara->Add( "STAR_Mom_Z",                 &(Star_Mom[2]),                   0.0,             NoMin_double,  NoMax_double   );
 #  endif
 
 
