@@ -568,7 +568,7 @@ void CPU_Find_H2_Opacity( const real Half_Var[][NCOMP_TOTAL], real Output[][ PS2
       pres  = Half_Var[ID2][ENGY];
 #     else
       pres  = CPU_DensEntropy2Pres(Half_Var[ID2][DENS], Half_Var[ID2][ENPY], Gamma_m1, 
-                                   CheckMCheckMinPres_Yes, MIN_PRES);
+                                   CheckMinPres_Yes, MIN_PRES);
 #     endif
       
       Temp = pres * _const_R * _dens;
