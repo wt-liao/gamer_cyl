@@ -94,8 +94,15 @@ void Grackle_Prepare( const int lv, real h_Che_Array[], const int NPG, const int
       if (  Idx_Metal == Idx_Undefined  ||  CheIdx_Metal == Idx_Undefined  )
          Aux_Error( ERROR_INFO, "[Che]Idx_Metal is undefined for \"GRACKLE_METAL\" !!\n" );
    }
+
+// cooling is not supported under grackle scheme
+#  ifdef COOLING
+   Aux_Error( ERROR_INFO, "SUPPORT_GRACKLE does not work with COOLING yet !!\n" );
+#  endif
    
 #  ifdef GRACKLE_H2_SOBOLEV
+   if (GRACKLE_H2_OPA_APPROX != 2)
+      Aux_Error( ERROR_INFO, "Please set GRACKLE_H2_OPA_APPROX to 2 for GRACKLE_H2_SOBOLEV" ) ; 
    if ( Idx_OpTauX == Idx_Undefined || CheIdx_H2_TauX == Idx_Undefined )
       Aux_Error( ERROR_INFO, "[Che]Idx_OpTauX is undefined for \"GRACKLE_H2_SOBOLEV\" !!\n" );
    if ( Idx_OpTauY == Idx_Undefined || CheIdx_H2_TauY == Idx_Undefined )
