@@ -42,7 +42,7 @@ SIMU_OPTION += -DGRAVITY
 #SIMU_OPTION += -DCOOLING
 
 # enable temperature limit
-SIMU_OPTION += -DSET_T_LIMIT_SG
+#SIMU_OPTION += -DSET_T_LIMIT_SG
 
 # enable UserBC to use gravitataional pot
 SIMU_OPTION += -DUserPotBC
@@ -68,8 +68,9 @@ SIMU_OPTION += -DGRACKLE_RELAX
 # grackle dt
 SIMU_OPTION += -DGRACKLE_DT
 
-# grackle sobolev approx 
+# grackle sobolev approx / disk optical depth
 SIMU_OPTION += -DGRACKLE_H2_SOBOLEV
+#SIMU_OPTION += -DGRACKLE_H2_DISK
 
 # coordinate system: CARTESIAN/CYLINDRICAL/SPHERICAL (experimental)
 SIMU_OPTION += -DCOORDINATE=CYLINDRICAL
@@ -98,6 +99,7 @@ SIMU_OPTION += -DDUAL_ENERGY=DE_ENPY
 # number of user-defined passively advected scalars
 # --> set it to 0 or comment it out if none is required
 # --> useless for RTVD/WAF
+## grackle 9 species + sobolev =9+4 =13
 SIMU_OPTION += -DNCOMP_PASSIVE_USER=13
 
 
