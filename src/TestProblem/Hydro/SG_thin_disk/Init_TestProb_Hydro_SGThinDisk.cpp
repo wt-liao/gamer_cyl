@@ -385,14 +385,9 @@ void AddNewField_GrackleOp()
    Idx_DiskTau = = AddField( "DiskOpacity", NORMALIZE_NO );
    
 #  endif
-   
-#  ifdef GRACKLE_
-
 } // FUNCTION : AddNewField_GrackleOp
 
 #endif // #ifdef SUPPORT_GRACKLE
-
-
 
 #endif // #if ( MODEL == HYDRO )
 
