@@ -81,6 +81,9 @@ void Grackle_Init_FieldData()
    Che_FieldData->H2_Sobolev_tau_x        = NULL;
    Che_FieldData->H2_Sobolev_tau_y        = NULL;
    Che_FieldData->H2_Sobolev_tau_z        = NULL;
+   
+   // H2 Disk 
+   Che_FieldData->H2_Disk_tau             = NULL;
 
 } // FUNCTION : Grackle_Init_FieldData
 

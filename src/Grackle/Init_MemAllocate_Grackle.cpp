@@ -80,12 +80,15 @@ void Init_MemAllocate_Grackle( const int Che_NPG )
    if ( GRACKLE_METAL )
    CheIdx_Metal = Che_NField ++;
    
-#  ifdef GRACKLE_H2_SOBOLEV
+#  if (defined GRACKLE_H2_SOBOLEV)
    //### check if we can access grackle_data here
-   // if (grackle_data->h2_optical_depth_approximation == 2)
    CheIdx_H2_TauX = Che_NField ++; 
    CheIdx_H2_TauY = Che_NField ++; 
    CheIdx_H2_TauZ = Che_NField ++; 
+   
+#  elif (defined GRACKLE_H2_DISK)
+   CheIdx_H2_DiskTau = Che_NField ++; 
+   
 #  endif
 
 

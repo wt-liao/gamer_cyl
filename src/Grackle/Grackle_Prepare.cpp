@@ -111,6 +111,11 @@ void Grackle_Prepare( const int lv, real h_Che_Array[], const int NPG, const int
       Aux_Error( ERROR_INFO, "[Che]Idx_OpTauZ is undefined for \"GRACKLE_H2_SOBOLEV\" !!\n" );
 #  endif
    
+#  ifdef GRACKLE_H2_DISK
+   if (GRACKLE_H2_OPA_APPROX != 3)
+      Aux_Error( ERROR_INFO, "Please set GRACKLE_H2_OPA_APPROX to 3 for GRACKLE_H2_DISK" ) ; 
+#  endif
+   
 #  endif // #ifdef GAMER_DEBUG
 
 
@@ -138,11 +143,14 @@ void Grackle_Prepare( const int lv, real h_Che_Array[], const int NPG, const int
    real *Ptr_DII0   = h_Che_Array + CheIdx_DII  *Size1v;
    real *Ptr_HDI0   = h_Che_Array + CheIdx_HDI  *Size1v;
    real *Ptr_Metal0 = h_Che_Array + CheIdx_Metal*Size1v;
-#  ifdef GRACKLE_H2_SOBOLEV
+   
+#  if (defined GRACKLE_H2_SOBOLEV)
    real *Ptr_H2_Tau_X0 = h_Che_Array + CheIdx_H2_TauX * Size1v;
    real *Ptr_H2_Tau_Y0 = h_Che_Array + CheIdx_H2_TauY * Size1v;
    real *Ptr_H2_Tau_Z0 = h_Che_Array + CheIdx_H2_TauZ * Size1v;
-#  endif
+#  elif (defined GRACKLE_H2_DISK)
+   real *Ptr_H2_Disk_Tau = h_Che_Array + CheIdx_H2_DiskTau * Size1v;
+#  endif // #if (defined GRACKLE_H2_SOBOLEV)... #elif (defined GRACKLE_H2_DISK)
 
 
 #  pragma omp parallel

@@ -364,7 +364,7 @@ void Aux_Record_User()
 } // FUNCTION : Aux_Record_User
 
 
-#  if (defined SUPPORT_GRACKLE) && (defined GRACKLE_H2_SOBOLEV)
+#  ifdef SUPPORT_GRACKLE
 //-------------------------------------------------------------------------------------------------------
 // Function    :  AddNewField_GrackleOp
 // Description :  Add the problem-specific fields
@@ -375,14 +375,22 @@ void Aux_Record_User()
 //-------------------------------------------------------------------------------------------------------
 void AddNewField_GrackleOp()
 {
+#  if (defined GRACKLE_H2_SOBOLEV)
    Idx_alpha  = AddField( "Alpha",     NORMALIZE_NO );
    Idx_OpTauX = AddField( "Opacity_X", NORMALIZE_NO );
    Idx_OpTauY = AddField( "Opacity_Y", NORMALIZE_NO );
    Idx_OpTauZ = AddField( "Opacity_Z", NORMALIZE_NO );
+   
+#  elif (defined GRACKLE_H2_DISK)
+   Idx_DiskTau = = AddField( "DiskOpacity", NORMALIZE_NO );
+   
+#  endif
+   
+#  ifdef GRACKLE_
 
 } // FUNCTION : AddNewField_GrackleOp
 
-#endif // #if (defined SUPPORT_GRACKLE) && (defined GRACKLE_H2_SOBOLEV)
+#endif // #ifdef SUPPORT_GRACKLE
 
 
 
