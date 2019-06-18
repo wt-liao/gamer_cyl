@@ -72,7 +72,7 @@ extern void CoolingFunc(real* cool_rate, const real PriVar[], const real x_pos[]
 #endif
 #endif
 
-#if (defined SUPPORT_GRACKLE) && (defined GRACKLE_H2_SOBOLEV) && (FLU_SCHEME == MHM_RP)
+#if (defined SUPPORT_GRACKLE) && ((defined GRACKLE_H2_SOBOLEV) || (defined GRACKLE_H2_DISK)) && (FLU_SCHEME == MHM_RP)
 static void CPU_Find_H2_Opacity( const real Half_Var[][NCOMP_TOTAL], real Output[][ PS2*PS2*PS2 ], 
                                  const real* dh, const real* Corner ) ;
 #endif // if (defined SUPPORT_GRACKLE) && (defined GRACKLE_H2_SOBOLEV) && (FLU_SCHEME == MHM_RP)
@@ -283,7 +283,7 @@ void CPU_FluidSolver_MHM( const real Flu_Array_In[][NCOMP_TOTAL][ FLU_NXT*FLU_NX
          
          
 //       5. use Half_Var to calculate optical depth
-#        if (defined SUPPORT_GRACKLE) && (defined GRACKLE_H2_SOBOLEV) && (FLU_SCHEME == MHM_RP)
+#        if (defined SUPPORT_GRACKLE) && ((defined GRACKLE_H2_SOBOLEV) || (defined GRACKLE_H2_DISK)) && (FLU_SCHEME == MHM_RP)
          CPU_Find_H2_Opacity( Half_Var, Flu_Array_Out[P], dh, Corner_Array[P] );
 #        endif
 

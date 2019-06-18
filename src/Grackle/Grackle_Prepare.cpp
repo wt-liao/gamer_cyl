@@ -23,11 +23,13 @@ extern int CheIdx_DII;
 extern int CheIdx_HDI;
 extern int CheIdx_Metal;
 
-#ifdef GRACKLE_H2_SOBOLEV
+#if (defined GRACKLE_H2_SOBOLEV)
 extern int CheIdx_H2_TauX ;
 extern int CheIdx_H2_TauY ;
 extern int CheIdx_H2_TauZ ;
-#endif
+#elif (defined GRACKLE_H2_DISK)
+extern int CheIdx_H2_Disk_Tau;
+#endif // #if (defined GRACKLE_H2_SOBOLEV) ... #elif (defined GRACKLE_H2_DISK)
 
 
 
@@ -114,6 +116,8 @@ void Grackle_Prepare( const int lv, real h_Che_Array[], const int NPG, const int
 #  ifdef GRACKLE_H2_DISK
    if (GRACKLE_H2_OPA_APPROX != 3)
       Aux_Error( ERROR_INFO, "Please set GRACKLE_H2_OPA_APPROX to 3 for GRACKLE_H2_DISK" ) ; 
+   if ( Idx_DiskTau == Idx_Undefined || CheIdx_H2_Disk_Tau == Idx_Undefined )
+      Aux_Error( ERROR_INFO, "[Che]Idx_DiskTau is undefined for \"GRACKLE_H2_DISK\" !!\n" );
 #  endif
    
 #  endif // #ifdef GAMER_DEBUG
@@ -149,7 +153,7 @@ void Grackle_Prepare( const int lv, real h_Che_Array[], const int NPG, const int
    real *Ptr_H2_Tau_Y0 = h_Che_Array + CheIdx_H2_TauY * Size1v;
    real *Ptr_H2_Tau_Z0 = h_Che_Array + CheIdx_H2_TauZ * Size1v;
 #  elif (defined GRACKLE_H2_DISK)
-   real *Ptr_H2_Disk_Tau = h_Che_Array + CheIdx_H2_DiskTau * Size1v;
+   real *Ptr_H2_Disk_Tau0 = h_Che_Array + CheIdx_H2_DiskTau * Size1v;
 #  endif // #if (defined GRACKLE_H2_SOBOLEV)... #elif (defined GRACKLE_H2_DISK)
 
 
@@ -164,8 +168,10 @@ void Grackle_Prepare( const int lv, real h_Che_Array[], const int NPG, const int
    real *Ptr_Dens=NULL, *Ptr_sEint=NULL, *Ptr_Ek=NULL, *Ptr_e=NULL, *Ptr_HI=NULL, *Ptr_HII=NULL;
    real *Ptr_HeI=NULL, *Ptr_HeII=NULL, *Ptr_HeIII=NULL, *Ptr_HM=NULL, *Ptr_H2I=NULL, *Ptr_H2II=NULL;
    real *Ptr_DI=NULL, *Ptr_DII=NULL, *Ptr_HDI=NULL, *Ptr_Metal=NULL;
-#  ifdef GRACKLE_H2_SOBOLEV
+#  if (defined GRACKLE_H2_SOBOLEV)
    real *Ptr_H2_Tau_X=NULL, *Ptr_H2_Tau_Y=NULL, *Ptr_H2_Tau_Z=NULL;
+#  elif (defined GRACKLE_H2_DISK)
+   real *Ptr_H2_Disk_Tau=NULL;
 #  endif
 
 #  pragma omp for schedule( static )
@@ -191,10 +197,12 @@ void Grackle_Prepare( const int lv, real h_Che_Array[], const int NPG, const int
       Ptr_DII   = Ptr_DII0   + offset;
       Ptr_HDI   = Ptr_HDI0   + offset;
       Ptr_Metal = Ptr_Metal0 + offset;
-#     ifdef GRACKLE_H2_SOBOLEV
+#     if (defined GRACKLE_H2_SOBOLEV)
       Ptr_H2_Tau_X = Ptr_H2_Tau_X0 + offset;
       Ptr_H2_Tau_Y = Ptr_H2_Tau_Y0 + offset;
       Ptr_H2_Tau_Z = Ptr_H2_Tau_Z0 + offset;
+#     elif (defined GRACKLE_H2_DISK)
+      Ptr_H2_Disk_Tau = Ptr_H2_Disk_Tau0 + offset; 
 #     endif
 
       for (int LocalID=0; LocalID<8; LocalID++)
@@ -259,11 +267,13 @@ void Grackle_Prepare( const int lv, real h_Che_Array[], const int NPG, const int
             if ( GRACKLE_METAL )
             Ptr_Metal[idx_pg] = *( fluid[Idx_Metal][0][0] + idx_p );
             
-#           ifdef GRACKLE_H2_SOBOLEV
+#           if (defined GRACKLE_H2_SOBOLEV)
             Ptr_H2_Tau_X[idx_pg] = *( fluid[Idx_OpTauX][0][0] + idx_p );
             Ptr_H2_Tau_Y[idx_pg] = *( fluid[Idx_OpTauY][0][0] + idx_p );
             Ptr_H2_Tau_Z[idx_pg] = *( fluid[Idx_OpTauZ][0][0] + idx_p );
-#           endif
+#           elif (defined GRACKLE_H2_DISK)
+            Ptr_H2_Disk_Tau[idx_pg] = *( fluid[Idx_DiskTau][0][0] + idx_p );
+#           endif // #if (defined GRACKLE_H2_SOBOLEV)... #elif (defined GRACKLE_H2_DISK)
 
             idx_pg ++;
          } // for (int idx_p=0; idx_p<CUBE(PS1); idx_p++)
@@ -304,10 +314,12 @@ void Grackle_Prepare( const int lv, real h_Che_Array[], const int NPG, const int
    if ( GRACKLE_METAL )
    Che_FieldData->metal_density   = Ptr_Metal0;
    
-#  ifdef GRACKLE_H2_SOBOLEV
+#  if (defined GRACKLE_H2_SOBOLEV)
    Che_FieldData->H2_Sobolev_tau_x = Ptr_H2_Tau_X0;
    Che_FieldData->H2_Sobolev_tau_y = Ptr_H2_Tau_Y0;
    Che_FieldData->H2_Sobolev_tau_z = Ptr_H2_Tau_Z0;
+#  elif (defined GRACKLE_H2_DISK)
+   Che_FieldData->H2_Disk_tau      = Ptr_H2_Disk_Tau0;
 #  endif
 
 } // FUNCTION : Grackle_Prepare
