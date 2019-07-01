@@ -429,7 +429,7 @@ void Init_TestProb_Hydro_SGThinDisk()
    End_User_Ptr             = NULL;
    Init_ExternalAcc_Ptr     = Init_ExternalAcc;       // option: OPT__GRAVITY_TYPE=2/3; example: SelfGravity/Init_ExternalAcc.cpp
    
-#  if (defined SUPPORT_GRACKLE) && (defined GRACKLE_H2_SOBOLEV)
+#  if (defined SUPPORT_GRACKLE) && ((defined GRACKLE_H2_SOBOLEV) || (defined GRACKLE_H2_DISK))
    Init_Field_User_Ptr      = AddNewField_GrackleOp;
 #  endif
    
