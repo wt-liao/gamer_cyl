@@ -28,7 +28,7 @@ extern int CheIdx_H2_TauX ;
 extern int CheIdx_H2_TauY ;
 extern int CheIdx_H2_TauZ ;
 #elif (defined GRACKLE_H2_DISK)
-extern int CheIdx_H2_Disk_Tau;
+extern int CheIdx_H2_DiskTau;
 #endif // #if (defined GRACKLE_H2_SOBOLEV) ... #elif (defined GRACKLE_H2_DISK)
 
 
