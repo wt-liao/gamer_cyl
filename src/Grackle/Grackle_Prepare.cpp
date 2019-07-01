@@ -116,7 +116,7 @@ void Grackle_Prepare( const int lv, real h_Che_Array[], const int NPG, const int
 #  ifdef GRACKLE_H2_DISK
    if (GRACKLE_H2_OPA_APPROX != 3)
       Aux_Error( ERROR_INFO, "Please set GRACKLE_H2_OPA_APPROX to 3 for GRACKLE_H2_DISK" ) ; 
-   if ( Idx_DiskTau == Idx_Undefined || CheIdx_H2_Disk_Tau == Idx_Undefined )
+   if ( Idx_DiskTau == Idx_Undefined || CheIdx_H2_DiskTau == Idx_Undefined )
       Aux_Error( ERROR_INFO, "[Che]Idx_DiskTau is undefined for \"GRACKLE_H2_DISK\" !!\n" );
 #  endif
    

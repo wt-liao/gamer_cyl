@@ -29,7 +29,7 @@ int CheIdx_H2_TauX = Idx_Undefined;
 int CheIdx_H2_TauY = Idx_Undefined;
 int CheIdx_H2_TauZ = Idx_Undefined;
 #elif (defined GRACKLE_H2_DISK)
-int CheIdx_H2_Disk_Tau = Idx_Undefined;
+int CheIdx_H2_DiskTau = Idx_Undefined;
 #endif // #if (defined GRACKLE_H2_SOBOLEV) ... #elif (defined GRACKLE_H2_DISK)
 
 

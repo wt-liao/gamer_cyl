@@ -49,7 +49,7 @@ SET_GLOBAL( FieldIdx_t Idx_OpTauX,        Idx_Undefined );
 SET_GLOBAL( FieldIdx_t Idx_OpTauY,        Idx_Undefined );
 SET_GLOBAL( FieldIdx_t Idx_OpTauZ,        Idx_Undefined );
 // Grackle H2 Disk Opacity
-SET_GLOBAL( FieldIdx_t Idx_DiskOpTau,     Idx_Undefined );
+SET_GLOBAL( FieldIdx_t Idx_DiskTau,     Idx_Undefined );
 
 #elif ( MODEL == ELBDM )
 

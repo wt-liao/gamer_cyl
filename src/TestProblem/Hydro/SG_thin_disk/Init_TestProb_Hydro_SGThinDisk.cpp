@@ -382,7 +382,7 @@ void AddNewField_GrackleOp()
    Idx_OpTauZ = AddField( "Opacity_Z", NORMALIZE_NO );
    
 #  elif (defined GRACKLE_H2_DISK)
-   Idx_DiskTau = = AddField( "DiskOpacity", NORMALIZE_NO );
+   Idx_DiskTau = AddField( "DiskOpacity", NORMALIZE_NO );
    
 #  endif
 } // FUNCTION : AddNewField_GrackleOp

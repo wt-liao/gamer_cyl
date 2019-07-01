@@ -630,17 +630,27 @@ void CPU_Find_H2_Opacity( const real Half_Var[][NCOMP_TOTAL], real Output[][ PS2
                           const real* dh, const real* Corner ) {
                              
    real dens, _dens, pres, Temp, enpy_disk, cs;
-   real disk_eta, disk_h, disk_H, disk_omega, disk_tau, dens_mid; 
+   real disk_eta, disk_h, disk_H, disk_omega, tau_head, disk_tau, dens_mid; 
+   int  ID1, ID2; 
    real x_pos[3], face_pos[1][2] ;
    real tau_0 = 1.34, c1 = -0.79, c2 = 2.18; // fitting parameters for optical depth
    
-   const double m_ave_cgs = Const_mH * (0.76 + 0.24*4) ;
-   const double const_R   = (Const_kB/m_ave_cgs) * SQR(time_unit/length_unit) ;
-   const double _const_R  = 1 / const_R ;
-   const real  Gamma_m1  = GAMMA - 1.0;
-   const real  _Gamma_m1 = 1.0/Gamma_m1;
-   const real  _sqrt_5   = 1.0 / SQRT(5);
-   const real  _10au     = 1.0 / (10*Const_au);
+   const int Ghost_Size     = int(0.5*(N_HF_VAR-PS2));
+   
+   const double length_unit = Che_Units.length_units;
+   const double time_unit   = Che_Units.time_units;
+   
+   const double m_ave_cgs   = Const_mH * (0.76 + 0.24*4) ;
+   const double const_R     = (Const_kB/m_ave_cgs) * SQR(time_unit/length_unit) ;
+   const double _const_R    = 1 / const_R ;
+   const real  Gamma_m1     = GAMMA - 1.0;
+   const real  _Gamma_m1    = 1.0/Gamma_m1;
+   const real  _sqrt_5      = 1.0 / SQRT(5);
+   const real  _10au        = 1.0 / (10*Const_au);
+   
+#  ifdef DUAL_ENERGY
+   const bool CheckMinPres_Yes = true; 
+#  endif
    
    for (int k1=0, k2=Ghost_Size;  k1<PS2;  k1++, k2++)
    for (int j1=0, j2=Ghost_Size;  j1<PS2;  j1++, j2++)
@@ -671,7 +681,7 @@ void CPU_Find_H2_Opacity( const real Half_Var[][NCOMP_TOTAL], real Output[][ PS2
       
       Temp       = pres * _const_R * _dens;
       enpy_disk  = pres * POW(_dens, GAMMA); 
-      cs         = GAMMA*enpy_disk*POW(dens, GAMMA_m1) ;
+      cs         = GAMMA*enpy_disk*POW(dens, Gamma_m1) ;
       
       disk_omega = FABS( Half_Var[ID2][MOMY]/x_pos[0] );
       disk_H     = cs / disk_omega ;
