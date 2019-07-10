@@ -126,7 +126,11 @@ void Flu_ResetByUser_API( const int lv, const int FluSg, const double TTime )
       
       //
       Aux_Coord_Cartesian2AdoptedCoord(star_pos_crt, star_pos_cyl);
-      for (int n=0; n<3; n++) ExtAcc_AuxArray[n] = star_pos_cyl[n] ;
+      for (int n=0; n<3; n++) {
+         Star_Pos[n]        = star_pos_cyl[n] ;
+         ExtAcc_AuxArray[n] = Star_Pos[n] ;
+      }
+         
    }
 #  endif // #ifdef MODEL_MSTAR
    

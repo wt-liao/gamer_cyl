@@ -2068,6 +2068,13 @@ void ResetParameter( const char *FileName, double *EndT, long *EndStep )
                                            "Star_Mom", Star_Mom[0], Star_Mom[1], Star_Mom[2] ) ;
    }
    
+   int STAR_Pos_FieldIdx = H5Tget_member_index( TID, "Star_Pos" );
+   if (STAR_Pos_FieldIdx >= 0) {
+      LoadField( "Star_Pos",  Star_Pos, SID, TID, NonFatal, NullPtr, -1, NonFatal );
+      if (MPI_Rank == 0)      Aux_Message( stdout, "      NOTE : parameter %s is reset to (%14.7e, %14.7e, %14.7e)\n", 
+                                           "Star_Pos", Star_Pos[0], Star_Pos[1], Star_Pos[2] ) ;
+   }
+   
    //LoadField( "BoxEdgeL", RS.BoxEdgeL, SID, TID, NonFatal, RT.BoxEdgeL, 3, NonFatal );
 #  endif 
    

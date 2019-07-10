@@ -439,6 +439,7 @@ struct InputPara_t
    double M_STAR;
    double STAR_J;
    double Star_Mom[3];
+   double Star_Pos[3];
 #  endif
 
 // fluid solvers in both HYDRO/MHD/ELBDM

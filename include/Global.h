@@ -149,7 +149,7 @@ extern MPI_Comm rank_i_comm, rank_ip_comm;
 #ifdef MODEL_MSTAR
 extern double     d_MStar, d_MStar_SUM, d_Star_J, d_Star_J_SUM; // J: angular momentum
 extern double     d_Star_Mom[3], d_Star_Mom_SUM[3] ; // this is momentum in cartesian
-extern double     ACCRETE_RADIUS, Time2Accrete, M_STAR, STAR_J, Star_Mom[3];  // input from file
+extern double     ACCRETE_RADIUS, Time2Accrete, M_STAR, STAR_J, Star_Mom[3], Star_Pos[3];  // input from file
 #endif   // MODEL_MSTAR
 
 extern double     GFUNC_COEFF0;

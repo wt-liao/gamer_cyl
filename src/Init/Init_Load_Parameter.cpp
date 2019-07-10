@@ -261,6 +261,9 @@ void Init_Load_Parameter()
    ReadPara->Add( "STAR_Mom_X",                 &(Star_Mom[0]),                   0.0,             NoMin_double,  NoMax_double   );
    ReadPara->Add( "STAR_Mom_Y",                 &(Star_Mom[1]),                   0.0,             NoMin_double,  NoMax_double   );
    ReadPara->Add( "STAR_Mom_Z",                 &(Star_Mom[2]),                   0.0,             NoMin_double,  NoMax_double   );
+   ReadPara->Add( "STAR_Pos_X",                 &(Star_Pos[0]),                   0.0,             NoMin_double,  NoMax_double   );
+   ReadPara->Add( "STAR_Pos_Y",                 &(Star_Pos[1]),                   0.0,             NoMin_double,  NoMax_double   );
+   ReadPara->Add( "STAR_Pos_Z",                 &(Star_Pos[2]),                   0.0,             NoMin_double,  NoMax_double   );
 #  endif
 
 
