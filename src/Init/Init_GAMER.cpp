@@ -1,4 +1,5 @@
 #include "GAMER.h"
+#include "TestProb.h"
 
 #ifdef PARTICLE
 extern void (*Par_Init_ByFunction_Ptr)( const long NPar_ThisRank, const long NPar_AllRank,
@@ -190,6 +191,7 @@ void Init_GAMER( int *argc, char ***argv )
    
 // reset M_STAR; 
 #  ifdef MODEL_MSTAR
+   for (int d=0; d<3; d++) ExtAcc_AuxArray[d] = Star_Pos[d];
    Init_ExternalAccPot();
 #  endif
 
