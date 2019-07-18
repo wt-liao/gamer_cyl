@@ -303,9 +303,9 @@ void Init_ExternalAcc()
 
 // ExtAcc_AuxArray has the size of EXT_ACC_NAUX_MAX defined in CUPOT.h (default = 10)
 
-   ExtAcc_AuxArray[0] = (real) 0.0;
-   ExtAcc_AuxArray[1] = (real) 0.0;
-   ExtAcc_AuxArray[2] = (real) 0.0;
+   ExtAcc_AuxArray[0] = (real) Star_Pos[0];
+   ExtAcc_AuxArray[1] = (real) Star_Pos[1];
+   ExtAcc_AuxArray[2] = (real) Star_Pos[2];
    ExtAcc_AuxArray[3] = (real) NEWTON_G * M_STAR;
    ExtAcc_AuxArray[4] = (real) 0.0;
 

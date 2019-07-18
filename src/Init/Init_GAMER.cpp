@@ -191,7 +191,6 @@ void Init_GAMER( int *argc, char ***argv )
    
 // reset M_STAR; 
 #  ifdef MODEL_MSTAR
-   for (int d=0; d<3; d++) ExtAcc_AuxArray[d] = Star_Pos[d];
    Init_ExternalAccPot();
 #  endif
 
