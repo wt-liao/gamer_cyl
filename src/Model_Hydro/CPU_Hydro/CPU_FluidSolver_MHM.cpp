@@ -575,11 +575,13 @@ void CPU_Find_H2_Opacity( const real Half_Var[][NCOMP_TOTAL], real Output[][ PS2
       lnT  = LOG(Temp); 
       
       // get T_idx corresponding to table & interpolate
-      Idx = int( (lnT-Grackle_T_Start)/Grackle_dT ) ; 
+      Idx = int( (lnT-Grackle_T_Start)*_Grackle_dT ) ; 
       
       alpha  = Alpha_Table[Idx] + 
                (Alpha_Table[Idx+1]-Alpha_Table[Idx]) * ( (lnT-T_Table[Idx]) * _Grackle_dT ); 
-      alpha  = FMAX(alpha, TINY_NUMBER); 
+      //alpha  = FMAX(alpha, TINY_NUMBER); 
+      alpha  = FMAX(alpha, FMIN(Alpha_Table[Idx], Alpha_Table[Idx+1]) ) ;
+      alpha  = FMIN(alpha, FMAX(Alpha_Table[Idx], Alpha_Table[Idx+1]) )
       
       // calculate vel gradient and find tau in each direction
       ID_iL = (k2*N_HF_VAR   + j2)*N_HF_VAR + (i2-1) ;
