@@ -115,7 +115,8 @@ void Flu_ResetByUser_API( const int lv, const int FluSg, const double TTime )
 
       const double _M_Star = 1.0/M_STAR ;
       
-      // 3.0 update star's mass and location
+      // 3.0 update star's location
+      /*
       const double dt = dTime_AllLv[0];
       double star_pos_cyl[3] = { ExtAcc_AuxArray[0], ExtAcc_AuxArray[1], ExtAcc_AuxArray[2] } ;
       double star_pos_crt[3] ;
@@ -130,6 +131,7 @@ void Flu_ResetByUser_API( const int lv, const int FluSg, const double TTime )
          Star_Pos[n]        = star_pos_cyl[n] ;
          ExtAcc_AuxArray[n] = Star_Pos[n] ;
       }
+      */
          
    }
 #  endif // #ifdef MODEL_MSTAR
