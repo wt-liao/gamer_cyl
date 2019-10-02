@@ -112,9 +112,9 @@ void CPU_FullStepUpdate( const real Input[][ FLU_NXT*FLU_NXT*FLU_NXT ], real Out
       
       if (x_pos[0] > Edge_x1_L && x_pos[0] < Edge_x1_L+dh[0] && dist2center < ACCRETE_RADIUS ) {
          //### Note that Flux = physical_flux*r_i
-         d_MStar         += FMAX( Flux[ID1][0][DENS], 0 ) * dt * (dh[1]*dh[2]) ; 
+         d_MStar         += FMAX( -Flux[ID1][0][DENS], 0 ) * dt * (dh[1]*dh[2]) ; 
          
-         if (Flux[ID1][0][DENS] > 0) {
+         if (Flux[ID1][0][DENS] < 0) {
             d_star_mom_r     = Flux[ID1][0][MOMX] * dt * (dh[1]*dh[2]) ;
             d_star_mom_theta = Flux[ID1][0][MOMY] * dt * (dh[1]*dh[2]) / r_i ;
             cos_theta        = cos(x_pos[1]);
